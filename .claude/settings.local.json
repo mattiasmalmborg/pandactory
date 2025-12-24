@@ -30,7 +30,8 @@
       "Bash(cmd /c \"del \\\\?\\\\c:\\\\dev\\\\Pandactory\\\\nul\")",
       "Bash(cmd /c \"dir c:\\\\dev\\\\Pandactory\\\\nul*\")",
       "Bash(copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")",
-      "Bash(cmd /c copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")"
+      "Bash(cmd /c copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")",
+      "Bash(git -C:*)"
     ],
     "deny": [],
     "ask": []

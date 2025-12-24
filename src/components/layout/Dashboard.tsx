@@ -1,5 +1,6 @@
 import { useGame } from '../../game/state/GameContext';
 import { SpaceshipGoal } from './SpaceshipGoal';
+import { ASSET_CONFIG } from '../../config/assets';
 
 interface DashboardProps {
   onNavigateToBiome: () => void;
@@ -71,7 +72,7 @@ export function Dashboard({ onNavigateToBiome: _onNavigateToBiome }: DashboardPr
       <div className="text-center">
         <h1 className="text-2xl font-bold text-panda-orange flex items-center justify-center gap-2">
           <img
-            src="/assets/ui/logo.png"
+            src={ASSET_CONFIG.ui.logo}
             alt="Pandactory"
             className="h-56 max-w-[90%] object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] -mt-2 -mb-4"
             onError={(e) => {
