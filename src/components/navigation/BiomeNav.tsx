@@ -2,16 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { BIOMES } from '../../game/config/biomes';
 import { BiomeId } from '../../types/game.types';
-
-// Map biome IDs to their asset paths
-const BIOME_ICONS: Record<BiomeId, string> = {
-  lush_forest: '/assets/icons/biome_lush_forest.png',
-  misty_lake: '/assets/icons/biome_misty_lake.png',
-  arid_desert: '/assets/icons/biome_arid_desert.png',
-  frozen_tundra: '/assets/icons/biome_frozen_tundra.png',
-  volcanic_isle: '/assets/icons/biome_volcanic_isle.png',
-  crystal_caverns: '/assets/icons/biome_crystal_caverns.png',
-};
+import { getBiomeIconPath } from '../../config/assets';
 
 // Biome discovery order (exported for swipe navigation)
 export const BIOME_ORDER: BiomeId[] = [
@@ -40,7 +31,7 @@ function BiomeTab({
   imageHasFailed: boolean;
 }) {
   const biomeConfig = BIOMES[biomeId];
-  const iconPath = BIOME_ICONS[biomeId];
+  const iconPath = getBiomeIconPath(biomeId);
 
   return (
     <button
