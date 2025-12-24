@@ -1,0 +1,279 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "created": "2024-12-04",
+    "style": "Cozy hand-drawn art, warm colors, inviting atmosphere",
+    "artTools": ["DALL-E", "Midjourney", "Photoshop"],
+    "targetResolution": "Mobile-first (375x667 base)"
+  },
+  "backgrounds": [
+    {
+      "id": "lush_forest_bg",
+      "biome": "Lush Forest",
+      "prompt": "A cozy, hand-drawn lush forest landscape with tall trees, soft green foliage, dappled sunlight filtering through leaves, peaceful atmosphere, warm and inviting colors, mobile game background art, top-down isometric perspective, slight crash site visible with pieces of spaceship",
+      "style": "warm, inviting, hand-drawn, cozy",
+      "dimensions": "1080x1920",
+      "status": "pending",
+      "filename": "lush_forest.png",
+      "variants": ["day", "dusk"]
+    },
+    {
+      "id": "arid_desert_bg",
+      "biome": "Arid Desert",
+      "prompt": "A hand-drawn arid desert landscape with golden sand dunes, scattered cacti, warm sunset colors, peaceful yet harsh environment, cozy art style despite the desert heat, mobile game background, top-down isometric view, subtle oil patches visible",
+      "style": "warm, sandy, hand-drawn, cozy",
+      "dimensions": "1080x1920",
+      "status": "pending",
+      "filename": "arid_desert.png",
+      "variants": ["day", "sunset"]
+    }
+  ],
+  "characters": [
+    {
+      "id": "red_panda_idle",
+      "type": "character",
+      "name": "Red Panda - Idle",
+      "prompt": "An adorable, highly intelligent red panda character with bright orange-red fur, expressive curious eyes, wearing a tiny engineer's vest with pockets, standing in idle pose, cozy hand-drawn style, cute but not overly cartoonish, mobile game sprite",
+      "dimensions": "256x256",
+      "status": "pending",
+      "filename": "panda_idle.png",
+      "animations": ["idle", "blink"]
+    },
+    {
+      "id": "red_panda_working",
+      "type": "character",
+      "name": "Red Panda - Working",
+      "prompt": "The same intelligent red panda character actively working on machinery, holding a small wrench or tool, focused expression, engineer vest, hand-drawn cozy style, energetic pose showing problem-solving",
+      "dimensions": "256x256",
+      "status": "pending",
+      "filename": "panda_working.png",
+      "animations": ["working", "hammering"]
+    },
+    {
+      "id": "red_panda_expedition",
+      "type": "character",
+      "name": "Red Panda - Expedition",
+      "prompt": "The intelligent red panda character equipped for exploration, wearing a small backpack and explorer's hat, determined expression, holding a map, hand-drawn cozy style, ready for adventure",
+      "dimensions": "256x256",
+      "status": "pending",
+      "filename": "panda_expedition.png",
+      "animations": ["walking", "looking"]
+    }
+  ],
+  "automations": [
+    {
+      "id": "harvester_icon",
+      "automation": "Harvester",
+      "prompt": "Icon for a harvester automation machine, simple mechanical design with gears and collection basket, hand-drawn cozy style, warm colors, 64x64 game icon, circular or rounded square frame",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "harvester.png"
+    },
+    {
+      "id": "wood_chipper_icon",
+      "automation": "Wood Chipper",
+      "prompt": "Icon for a wood chipper machine, showing wood being processed, mechanical but friendly design, hand-drawn cozy style, warm browns and greens, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "wood_chipper.png"
+    },
+    {
+      "id": "saw_mill_icon",
+      "automation": "Saw Mill",
+      "prompt": "Icon for a saw mill building, showing circular saw blade and wood planks, cozy industrial design, hand-drawn style, warm wooden colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "saw_mill.png"
+    },
+    {
+      "id": "stone_crusher_icon",
+      "automation": "Stone Crusher",
+      "prompt": "Icon for a stone crusher machine, heavy mechanical design crushing rocks, hand-drawn cozy style, gray and metallic colors with warm accents, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "stone_crusher.png"
+    },
+    {
+      "id": "berry_press_icon",
+      "automation": "Berry Press",
+      "prompt": "Icon for a berry press machine, showing berries being pressed into juice, colorful and cheerful design, hand-drawn cozy style, purple and pink berry colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "berry_press.png"
+    },
+    {
+      "id": "sand_collector_icon",
+      "automation": "Sand Collector",
+      "prompt": "Icon for a sand collector machine, desert-themed with sifting mechanism, hand-drawn cozy style, sandy yellow and brown colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "sand_collector.png"
+    },
+    {
+      "id": "oil_pump_icon",
+      "automation": "Oil Pump",
+      "prompt": "Icon for an oil pump machine, mechanical pump extracting black oil, industrial but cozy design, hand-drawn style, dark brown and metallic colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "oil_pump.png"
+    },
+    {
+      "id": "glass_furnace_icon",
+      "automation": "Glass Furnace",
+      "prompt": "Icon for a glass furnace, showing molten sand and glass production, glowing warm colors, hand-drawn cozy style, orange glow and transparent glass, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "glass_furnace.png"
+    },
+    {
+      "id": "refinery_icon",
+      "automation": "Refinery",
+      "prompt": "Icon for an oil refinery, complex pipes and processing towers, industrial but friendly design, hand-drawn cozy style, metallic and dark colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "refinery.png"
+    },
+    {
+      "id": "cacti_farm_icon",
+      "automation": "Cacti Farm",
+      "prompt": "Icon for a cacti farm, showing organized rows of cacti being cultivated, desert agriculture theme, hand-drawn cozy style, green and sandy colors, 64x64 game icon",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "cacti_farm.png"
+    }
+  ],
+  "resources": [
+    {
+      "id": "wood_icon",
+      "resource": "Wood",
+      "prompt": "Resource icon for wood logs, simple hand-drawn style, warm brown colors, cozy appearance, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "wood.png"
+    },
+    {
+      "id": "stone_icon",
+      "resource": "Stone",
+      "prompt": "Resource icon for stone rocks, simple hand-drawn style, gray colors with texture, cozy appearance, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "stone.png"
+    },
+    {
+      "id": "berries_icon",
+      "resource": "Berries",
+      "prompt": "Resource icon for berries, colorful purple-blue berries, simple hand-drawn style, appetizing and cozy, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "berries.png"
+    },
+    {
+      "id": "planks_icon",
+      "resource": "Planks",
+      "prompt": "Resource icon for wooden planks, neatly stacked processed wood, hand-drawn style, warm wooden brown, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "planks.png"
+    },
+    {
+      "id": "sand_icon",
+      "resource": "Sand",
+      "prompt": "Resource icon for desert sand, fine golden particles, simple hand-drawn style, warm sandy yellow, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "sand.png"
+    },
+    {
+      "id": "oil_icon",
+      "resource": "Oil",
+      "prompt": "Resource icon for crude oil, dark liquid in a container, simple hand-drawn style, black and brown colors, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "oil.png"
+    },
+    {
+      "id": "glass_icon",
+      "resource": "Glass",
+      "prompt": "Resource icon for glass, transparent with slight shimmer, simple hand-drawn style, light blue-white with highlights, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "glass.png"
+    }
+  ],
+  "powerCells": [
+    {
+      "id": "basic_power_cell",
+      "tier": "Basic",
+      "prompt": "Icon for a basic power cell battery, simple cylindrical design with blue glow, hand-drawn cozy style, technological but friendly, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "power_cell_basic.png"
+    },
+    {
+      "id": "advanced_power_cell",
+      "tier": "Advanced",
+      "prompt": "Icon for an advanced power cell, more complex design with green glow, hand-drawn cozy style, higher tech appearance, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "power_cell_advanced.png"
+    },
+    {
+      "id": "superior_power_cell",
+      "tier": "Superior",
+      "prompt": "Icon for a superior power cell, sleek design with purple glow and energy arcs, hand-drawn cozy style, premium appearance, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "power_cell_superior.png"
+    },
+    {
+      "id": "unstable_power_cell",
+      "tier": "Unstable",
+      "prompt": "Icon for an unstable power cell, crackling with red and orange energy, warning symbols, hand-drawn cozy but dangerous style, volatile appearance, 48x48 game icon",
+      "dimensions": "96x96",
+      "status": "pending",
+      "filename": "power_cell_unstable.png"
+    }
+  ],
+  "ui": [
+    {
+      "id": "button_primary",
+      "type": "button",
+      "prompt": "Hand-drawn cozy button design, warm colors, rounded corners, friendly appearance, suitable for mobile game UI",
+      "dimensions": "variable",
+      "status": "pending",
+      "filename": "button_primary.png"
+    },
+    {
+      "id": "panel_background",
+      "type": "panel",
+      "prompt": "Hand-drawn panel background with subtle texture, warm neutral colors, cozy appearance, mobile game UI element",
+      "dimensions": "variable",
+      "status": "pending",
+      "filename": "panel_bg.png"
+    },
+    {
+      "id": "expedition_map",
+      "type": "ui_element",
+      "prompt": "Hand-drawn exploration map icon, vintage style with warm parchment colors, cozy and inviting, mobile game UI",
+      "dimensions": "128x128",
+      "status": "pending",
+      "filename": "expedition_map.png"
+    }
+  ],
+  "summary": {
+    "totalAssets": 36,
+    "byCategory": {
+      "backgrounds": 2,
+      "characters": 3,
+      "automations": 10,
+      "resources": 7,
+      "powerCells": 4,
+      "ui": 3
+    },
+    "priority": {
+      "high": ["red_panda_idle", "lush_forest_bg", "harvester_icon", "wood_icon", "stone_icon"],
+      "medium": ["arid_desert_bg", "all automation icons", "all resource icons"],
+      "low": ["ui elements", "character variations"]
+    }
+  }
+}
