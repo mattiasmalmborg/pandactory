@@ -86,6 +86,7 @@ export interface GameState {
   unlockedBiomes: BiomeId[];
   expeditionCount: number;
   expeditionPityCounter: number; // Hidden counter for biome discovery pity system
+  powerCellPityCounter: number; // Hidden counter for power cell pity system (+10% per expedition without power cell)
   discoveredProducedResources: ResourceId[]; // Resources discovered through automation production
   pendingResourceDiscoveries: ResourceId[]; // Queue of produced resources waiting to show discovery popup
   discoveredProducedFoods: FoodId[]; // Foods discovered through automation production
@@ -144,6 +145,7 @@ export interface ExpeditionTierConfig {
   powerCellChance: number;
   biomeDiscoveryChance: number;
   resourceDiscoveryChance: number; // Chance to discover each undiscovered resource in current biome
+  bonusPowerCellChance?: number; // Optional: chance for 2-3 power cells (Epic Journey only)
 }
 
 export interface ExpeditionState {

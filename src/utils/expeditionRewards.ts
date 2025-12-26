@@ -20,7 +20,8 @@ function getResourceScaleMultiplier(unlockedBiomeCount: number): number {
 
 /**
  * Calculates rewards for a completed expedition
- * @param pityCounter - Hidden counter for biome discovery pity system (+5% per failed attempt)
+ * @param biomePityCounter - Hidden counter for biome discovery pity system (+5% per failed attempt)
+ * @param powerCellPityCounter - Hidden counter for power cell pity system (+10% per expedition without power cell)
  * @param isCompleted - Whether the expedition was completed (true) or recalled early (false)
  * @param progressPercent - How far the expedition progressed (0-1), used for partial rewards
  */
@@ -30,7 +31,8 @@ export function calculateExpeditionRewards(
   unlockedBiomes: BiomeId[],
   currentBiomeId: BiomeId,
   discoveredResources: ResourceId[],
-  pityCounter: number = 0,
+  biomePityCounter: number = 0,
+  powerCellPityCounter: number = 0,
   isCompleted: boolean = true,
   progressPercent: number = 1.0
 ): CalculatedRewards {
@@ -57,16 +59,35 @@ export function calculateExpeditionRewards(
   }));
 
   // Power cell rewards - ONLY on completed expeditions
+  // Pity system: +5% chance per expedition without power cell (max +40%)
   const powerCells: PowerCellTier[] = [];
-  if (isCompleted && Math.random() < config.powerCellChance) {
-    // Random power cell tier (weighted towards lower tiers)
-    const rand = Math.random();
-    if (rand < 0.7) {
-      powerCells.push('green');
-    } else if (rand < 0.95) {
-      powerCells.push('blue');
-    } else {
-      powerCells.push('orange');
+  if (isCompleted) {
+    const pityBonus = Math.min(powerCellPityCounter * 0.05, 0.40);
+    const effectivePowerCellChance = config.powerCellChance + pityBonus;
+
+    if (Math.random() < effectivePowerCellChance) {
+      // Random power cell tier (weighted towards lower tiers)
+      const addPowerCell = () => {
+        const rand = Math.random();
+        if (rand < 0.7) {
+          powerCells.push('green');
+        } else if (rand < 0.95) {
+          powerCells.push('blue');
+        } else {
+          powerCells.push('orange');
+        }
+      };
+
+      // Add first power cell
+      addPowerCell();
+
+      // Epic Journey has 15% chance for bonus power cells (2-3 total)
+      if (config.bonusPowerCellChance && Math.random() < config.bonusPowerCellChance) {
+        addPowerCell(); // Second power cell
+        if (Math.random() < 0.5) {
+          addPowerCell(); // 50% chance for third power cell
+        }
+      }
     }
   }
 
@@ -87,8 +108,8 @@ export function calculateExpeditionRewards(
   if (isCompleted) {
     // Pity system: +5% chance per failed expedition (hidden from player)
     // Caps at +50% bonus (10 failed expeditions)
-    const pityBonus = Math.min(pityCounter * 0.05, 0.50);
-    const effectiveDiscoveryChance = config.biomeDiscoveryChance + pityBonus;
+    const biomePityBonus = Math.min(biomePityCounter * 0.05, 0.50);
+    const effectiveDiscoveryChance = config.biomeDiscoveryChance + biomePityBonus;
 
     if (Math.random() < effectiveDiscoveryChance) {
       // Get the next biome in progression from current biome

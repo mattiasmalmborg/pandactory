@@ -8,7 +8,7 @@ export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
     durationMinutes: 10,
     foodCost: 500,
     resourceMultiplier: 0.5,
-    powerCellChance: 0.05, // 5%
+    powerCellChance: 0.075, // 7.5%
     biomeDiscoveryChance: 0.03, // 3%
     resourceDiscoveryChance: 0.10, // 10% per undiscovered resource
   },
@@ -19,7 +19,7 @@ export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
     durationMinutes: 30,
     foodCost: 1500,
     resourceMultiplier: 1.0,
-    powerCellChance: 0.10, // 10%
+    powerCellChance: 0.15, // 15%
     biomeDiscoveryChance: 0.10, // 10%
     resourceDiscoveryChance: 0.20, // 20% per undiscovered resource
   },
@@ -30,7 +30,7 @@ export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
     durationMinutes: 60,
     foodCost: 3500,
     resourceMultiplier: 1.5,
-    powerCellChance: 0.15, // 15%
+    powerCellChance: 0.30, // 30%
     biomeDiscoveryChance: 0.20, // 20%
     resourceDiscoveryChance: 0.30, // 30% per undiscovered resource
   },
@@ -41,7 +41,7 @@ export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
     durationMinutes: 120,
     foodCost: 8000,
     resourceMultiplier: 2.5,
-    powerCellChance: 0.25, // 25%
+    powerCellChance: 0.45, // 45%
     biomeDiscoveryChance: 0.35, // 35%
     resourceDiscoveryChance: 0.45, // 45% per undiscovered resource
   },
@@ -52,9 +52,10 @@ export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
     durationMinutes: 240,
     foodCost: 18000,
     resourceMultiplier: 4.0,
-    powerCellChance: 0.35, // 35%
+    powerCellChance: 0.60, // 60% (same as Deep, but with bonus chance)
     biomeDiscoveryChance: 0.50, // 50%
     resourceDiscoveryChance: 0.60, // 60% per undiscovered resource
+    bonusPowerCellChance: 0.15, // 15% chance for 2-3 power cells
   },
 };
 

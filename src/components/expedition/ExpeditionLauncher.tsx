@@ -106,14 +106,15 @@ export function ExpeditionLauncher() {
       .flatMap(b => b.discoveredResources || [])
       .filter((v, i, a) => a.indexOf(v) === i); // unique
 
-    // Calculate rewards (pass pity counter for hidden bonus)
+    // Calculate rewards (pass pity counters for hidden bonuses)
     const rewards = calculateExpeditionRewards(
       state.panda.expedition.tier,
       bonus,
       state.unlockedBiomes,
       state.player.currentBiome,
       allDiscoveredResources,
-      state.expeditionPityCounter || 0
+      state.expeditionPityCounter || 0,
+      state.powerCellPityCounter || 0
     );
 
     // Convert PowerCellTier[] to PowerCell[] using createPowerCell to ensure bonus is set

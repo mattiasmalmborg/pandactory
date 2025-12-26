@@ -74,6 +74,7 @@ export const INITIAL_GAME_STATE: GameState = {
   unlockedBiomes: ['lush_forest'],
   expeditionCount: 0,
   expeditionPityCounter: 0,
+  powerCellPityCounter: 0,
   discoveredProducedResources: [], // Intermediate resources discovered via production
   pendingResourceDiscoveries: [], // Queue for popup display
   discoveredProducedFoods: [], // Foods discovered via automation production
@@ -85,7 +86,7 @@ export const INITIAL_GAME_STATE: GameState = {
   },
   lastTick: Date.now(),
   lastSave: Date.now(),
-  version: '1.1.0',
+  version: '1.2.0',
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -300,6 +301,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       // Add power cells to inventory
       newState.powerCellInventory = [...state.powerCellInventory, ...powerCells];
+
+      // Power cell pity system: reset on success, increment on failure
+      if (powerCells.length > 0) {
+        newState.powerCellPityCounter = 0;
+      } else {
+        newState.powerCellPityCounter = (state.powerCellPityCounter || 0) + 1;
+      }
 
       // Unlock new biome if discovered - reset pity counter
       if (newBiome) {

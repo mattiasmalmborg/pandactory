@@ -90,6 +90,7 @@ export function ExpeditionTimer() {
       state.player.currentBiome,
       state.biomes[state.player.currentBiome].discoveredResources || [],
       state.expeditionPityCounter || 0,
+      state.powerCellPityCounter || 0,
       false, // Not completed
       progress // Current progress percentage
     );
