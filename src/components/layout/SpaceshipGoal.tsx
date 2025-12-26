@@ -63,8 +63,8 @@ export function SpaceshipGoal() {
   // Check if we've started producing any spaceship parts
   const hasStartedProduction = discoveredParts.size > 0;
 
-  // Calculate shards to earn (base 1 for completion)
-  const shardsToEarn = isComplete ? 1 : 0;
+  // Calculate shards to earn (base 2 for completion)
+  const shardsToEarn = isComplete ? 2 : 0;
 
   const handlePrestige = () => {
     dispatch({
