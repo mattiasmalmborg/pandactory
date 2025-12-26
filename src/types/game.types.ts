@@ -188,7 +188,7 @@ export type GameAction =
   | { type: 'REMOVE_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string } }
   | { type: 'START_EXPEDITION'; payload: { tier: ExpeditionTier; foodConsumed: { id: FoodId; amount: number }[] } }
   | { type: 'COLLECT_EXPEDITION'; payload: { rewards: Record<ResourceId, number>; powerCells: PowerCell[]; newBiome: BiomeId | null; newResources: ResourceId[] } }
-  | { type: 'RECALL_EXPEDITION'; payload: { partialRewards: Record<ResourceId, number> } }
+  | { type: 'RECALL_EXPEDITION'; payload: { partialRewards: Partial<Record<ResourceId, number>> } }
   | { type: 'SWITCH_BIOME'; payload: { biomeId: BiomeId } }
   | { type: 'UNLOCK_BIOME'; payload: { biomeId: BiomeId } }
   | { type: 'ACTIVATE_BIOME'; payload: { biomeId: BiomeId } }

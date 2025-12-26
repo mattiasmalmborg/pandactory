@@ -33,7 +33,8 @@
       "Bash(cmd /c copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")",
       "Bash(git -C:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

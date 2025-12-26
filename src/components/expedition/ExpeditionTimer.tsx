@@ -73,6 +73,15 @@ export function ExpeditionTimer() {
   }
 
   const recallExpedition = () => {
+    // No rewards if less than 1% progress
+    if (progress < 0.01) {
+      dispatch({
+        type: 'RECALL_EXPEDITION',
+        payload: { partialRewards: {} },
+      });
+      return;
+    }
+
     // Calculate partial rewards based on progress
     const partialRewards = calculateExpeditionRewards(
       expedition.tier,
@@ -117,8 +126,8 @@ export function ExpeditionTimer() {
   const progressPercent = Math.round(progress * 100);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gradient-to-br from-blue-900/95 to-blue-800/95 rounded-xl border-2 border-blue-500 p-6 max-w-md w-full shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-gradient-to-br from-blue-900/95 to-blue-800/95 rounded-xl border-2 border-blue-500 p-6 max-w-md w-full shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="text-center mb-4">
           <h2 className="text-2xl font-bold text-white mb-1">
@@ -181,7 +190,7 @@ export function ExpeditionTimer() {
           Recall Early ({progressPercent}% rewards)
         </button>
         <p className="text-center text-xs text-blue-300/70 mt-2">
-          Recalling early forfeits completion bonus, biome discovery, and power cells
+          Recalling early forfeits spent food, completion bonus, biome discovery, and power cells
         </p>
       </div>
     </div>
