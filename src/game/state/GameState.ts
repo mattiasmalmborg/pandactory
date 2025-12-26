@@ -1,4 +1,4 @@
-import { GameState, GameAction, ResourceId, FoodId } from '../../types/game.types';
+import { GameState, GameAction, ResourceId, FoodId, BiomeId } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
 import { EXPEDITION_TIERS } from '../config/expeditions';
 import { SKILL_TREE } from '../config/skillTree';
@@ -540,8 +540,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'LOAD_GAME': {
+      const loadedState = action.payload.gameState;
+
+      // Migration: Rebuild unlockedBiomes from biomes.discovered for old saves
+      // This ensures scaled expedition costs work correctly
+      const migratedUnlockedBiomes: BiomeId[] = [];
+      (Object.keys(loadedState.biomes) as BiomeId[]).forEach((biomeId) => {
+        if (loadedState.biomes[biomeId].discovered) {
+          migratedUnlockedBiomes.push(biomeId);
+        }
+      });
+
+      // If migration found more biomes than currently tracked, use the migrated list
+      const currentUnlocked = loadedState.unlockedBiomes || ['lush_forest'];
+      const finalUnlockedBiomes = migratedUnlockedBiomes.length > currentUnlocked.length
+        ? migratedUnlockedBiomes
+        : currentUnlocked;
+
       return {
-        ...action.payload.gameState,
+        ...loadedState,
+        unlockedBiomes: finalUnlockedBiomes,
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };

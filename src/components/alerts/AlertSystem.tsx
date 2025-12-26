@@ -4,6 +4,7 @@ import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../../utils/allocation';
 import { ResourceId } from '../../types/game.types';
+import { formatNumber } from '../../utils/formatters';
 
 export type AlertId = string; // Format: "type-biomeId-automationId" or "type-resourceId"
 
@@ -114,7 +115,7 @@ export function AlertSystem() {
                 id: `resource_depleting-${resourceId}`,
                 type: 'resource_depleting',
                 title: `${resource?.icon || ''} ${resource?.name || resourceId} Depleting!`,
-                message: `Will run out ${timeText}. Production: ${produceRate.toFixed(1)}/min, Consumption: ${consumeRate.toFixed(1)}/min`,
+                message: `Will run out ${timeText}. Production: ${formatNumber(produceRate)}/min, Consumption: ${formatNumber(consumeRate)}/min`,
                 severity: timeUntilDepletion < 10 ? 'critical' : 'warning',
                 timestamp: Date.now(),
               });

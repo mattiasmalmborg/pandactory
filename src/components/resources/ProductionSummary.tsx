@@ -3,6 +3,7 @@ import { BiomeId } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
 import { calculateProductionRate } from '../../utils/calculations';
+import { formatNumber } from '../../utils/formatters';
 
 interface ProductionSummaryProps {
   biomeId: BiomeId;
@@ -52,7 +53,7 @@ export function ProductionSummary({ biomeId }: ProductionSummaryProps) {
             <div key={resourceId} className="flex items-center gap-2">
               <span className="text-lg">{resource?.icon ?? "❓"}</span>
               <div className="text-sm">
-                <div className="text-green-300 font-semibold">+{rate.toFixed(1)}/min</div>
+                <div className="text-green-300 font-semibold">+{formatNumber(rate)}/min</div>
                 <div className="text-xs text-green-500">{resource?.name ?? "Unknown"}</div>
               </div>
             </div>

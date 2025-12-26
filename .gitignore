@@ -38,6 +38,33 @@ nul
 *.psd
 public/photoshop/
 
+# Temporary/draft image files (ChatGPT generated drafts, etc)
+public/assets/backgrounds/ChatGPT*
+public/assets/ui/ChatGPT*
+public/assets/RESOURCE_LIST.txt
+public/assets/asset-refs.json
+
+# Unused/draft logo variations
+public/assets/ui/logo1.png
+public/assets/icons/biome_lush_forest1.png
+public/assets/icons/biome_lush_forest2.png
+public/assets/icons/biome_lush_forest3.png
+public/assets/icons/biome_misty_lake1.png
+public/assets/icons/biome_misty_lake2.png
+
+# Unused background variations
+public/assets/backgrounds/bg_arid_desert1.jpg
+public/assets/backgrounds/bg_arid_desert2.jpg
+public/assets/backgrounds/bg_crystal_caverns2.jpg
+public/assets/backgrounds/bg_frozen_tundra2.jpg
+public/assets/backgrounds/bg_lush_forest1.jpg
+public/assets/backgrounds/bg_lush_forest2.jpg
+public/assets/backgrounds/bg_lush_forest3.jpg
+public/assets/backgrounds/bg_misty_lake2.jpg
+public/assets/backgrounds/bg_volcanic_isle2.jpg
+public/assets/backgrounds/bg_dashboard.png
+public/assets/backgrounds/bg_dashboard2.jpg
+
 # Local development documentation
 DEV-README.md
 ASSETS.md

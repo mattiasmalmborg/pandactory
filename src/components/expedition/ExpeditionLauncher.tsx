@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../game/state/GameContext';
-import { EXPEDITION_TIERS, isExpeditionComplete, calculateExpeditionBonus } from '../../game/config/expeditions';
+import { EXPEDITION_TIERS, isExpeditionComplete, calculateExpeditionBonus, getScaledFoodCost } from '../../game/config/expeditions';
 import { FOOD_ITEMS, calculateTotalNutrition, optimizeFoodSelection, calculateWastedNutrition } from '../../game/config/food';
 import { createPowerCell } from '../../game/config/powerCells';
 import { ExpeditionTier, FoodId } from '../../types/game.types';
@@ -19,9 +19,11 @@ export function ExpeditionLauncher() {
   const [calculatedRewards, setCalculatedRewards] = useState<ReturnType<typeof calculateExpeditionRewards> | null>(null);
 
   const tierConfig = EXPEDITION_TIERS[selectedTier];
+  const unlockedBiomeCount = state.unlockedBiomes.length;
+  const scaledFoodCost = getScaledFoodCost(tierConfig.foodCost, unlockedBiomeCount);
   const totalNutrition = calculateTotalNutrition(foodSelection);
-  const hasEnoughFood = totalNutrition >= tierConfig.foodCost;
-  const wastedNutrition = calculateWastedNutrition(foodSelection, tierConfig.foodCost);
+  const hasEnoughFood = totalNutrition >= scaledFoodCost;
+  const wastedNutrition = calculateWastedNutrition(foodSelection, scaledFoodCost);
 
   // Swipe navigation between biomes
   const navigateToBiome = useCallback((direction: 'prev' | 'next') => {
@@ -64,17 +66,17 @@ export function ExpeditionLauncher() {
       const integerFood = Object.fromEntries(
         Object.entries(state.food).map(([id, amount]) => [id, Math.floor(amount)])
       ) as Record<FoodId, number>;
-      const optimized = optimizeFoodSelection(tierConfig.foodCost, integerFood);
+      const optimized = optimizeFoodSelection(scaledFoodCost, integerFood);
       setFoodSelection(optimized);
     }
-  }, [selectedTier, autoFill, state.food, tierConfig.foodCost]);
+  }, [selectedTier, autoFill, state.food, scaledFoodCost]);
 
   const optimizeSelection = () => {
     // Convert food to integers before optimization
     const integerFood = Object.fromEntries(
       Object.entries(state.food).map(([id, amount]) => [id, Math.floor(amount)])
     ) as Record<FoodId, number>;
-    const optimized = optimizeFoodSelection(tierConfig.foodCost, integerFood);
+    const optimized = optimizeFoodSelection(scaledFoodCost, integerFood);
     setFoodSelection(optimized);
   };
 
@@ -209,15 +211,17 @@ export function ExpeditionLauncher() {
       );
     }
 
-    // Expedition in progress
+    // Expedition in progress - ExpeditionTimer handles the popup UI
+    // Just show a simple message here
     return (
       <div ref={swipeRef} className="pb-24">
         <BiomeNav />
         <div className="p-4">
-          <h2 className="text-xl font-bold text-white">
-            Dr. Redd Pawston III is on an expedition!
-          </h2>
-          <p className="text-gray-400">Check the progress card above.</p>
+          <div className="bg-amber-900/50 rounded-lg border border-amber-700/50 p-4 text-center">
+            <p className="text-amber-200">
+              Dr. Redd Pawston III is on an expedition...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -240,6 +244,7 @@ export function ExpeditionLauncher() {
         <h3 className="text-md font-semibold text-white">Expedition Tier</h3>
         {(Object.keys(EXPEDITION_TIERS) as ExpeditionTier[]).map((tier) => {
           const config = EXPEDITION_TIERS[tier];
+          const tierScaledCost = getScaledFoodCost(config.foodCost, unlockedBiomeCount);
           return (
             <div
               key={tier}
@@ -269,7 +274,7 @@ export function ExpeditionLauncher() {
                 {/* Food cost box */}
                 <div className="bg-gray-900/50 rounded-md px-2.5 py-1.5 flex items-center gap-2">
                   <span className="text-lg">🍽️</span>
-                  <div className="text-yellow-400 font-semibold text-sm">{config.foodCost}</div>
+                  <div className="text-yellow-400 font-semibold text-sm">{formatNumber(tierScaledCost)}</div>
                 </div>
               </div>
 
@@ -329,18 +334,18 @@ export function ExpeditionLauncher() {
         <div className="mb-3">
           <div className="flex justify-between text-xs mb-1">
             <span className="text-gray-400">Nutrition packed</span>
-            <span className={totalNutrition >= tierConfig.foodCost ? 'text-green-400 font-semibold' : 'text-yellow-400'}>
-              {totalNutrition.toLocaleString()} / {tierConfig.foodCost.toLocaleString()}
+            <span className={totalNutrition >= scaledFoodCost ? 'text-green-400 font-semibold' : 'text-yellow-400'}>
+              {formatNumber(totalNutrition)} / {formatNumber(scaledFoodCost)}
             </span>
           </div>
           <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${
-                totalNutrition >= tierConfig.foodCost
+                totalNutrition >= scaledFoodCost
                   ? 'bg-gradient-to-r from-green-500 to-emerald-400'
                   : 'bg-gradient-to-r from-yellow-500 to-orange-400'
               }`}
-              style={{ width: `${Math.min((totalNutrition / tierConfig.foodCost) * 100, 100)}%` }}
+              style={{ width: `${Math.min((totalNutrition / scaledFoodCost) * 100, 100)}%` }}
             />
           </div>
         </div>
@@ -369,39 +374,37 @@ export function ExpeditionLauncher() {
             return (
               <div
                 key={foodId}
-                className={`p-2.5 rounded-lg border transition-all ${
+                className={`p-2.5 rounded-lg border transition-all flex flex-col ${
                   isSelected
                     ? 'border-green-600/50 bg-green-900/20'
                     : 'border-gray-700/50 bg-gray-900/30'
                 }`}
               >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-white flex items-center gap-1">
-                      <span>{food.icon}</span>
-                      <span>{food.name}</span>
-                    </div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">
-                      <span className="text-amber-400">{food.nutritionValue}</span> nutr • <span className="text-gray-300">{formatNumber(available)}</span> avail
-                    </div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-white flex items-center gap-1">
+                    <span>{food.icon}</span>
+                    <span>{food.name}</span>
                   </div>
-                  <div className="flex items-center gap-0.5 ml-1">
-                    <button
-                      onClick={() => removeFood(foodId)}
-                      disabled={selected === 0}
-                      className="w-6 h-6 text-xs bg-gray-700 hover:bg-red-700 text-white rounded disabled:opacity-30 disabled:hover:bg-gray-700 transition-colors font-bold"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center text-white font-semibold text-sm">{selected}</span>
-                    <button
-                      onClick={() => addFood(foodId)}
-                      disabled={selected >= available}
-                      className="w-6 h-6 text-xs bg-gray-700 hover:bg-green-700 text-white rounded disabled:opacity-30 disabled:hover:bg-gray-700 transition-colors font-bold"
-                    >
-                      +
-                    </button>
+                  <div className="text-[10px] text-gray-400 mt-0.5">
+                    <span className="text-amber-400">{food.nutritionValue}</span> nutr • <span className="text-gray-300">{formatNumber(available)}</span> avail
                   </div>
+                </div>
+                <div className="flex items-center justify-center gap-1.5 mt-2 pt-2 border-t border-gray-700/30">
+                  <button
+                    onClick={() => removeFood(foodId)}
+                    disabled={selected === 0}
+                    className="w-7 h-7 text-sm bg-gray-700 hover:bg-red-700 text-white rounded disabled:opacity-30 disabled:hover:bg-gray-700 transition-colors font-bold"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-[2.5rem] text-center text-white font-semibold text-sm">{formatNumber(selected)}</span>
+                  <button
+                    onClick={() => addFood(foodId)}
+                    disabled={selected >= available}
+                    className="w-7 h-7 text-sm bg-gray-700 hover:bg-green-700 text-white rounded disabled:opacity-30 disabled:hover:bg-gray-700 transition-colors font-bold"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
             );

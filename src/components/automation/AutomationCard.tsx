@@ -236,7 +236,7 @@ export function AutomationCard({
                   data-tooltip={sourceDescription}
                 >
                   <span>{resource?.icon ?? "❓"} {resource?.name ?? "?"}</span>
-                  <span>-{needed.toFixed(1)}/m</span>
+                  <span>-{formatNumber(needed)}/m</span>
                 </div>
               );
             })}
@@ -252,7 +252,7 @@ export function AutomationCard({
             return (
               <div key={produce.resourceId} className="flex justify-between text-green-400">
                 <span>{resource?.icon ?? "❓"} {resource?.name ?? "?"}</span>
-                <span>+{actualProduction.toFixed(1)}/m</span>
+                <span>+{formatNumber(actualProduction)}/m</span>
               </div>
             );
           })}
@@ -261,7 +261,7 @@ export function AutomationCard({
             return (
               <div key={produce.foodId} className="flex justify-between text-green-400">
                 <span>{foodItem?.icon ?? '🍽️'} {foodItem?.name ?? produce.foodId}</span>
-                <span>+{(produce.amount * effectiveRate).toFixed(1)}/m</span>
+                <span>+{formatNumber(produce.amount * effectiveRate)}/m</span>
               </div>
             );
           })}
@@ -292,7 +292,7 @@ export function AutomationCard({
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-400">Next Level:</span>
             <span className="text-panda-orange font-semibold">
-              Lv.{automation.level + 1} → {nextLevelBaseRate.toFixed(1)}/min (+{boostPercent}%)
+              Lv.{automation.level + 1} → {formatNumber(nextLevelBaseRate)}/min (+{boostPercent}%)
             </span>
           </div>
 

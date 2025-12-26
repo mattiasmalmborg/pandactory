@@ -6,6 +6,7 @@ import { useGame } from '../../game/state/GameContext';
 import { canAfford } from '../../utils/calculations';
 import { calculateBiomeProductionRates } from '../../utils/allocation';
 import { getVisibleAutomations } from '../../utils/automation-visibility';
+import { formatNumber } from '../../utils/formatters';
 
 interface BuildAutomationProps {
   biomeId: BiomeId;
@@ -186,7 +187,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
                         {resource?.icon ?? "❓"} {resource?.name ?? "Unknown"}
                       </span>
                       <span className={canSupport ? 'text-green-400' : 'text-red-400'}>
-                        {available.toFixed(1)}/{needed.toFixed(1)}/min {canSupport ? '✓' : '✗'}
+                        {formatNumber(available)}/{formatNumber(needed)}/min {canSupport ? '✓' : '✗'}
                       </span>
                     </div>
                   );

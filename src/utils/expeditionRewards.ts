@@ -10,8 +10,19 @@ export interface CalculatedRewards {
 }
 
 /**
+ * Calculate the resource scaling multiplier based on unlocked biomes
+ * Scales similarly to food cost: 4× per additional biome
+ * This ensures late-game expeditions give proportionally more resources
+ */
+function getResourceScaleMultiplier(unlockedBiomeCount: number): number {
+  return Math.pow(4, Math.max(0, unlockedBiomeCount - 1));
+}
+
+/**
  * Calculates rewards for a completed expedition
  * @param pityCounter - Hidden counter for biome discovery pity system (+5% per failed attempt)
+ * @param isCompleted - Whether the expedition was completed (true) or recalled early (false)
+ * @param progressPercent - How far the expedition progressed (0-1), used for partial rewards
  */
 export function calculateExpeditionRewards(
   tier: ExpeditionTier,
@@ -19,22 +30,35 @@ export function calculateExpeditionRewards(
   unlockedBiomes: BiomeId[],
   currentBiomeId: BiomeId,
   discoveredResources: ResourceId[],
-  pityCounter: number = 0
+  pityCounter: number = 0,
+  isCompleted: boolean = true,
+  progressPercent: number = 1.0
 ): CalculatedRewards {
   const config = EXPEDITION_TIERS[tier];
   const baseMultiplier = config.resourceMultiplier;
-  const totalMultiplier = baseMultiplier * (1 + bonus);
+
+  // Scale rewards with progression (same scale as food costs)
+  const progressionScale = getResourceScaleMultiplier(unlockedBiomes.length);
+
+  // Completion bonus: +20% if expedition completed fully
+  const completionBonus = isCompleted ? 0.20 : 0;
+
+  // Progress scaling: partial rewards if recalled early
+  const progressMultiplier = isCompleted ? 1.0 : progressPercent;
+
+  const totalMultiplier = baseMultiplier * (1 + bonus + completionBonus) * progressionScale * progressMultiplier;
 
   // Calculate resource rewards based on current biome's primary resources
+  // Base amount: 20-50 per resource, then scaled
   const currentBiome = BIOMES[currentBiomeId];
   const resources: { resourceId: ResourceId; amount: number }[] = currentBiome.primaryResources.map(resourceId => ({
     resourceId,
-    amount: Math.floor((Math.random() * 10 + 5) * totalMultiplier) // 5-15 base, scaled by multiplier, rounded to integer
+    amount: Math.floor((Math.random() * 30 + 20) * totalMultiplier)
   }));
 
-  // Power cell rewards
+  // Power cell rewards - ONLY on completed expeditions
   const powerCells: PowerCellTier[] = [];
-  if (Math.random() < config.powerCellChance) {
+  if (isCompleted && Math.random() < config.powerCellChance) {
     // Random power cell tier (weighted towards lower tiers)
     const rand = Math.random();
     if (rand < 0.7) {
@@ -46,8 +70,8 @@ export function calculateExpeditionRewards(
     }
   }
 
-  // Biome discovery - follows strict progression order
-  // Each biome can only be discovered from specific biomes
+  // Biome discovery - ONLY on completed expeditions
+  // Follows strict progression order
   const BIOME_PROGRESSION: Record<BiomeId, BiomeId | null> = {
     'lush_forest': 'misty_lake',      // From lush_forest, discover misty_lake
     'misty_lake': 'arid_desert',       // From misty_lake, discover arid_desert
@@ -59,18 +83,21 @@ export function calculateExpeditionRewards(
 
   let newBiome: BiomeId | null = null;
 
-  // Pity system: +5% chance per failed expedition (hidden from player)
-  // Caps at +50% bonus (10 failed expeditions)
-  const pityBonus = Math.min(pityCounter * 0.05, 0.50);
-  const effectiveDiscoveryChance = config.biomeDiscoveryChance + pityBonus;
+  // Only check for biome discovery if expedition was completed
+  if (isCompleted) {
+    // Pity system: +5% chance per failed expedition (hidden from player)
+    // Caps at +50% bonus (10 failed expeditions)
+    const pityBonus = Math.min(pityCounter * 0.05, 0.50);
+    const effectiveDiscoveryChance = config.biomeDiscoveryChance + pityBonus;
 
-  if (Math.random() < effectiveDiscoveryChance) {
-    // Get the next biome in progression from current biome
-    const nextBiome = BIOME_PROGRESSION[currentBiomeId];
+    if (Math.random() < effectiveDiscoveryChance) {
+      // Get the next biome in progression from current biome
+      const nextBiome = BIOME_PROGRESSION[currentBiomeId];
 
-    // Only discover if: there's a next biome AND it's not already unlocked
-    if (nextBiome && !unlockedBiomes.includes(nextBiome)) {
-      newBiome = nextBiome;
+      // Only discover if: there's a next biome AND it's not already unlocked
+      if (nextBiome && !unlockedBiomes.includes(nextBiome)) {
+        newBiome = nextBiome;
+      }
     }
   }
 

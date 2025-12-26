@@ -190,48 +190,52 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                 return (
                   <div
                     key={resourceId}
-                    className="flex items-center justify-between p-3 hover:bg-gray-750 transition-colors"
+                    className="p-3 hover:bg-gray-750 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl" data-tooltip={tooltipText}>
-                        {resource?.icon ?? "❓"}
-                      </span>
-                      <span className="font-medium text-white">
-                        {resource?.name ?? "Unknown"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    {/* Top row: Icon, Name, Amount */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl" data-tooltip={tooltipText}>
+                          {resource?.icon ?? "❓"}
+                        </span>
+                        <span className="font-medium text-white">
+                          {resource?.name ?? "Unknown"}
+                        </span>
+                      </div>
                       <span
                         className="text-lg font-bold text-white"
                         data-tooltip={`Exact: ${exactAmount.toLocaleString()}`}
                       >
                         {formatNumber(amount)}
                       </span>
-                      {produced > 0 && (
-                        <span
-                          className="text-green-400"
-                          data-tooltip={`Exact: +${produced.toFixed(1)}/min`}
-                        >
-                          +{formatNumber(produced)}/min
-                        </span>
-                      )}
-                      {consumed > 0 && (
-                        <span
-                          className="text-orange-400"
-                          data-tooltip={`Exact: -${consumed.toFixed(1)}/min`}
-                        >
-                          -{formatNumber(consumed)}/min
-                        </span>
-                      )}
-                      {(produced > 0 || consumed > 0) && (
+                    </div>
+                    {/* Bottom row: Production rates (only if there's production/consumption) */}
+                    {(produced > 0 || consumed > 0) && (
+                      <div className="flex items-center justify-end gap-2 mt-1 text-xs">
+                        {produced > 0 && (
+                          <span
+                            className="text-green-400"
+                            data-tooltip={`Exact: +${produced.toFixed(1)}/min`}
+                          >
+                            +{formatNumber(produced)}/min
+                          </span>
+                        )}
+                        {consumed > 0 && (
+                          <span
+                            className="text-orange-400"
+                            data-tooltip={`Exact: -${consumed.toFixed(1)}/min`}
+                          >
+                            -{formatNumber(consumed)}/min
+                          </span>
+                        )}
                         <span
                           className={net > 0 ? 'text-green-500 font-semibold' : net < 0 ? 'text-red-500 font-semibold' : 'text-gray-400'}
                           data-tooltip={`Exact net: ${net > 0 ? '+' : ''}${net.toFixed(1)}/min`}
                         >
                           = {net > 0 ? '+' : ''}{formatNumber(Math.abs(net))}/min
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

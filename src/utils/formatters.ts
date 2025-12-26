@@ -1,12 +1,33 @@
 export function formatNumber(num: number): string {
-  if (num < 1000) {
-    return Math.floor(num).toString();
-  } else if (num < 1000000) {
-    return (num / 1000).toFixed(1) + 'K';
-  } else if (num < 1000000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+  const absNum = Math.abs(num);
+  const sign = num < 0 ? '-' : '';
+
+  if (absNum < 1000) {
+    return sign + Math.floor(absNum).toString();
+  } else if (absNum < 1_000_000) {
+    // Thousands (K)
+    const val = absNum / 1_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'K';
+  } else if (absNum < 1_000_000_000) {
+    // Millions (M)
+    const val = absNum / 1_000_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'M';
+  } else if (absNum < 1_000_000_000_000) {
+    // Billions (B)
+    const val = absNum / 1_000_000_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'B';
+  } else if (absNum < 1_000_000_000_000_000) {
+    // Trillions (T)
+    const val = absNum / 1_000_000_000_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'T';
+  } else if (absNum < 1_000_000_000_000_000_000) {
+    // Quadrillions (Qa)
+    const val = absNum / 1_000_000_000_000_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'Qa';
   } else {
-    return (num / 1000000000).toFixed(1) + 'B';
+    // Quintillions (Qi)
+    const val = absNum / 1_000_000_000_000_000_000;
+    return sign + (val >= 100 ? val.toFixed(0) : val.toFixed(1)) + 'Qi';
   }
 }
 
