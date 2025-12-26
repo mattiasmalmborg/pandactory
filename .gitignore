@@ -71,3 +71,7 @@ ASSETS.md
 TESTING.md
 TO-DO.txt
 UI-Resources/
+
+# Claude Code files (AI assistant context)
+.claude/
+CLAUDE.md
