@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useGame } from "../../game/state/GameContext";
 import { BIOMES } from "../../game/config/biomes";
 import { RESOURCES } from "../../game/config/resources";
@@ -100,61 +100,68 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
   // The popup will activate the biome when closed (handled by handleCloseIntro)
   // We still render the main view behind it so there's no intermediate screen
 
-  // Calculate production and consumption rates
-  const { production, consumption } = calculateBiomeProductionRates(biome);
+  // Calculate production and consumption rates (memoized)
+  const { production, consumption, foodProduction } = useMemo(() => {
+    const { production, consumption } = calculateBiomeProductionRates(biome);
 
-  // Calculate food production rates
-  const foodProduction: Record<string, number> = {};
-  biome.automations.forEach(automation => {
-    const config = AUTOMATIONS[automation.type];
-    if (!config || !config.producesFood) return;
+    // Calculate food production rates
+    const foodProd: Record<string, number> = {};
+    biome.automations.forEach(automation => {
+      const config = AUTOMATIONS[automation.type];
+      if (!config || !config.producesFood) return;
 
-    const rate = calculateProductionRate(config.baseProductionRate, automation.level);
-    const multiplier = automation.powerCell?.bonus ? (1 + automation.powerCell.bonus) : 1;
-    const effectiveRate = rate * multiplier;
+      const rate = calculateProductionRate(config.baseProductionRate, automation.level);
+      const multiplier = automation.powerCell?.bonus ? (1 + automation.powerCell.bonus) : 1;
+      const effectiveRate = rate * multiplier;
 
-    config.producesFood.forEach(foodProduce => {
-      const amount = foodProduce.amount * effectiveRate;
-      foodProduction[foodProduce.foodId] = (foodProduction[foodProduce.foodId] || 0) + amount;
+      config.producesFood.forEach(foodProduce => {
+        const amount = foodProduce.amount * effectiveRate;
+        foodProd[foodProduce.foodId] = (foodProd[foodProduce.foodId] || 0) + amount;
+      });
     });
-  });
 
-  // Collect biome resources (exclude food items - they come from state.food)
-  // Only show resources with at least 1 whole unit
-  const allResources = (Object.keys(biome.resources) as ResourceId[])
-    .filter(
-      (resourceId) =>
-        Math.floor(biome.resources[resourceId] || 0) >= 1 &&
-        RESOURCES[resourceId]?.category !== 'food' // Skip food items from biome.resources
-    )
-    .map((resourceId) => ({
-      resourceId: resourceId,
-      amount: biome.resources[resourceId] || 0,
-      produced: production[resourceId] || 0,
-      consumed: consumption[resourceId] || 0,
-      isFood: false,
-    }));
+    return { production, consumption, foodProduction: foodProd };
+  }, [biome]);
 
-  // Add food items from state.food that are produced in THIS biome
-  // Only show food if:
-  // 1. It's a primary resource in this biome (like berries in lush_forest), OR
-  // 2. It's being actively produced in this biome (production rate > 0)
-  const allFoodIds = Object.keys(state.food) as FoodId[];
-  const foodItems = allFoodIds
-    .filter(foodId => {
-      const isProducedHere = (foodProduction[foodId] || 0) > 0;
-      const isPrimaryHere = biomeConfig.primaryResources.includes(foodId as any);
-      return isProducedHere || isPrimaryHere;
-    })
-    .map(foodId => ({
-      resourceId: foodId as any as ResourceId,
-      amount: state.food[foodId] || 0,
-      produced: foodProduction[foodId] || 0,
-      consumed: 0,
-      isFood: false, // Don't mark as food in display - just show as "Berries" not "Berries (food)"
-    }));
+  // Collect biome resources and food (memoized)
+  const allResourcesAndFood = useMemo(() => {
+    // Collect biome resources (exclude food items - they come from state.food)
+    // Only show resources with at least 1 whole unit
+    const allResources = (Object.keys(biome.resources) as ResourceId[])
+      .filter(
+        (resourceId) =>
+          Math.floor(biome.resources[resourceId] || 0) >= 1 &&
+          RESOURCES[resourceId]?.category !== 'food' // Skip food items from biome.resources
+      )
+      .map((resourceId) => ({
+        resourceId: resourceId,
+        amount: biome.resources[resourceId] || 0,
+        produced: production[resourceId] || 0,
+        consumed: consumption[resourceId] || 0,
+        isFood: false,
+      }));
 
-  const allResourcesAndFood = [...allResources, ...foodItems];
+    // Add food items from state.food that are produced in THIS biome
+    // Only show food if:
+    // 1. It's a primary resource in this biome (like berries in lush_forest), OR
+    // 2. It's being actively produced in this biome (production rate > 0)
+    const allFoodIds = Object.keys(state.food) as FoodId[];
+    const foodItems = allFoodIds
+      .filter(foodId => {
+        const isProducedHere = (foodProduction[foodId] || 0) > 0;
+        const isPrimaryHere = biomeConfig.primaryResources.includes(foodId as unknown as ResourceId);
+        return isProducedHere || isPrimaryHere;
+      })
+      .map(foodId => ({
+        resourceId: foodId as unknown as ResourceId,
+        amount: state.food[foodId] || 0,
+        produced: foodProduction[foodId] || 0,
+        consumed: 0,
+        isFood: false,
+      }));
+
+    return [...allResources, ...foodItems];
+  }, [biome.resources, state.food, production, consumption, foodProduction, biomeConfig.primaryResources]);
 
   return (
     <div ref={swipeRef} className="pb-24">

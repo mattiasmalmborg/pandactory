@@ -42,10 +42,10 @@ export function getResourceSourceDescription(
 
   if (producers.length === 1) {
     const biomeName = BIOMES[producers[0]].name;
-    return `Från ${biomeName}`;
+    return `From ${biomeName}`;
   }
 
   // Multiple biomes
   const biomeNames = producers.map(id => BIOMES[id].name);
-  return `Från ${biomeNames.join(', ')}`;
+  return `From ${biomeNames.join(', ')}`;
 }

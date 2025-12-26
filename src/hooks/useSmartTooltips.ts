@@ -57,11 +57,13 @@ export function useSmartTooltips() {
       if (!tooltipElement) {
         tooltipElement = document.createElement('div');
         tooltipElement.className = 'tooltip-container';
-        tooltipElement.innerHTML = `<div class="tooltip-box"></div>`;
+        const tooltipBox = document.createElement('div');
+        tooltipBox.className = 'tooltip-box';
+        tooltipElement.appendChild(tooltipBox);
         document.body.appendChild(tooltipElement);
       }
 
-      const box = tooltipElement.querySelector('.tooltip-box') as HTMLDivElement;
+      const box = tooltipElement.firstElementChild as HTMLDivElement;
       box.textContent = text;
 
       // Get element position

@@ -86,18 +86,10 @@ export const INITIAL_GAME_STATE: GameState = {
   },
   lastTick: Date.now(),
   lastSave: Date.now(),
-  version: '1.2.0',
+  version: '1.3.0',
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
-  // Debug logging for food changes
-  if (action.type !== 'TICK' && action.type !== 'SAVE_GAME') {
-    console.log('🔧 Action dispatched:', action.type, {
-      currentBerries: state.food?.berries,
-      action: action
-    });
-  }
-
   switch (action.type) {
     case 'GATHER_RESOURCE': {
       const { biomeId, resourceId, amount } = action.payload;

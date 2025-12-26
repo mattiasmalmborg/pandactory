@@ -29,8 +29,8 @@ function getInitialView(): ViewType {
     if (saved && ['dashboard', 'biome', 'expedition', 'statistics', 'skills'].includes(saved)) {
       return saved as ViewType;
     }
-  } catch (e) {
-    console.error('Failed to load current view:', e);
+  } catch {
+    // Failed to load - use default
   }
   return 'dashboard'; // Default to dashboard (home page)
 }
@@ -57,7 +57,6 @@ function GameContent() {
     currentView,
     onViewChange: setCurrentView,
     unlockedBiomes: state.unlockedBiomes,
-    currentBiome: state.player.currentBiome,
     onBiomeChange: handleBiomeChange,
   });
 

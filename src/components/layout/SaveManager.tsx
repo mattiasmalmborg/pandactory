@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
+import { BIOMES } from '../../game/config/biomes';
+import { BiomeId } from '../../types/game.types';
 
 export function SaveManager() {
   const { state, dispatch } = useGame();
@@ -19,8 +21,7 @@ export function SaveManager() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error('Failed to export save:', e);
+    } catch {
       alert('Failed to export save file. Please try again.');
     }
   };
@@ -30,8 +31,7 @@ export function SaveManager() {
       const saveData = JSON.stringify(state);
       await navigator.clipboard.writeText(saveData);
       alert('Save data copied to clipboard!');
-    } catch (e) {
-      console.error('Failed to copy to clipboard:', e);
+    } catch {
       alert('Failed to copy to clipboard. Please try the download option instead.');
     }
   };
@@ -54,10 +54,10 @@ export function SaveManager() {
         return;
       }
 
-      // Validate biomes structure
-      const validBiomes = ['lush_forest', 'misty_lake', 'arid_desert', 'frozen_tundra', 'volcanic_isle', 'crystal_caverns'];
+      // Validate biomes structure using game config
+      const validBiomes = Object.keys(BIOMES) as BiomeId[];
       for (const biomeId of Object.keys(parsedData.biomes)) {
-        if (!validBiomes.includes(biomeId)) {
+        if (!validBiomes.includes(biomeId as BiomeId)) {
           setImportError(`Invalid biome "${biomeId}" in save file.`);
           return;
         }
@@ -95,8 +95,7 @@ export function SaveManager() {
 
       alert('Save loaded successfully! Reloading page...');
       window.location.reload();
-    } catch (e) {
-      console.error('Failed to import save:', e);
+    } catch {
       setImportError('Failed to parse save data. Please check the format and try again.');
     }
   };

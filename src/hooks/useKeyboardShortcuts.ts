@@ -7,7 +7,6 @@ interface UseKeyboardShortcutsProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   unlockedBiomes: BiomeId[];
-  currentBiome: BiomeId;
   onBiomeChange: (biomeId: BiomeId) => void;
 }
 
@@ -24,7 +23,6 @@ export function useKeyboardShortcuts({
   currentView,
   onViewChange,
   unlockedBiomes,
-  currentBiome,
   onBiomeChange,
 }: UseKeyboardShortcutsProps) {
   useEffect(() => {
@@ -70,5 +68,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentView, onViewChange, unlockedBiomes, currentBiome, onBiomeChange]);
+  }, [currentView, onViewChange, unlockedBiomes, onBiomeChange]);
 }

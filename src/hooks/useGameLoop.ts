@@ -176,13 +176,13 @@ export function useGameLoop() {
         // Save to localStorage with quota handling
         try {
           localStorage.setItem('pandactory-save', JSON.stringify(stateRef.current));
-        } catch (e: any) {
-          if (e.name === 'QuotaExceededError') {
-            console.error('💾 LocalStorage full! Attempting cleanup...');
+        } catch (e: unknown) {
+          const error = e as { name?: string };
+          if (error.name === 'QuotaExceededError') {
             // Try to clean up old saves or non-essential data
             try {
               // Remove any non-essential keys
-              const keysToRemove = [];
+              const keysToRemove: string[] = [];
               for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key !== 'pandactory-save' && key !== 'pandactory-current-view') {
@@ -193,13 +193,9 @@ export function useGameLoop() {
 
               // Try saving again
               localStorage.setItem('pandactory-save', JSON.stringify(stateRef.current));
-              console.log('✅ Cleaned up localStorage and saved successfully');
-            } catch (retryError) {
-              console.error('❌ Still failed to save after cleanup:', retryError);
+            } catch {
               alert('Warning: Unable to save game due to storage limits. Consider exporting your save file.');
             }
-          } else {
-            console.error('Failed to save game:', e);
           }
         }
         dispatchRef.current({ type: 'SAVE_GAME' });
@@ -215,9 +211,8 @@ export function useGameLoop() {
     const handleBeforeUnload = () => {
       try {
         localStorage.setItem('pandactory-save', JSON.stringify(state));
-        console.log('💾 Saved on page unload');
-      } catch (e) {
-        console.error('Failed to save on unload:', e);
+      } catch {
+        // Failed to save on unload - ignore
       }
     };
 
