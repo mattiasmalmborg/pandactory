@@ -31,7 +31,9 @@
       "Bash(cmd /c \"dir c:\\\\dev\\\\Pandactory\\\\nul*\")",
       "Bash(copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")",
       "Bash(cmd /c copy \"c:\\\\dev\\\\Pandactory\\\\README.md\" \"c:\\\\dev\\\\Pandactory\\\\DEV-README.md\")",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

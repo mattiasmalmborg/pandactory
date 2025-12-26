@@ -1,5 +1,5 @@
 // Pandactory Service Worker
-const CACHE_NAME = 'pandactory-v1';
+const CACHE_NAME = 'pandactory-v1.1';
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
@@ -7,7 +7,7 @@ const PRECACHE_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/assets/ui/logo.png',
-  '/assets/backgrounds/bg_dashboard.png',
+  '/assets/backgrounds/bg_dashboard.jpg',
   '/assets/backgrounds/bg_lush_forest.jpg',
   '/assets/backgrounds/bg_misty_lake.jpg',
   '/assets/backgrounds/bg_arid_desert.jpg',
