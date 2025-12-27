@@ -86,7 +86,7 @@ export const INITIAL_GAME_STATE: GameState = {
   },
   lastTick: Date.now(),
   lastSave: Date.now(),
-  version: '1.3.0',
+  version: '1.3.2',
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {

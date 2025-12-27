@@ -3,7 +3,7 @@ import { SKILL_TREE, canUnlockSkill } from '../../game/config/skillTree';
 import { SkillId, SkillNode } from '../../types/game.types';
 import { useState } from 'react';
 import { BackgroundWrapper } from '../layout/BackgroundWrapper';
-import { getScreenBackgroundPath, getFallbackGradient } from '../../config/assets';
+import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
 // Group skills by branch
 const BRANCHES = {
@@ -251,8 +251,8 @@ export function SkillTree() {
 
   return (
     <BackgroundWrapper
-      backgroundPath={getScreenBackgroundPath('skillTree')}
-      fallbackGradient={getFallbackGradient('skillTree')}
+      backgroundPath={getBiomeBackgroundPath('skills_stats')}
+      fallbackGradient={getFallbackGradient('skills_stats')}
       overlayOpacity={50}
     >
       {skillTreeContent}

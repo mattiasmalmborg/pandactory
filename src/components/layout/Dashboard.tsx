@@ -86,9 +86,9 @@ export function Dashboard({ onNavigateToBiome: _onNavigateToBiome }: DashboardPr
 
         {/* Game Description - Changes based on crash number */}
         <div className="mt-1 max-w-md mx-auto bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-3 shadow-lg relative">
-          {/* Prestige Counter - positioned on top-right corner */}
+          {/* Prestige Counter - positioned higher on top-right corner */}
           {hasPrestiged && (
-            <div className="absolute -top-3 -right-2 bg-purple-900 backdrop-blur-sm border border-purple-500 px-3 py-0.5 rounded-full shadow-lg">
+            <div className="absolute -top-5 -right-2 bg-purple-900 backdrop-blur-sm border border-purple-500 px-3 py-0.5 rounded-full shadow-lg">
               <span className="text-purple-300 text-xs font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 Crash #{state.prestige.totalPrestiges + 1}
               </span>
@@ -105,14 +105,6 @@ export function Dashboard({ onNavigateToBiome: _onNavigateToBiome }: DashboardPr
 
       {/* Spaceship Goal */}
       <SpaceshipGoal />
-
-      {/* Expedition Status */}
-      {state.panda.expedition !== null && (
-        <div className="bg-panda-orange bg-opacity-20 border border-panda-orange p-4 rounded-lg">
-          <div className="font-semibold text-panda-orange">🚀 Expedition In Progress</div>
-          <div className="text-sm text-gray-300">Dr. Redd Pawston III is exploring...</div>
-        </div>
-      )}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { formatNumber } from '../../utils/formatters';
 import { calculateProductionRate } from '../../utils/calculations';
 import { ResourceId, FoodId } from '../../types/game.types';
 import { SaveManager } from './SaveManager';
+import { BackgroundWrapper } from './BackgroundWrapper';
+import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
 export function Statistics() {
   const { state } = useGame();
@@ -169,7 +171,7 @@ export function Statistics() {
     unlockedSkills: state.prestige.unlockedSkills.length,
   };
 
-  return (
+  const statisticsContent = (
     <div className="p-4 space-y-4 pb-24">
       {/* Header */}
       <div className="text-center">
@@ -407,15 +409,15 @@ export function Statistics() {
         </div>
       </div>
 
-      {/* Prestige Stats (only show if player has prestiged) */}
+      {/* Crashes Stats (only show if player has crashed) */}
       {prestigeStats.totalPrestiges > 0 && (
         <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-lg border border-purple-500/50 p-4 space-y-3">
           <h2 className="text-lg font-semibold text-purple-200 flex items-center gap-2">
-            ✨ Prestige
+            ✨ Crashes
           </h2>
           <div className="grid grid-cols-2 gap-3">
             <StatCard
-              label="Total Prestiges"
+              label="Total Crashes"
               value={prestigeStats.totalPrestiges}
               icon="🔄"
             />
@@ -449,6 +451,16 @@ export function Statistics() {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <BackgroundWrapper
+      backgroundPath={getBiomeBackgroundPath('skills_stats')}
+      fallbackGradient={getFallbackGradient('skills_stats')}
+      overlayOpacity={50}
+    >
+      {statisticsContent}
+    </BackgroundWrapper>
   );
 }
 

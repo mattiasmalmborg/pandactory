@@ -4,6 +4,7 @@ import { EXPEDITION_TIERS, getExpeditionProgress, isExpeditionComplete } from '.
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
 import { ResourceId } from '../../types/game.types';
 import { ExpeditionRewards } from './ExpeditionRewards';
+import { BIOMES } from '../../game/config/biomes';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -65,6 +66,10 @@ export function ExpeditionTimer() {
   const expedition = state.panda.expedition;
   const tierConfig = EXPEDITION_TIERS[expedition.tier];
   const isCompleted = isExpeditionComplete(expedition);
+
+  // Get biome config for colors
+  const biomeConfig = BIOMES[state.player.currentBiome];
+  const biomeAccentColor = biomeConfig.accentColor;
 
   // Don't show the timer modal when expedition is complete
   // Let ExpeditionLauncher handle the completion UI
@@ -129,13 +134,19 @@ export function ExpeditionTimer() {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
       <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
-        <div className="bg-gradient-to-br from-blue-900/95 to-blue-800/95 rounded-xl border-2 border-blue-500 p-6 max-w-md w-full shadow-2xl">
+        <div
+          className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 max-w-md w-full shadow-2xl"
+          style={{
+            borderWidth: '2px',
+            borderColor: biomeAccentColor
+          }}
+        >
         {/* Header */}
         <div className="text-center mb-4">
           <h2 className="text-2xl font-bold text-white mb-1">
-            Expedition In Progress
+            {tierConfig.name} in {biomeConfig.name}
           </h2>
-          <p className="text-blue-200 text-sm">{tierConfig.name}</p>
+          <p className="text-gray-200 text-sm">Expedition In Progress</p>
         </div>
 
         {/* Panda Image */}
@@ -152,21 +163,30 @@ export function ExpeditionTimer() {
 
         {/* Progress Bar */}
         <div className="mb-4">
-          <div className="flex justify-between text-sm text-blue-200 mb-2">
+          <div className="flex justify-between text-sm text-gray-200 mb-2">
             <span>Progress</span>
             <span>{progressPercent}%</span>
           </div>
-          <div className="w-full bg-gray-900 rounded-full h-4 border border-blue-700">
+          <div
+            className="w-full bg-gray-900 rounded-full h-4"
+            style={{ borderWidth: '1px', borderColor: `${biomeAccentColor}99` }}
+          >
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-400 h-full rounded-full transition-all duration-1000"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full rounded-full transition-all duration-1000"
+              style={{
+                width: `${progressPercent}%`,
+                background: `linear-gradient(to right, ${biomeAccentColor}, ${biomeAccentColor}CC)`
+              }}
             />
           </div>
         </div>
 
         {/* Time Remaining */}
-        <div className="bg-black/30 rounded-lg p-4 border border-blue-700/50 text-center mb-4">
-          <div className="text-sm text-blue-300 mb-1">Time Remaining</div>
+        <div
+          className="bg-black/30 rounded-lg p-4 text-center mb-4"
+          style={{ borderWidth: '1px', borderColor: `${biomeAccentColor}80` }}
+        >
+          <div className="text-sm text-gray-300 mb-1">Time Remaining</div>
           <div className="text-3xl font-bold text-white font-mono">
             {formatTime(timeRemaining)}
           </div>
@@ -174,10 +194,10 @@ export function ExpeditionTimer() {
 
         {/* Completion benefits info */}
         <div className="bg-black/30 rounded-lg p-3 mb-4 text-sm">
-          <div className="text-blue-100 mb-2 font-semibold">
+          <div className="text-gray-100 mb-2 font-semibold">
             Completing the expedition gives:
           </div>
-          <ul className="text-blue-200 space-y-1 text-xs">
+          <ul className="text-gray-200 space-y-1 text-xs">
             <li>✓ +20% bonus to all resources</li>
             <li>✓ Chance to discover new biomes</li>
             <li>✓ Chance to find power cells</li>
@@ -191,7 +211,7 @@ export function ExpeditionTimer() {
         >
           Recall Early ({progressPercent}% rewards)
         </button>
-        <p className="text-center text-xs text-blue-300/70 mt-2">
+        <p className="text-center text-xs text-gray-300/70 mt-2">
           Recalling early forfeits spent food, completion bonus, biome discovery, and power cells
         </p>
         </div>

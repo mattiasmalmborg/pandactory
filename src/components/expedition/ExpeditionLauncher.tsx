@@ -213,17 +213,9 @@ export function ExpeditionLauncher() {
     }
 
     // Expedition in progress - ExpeditionTimer handles the popup UI
-    // Just show a simple message here
     return (
       <div ref={swipeRef} className="pb-24">
         <BiomeNav />
-        <div className="p-4">
-          <div className="bg-amber-900/50 rounded-lg border border-amber-700/50 p-4 text-center">
-            <p className="text-amber-200">
-              Dr. Redd Pawston III is on an expedition...
-            </p>
-          </div>
-        </div>
       </div>
     );
   }
