@@ -66,6 +66,36 @@ export type SkillId =
   | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4'
   | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4';
 
+export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'secret';
+
+export type AchievementId =
+  // Gathering achievements (10)
+  | 'first_gather' | 'gather_1k' | 'gather_100k' | 'gather_1m' | 'gather_10m' | 'gather_100m'
+  | 'material_master' | 'culinary_explorer' | 'full_catalog' | 'self_sufficient'
+  // Automation achievements (12)
+  | 'first_automation' | 'automation_5' | 'automation_10' | 'automation_25' | 'automation_50' | 'all_automations'
+  | 'first_production' | 'first_upgrade' | 'single_upgrade_50' | 'single_upgrade_100' | 'single_upgrade_200'
+  | 'biome_specialist' | 'all_automations_100'
+  // Power Cell achievements (7)
+  | 'power_cell_installed' | 'green_energy_5' | 'blue_power' | 'orange_surge'
+  | 'power_cells_10' | 'power_cells_20' | 'maximum_power'
+  // Expedition achievements (10)
+  | 'first_expedition' | 'expedition_10' | 'expedition_50' | 'expedition_100' | 'expedition_500'
+  | 'swift_forage_25' | 'quick_scout_25' | 'standard_expedition_25' | 'deep_exploration_10' | 'epic_journey_5'
+  // Biome achievements (7)
+  | 'world_domination'
+  | 'forest_resources' | 'lake_resources' | 'desert_resources' | 'tundra_resources' | 'volcano_resources' | 'caverns_resources'
+  // Crash/Prestige achievements (8) - all hidden until first prestige
+  | 'first_crash' | 'crash_3' | 'crash_5' | 'crash_10' | 'crash_25'
+  | 'cosmic_bamboo_10' | 'cosmic_bamboo_50' | 'cosmic_bamboo_100'
+  // Skill achievements (6)
+  | 'first_skill' | 'production_branch' | 'economy_branch' | 'expedition_branch' | 'power_cells_branch' | 'all_skills'
+  // Milestone achievements (3)
+  | 'spaceship_started' | 'spaceship_halfway' | 'spaceship_complete'
+  // Secret/Fun achievements (8)
+  | 'night_owl' | 'clicker_champion' | 'patient_panda' | 'speed_demon' | 'hoarder_deluxe'
+  | 'bamboo_addict' | 'perfectionist' | 'completionist';
+
 export interface ResourceCost {
   resourceId: ResourceId;
   amount: number;
@@ -95,6 +125,25 @@ export interface GameState {
     cosmicBambooShards: number;
     totalPrestiges: number;
     unlockedSkills: SkillId[];
+  };
+  // Achievement tracking
+  achievements: {
+    unlocked: AchievementId[];
+    pending: AchievementId[]; // Queue for toast notifications
+  };
+  // Lifetime stats for achievements
+  lifetimeStats: {
+    totalResourcesGathered: number;
+    totalAutomationsBuilt: number;
+    totalUpgradesPurchased: number;
+    totalExpeditionsCompleted: number;
+    expeditionsByTier: Record<ExpeditionTier, number>;
+  };
+  // Session stats for secret achievements (reset on page load)
+  sessionStats?: {
+    sessionStartTime: number; // When this session started
+    clickCount: number; // Clicks this session
+    lastClickTime: number; // Time of last click (for Patient Panda)
   };
   lastTick: number;
   lastSave: number;
@@ -201,6 +250,10 @@ export type GameAction =
   | { type: 'ACKNOWLEDGE_RESOURCE_DISCOVERY'; payload: { resourceId: ResourceId } }
   | { type: 'QUEUE_FOOD_DISCOVERY'; payload: { foodId: FoodId } }
   | { type: 'ACKNOWLEDGE_FOOD_DISCOVERY'; payload: { foodId: FoodId } }
+  | { type: 'UNLOCK_ACHIEVEMENT'; payload: { achievementId: AchievementId } }
+  | { type: 'ACKNOWLEDGE_ACHIEVEMENT'; payload: { achievementId: AchievementId } }
+  | { type: 'TRACK_CLICK' }
+  | { type: 'INIT_SESSION' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: { gameState: GameState } }
   | { type: 'RESET_GAME' };

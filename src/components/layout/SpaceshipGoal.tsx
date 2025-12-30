@@ -124,9 +124,9 @@ export function SpaceshipGoal() {
             {completedParts}/{totalParts} parts ({progressPercent}%)
           </span>
         </div>
-        <div className="bg-gray-700 rounded-full h-2">
+        <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
           <div
-            className={`h-2 rounded-full transition-all ${
+            className={`h-2 rounded-full progress-bar-smooth ${
               isComplete ? 'bg-green-500' : 'bg-purple-500'
             }`}
             style={{ width: `${progressPercent}%` }}
@@ -178,9 +178,9 @@ export function SpaceshipGoal() {
                 </span>
               </div>
               {!isPartComplete && currentAmount > 0 && (
-                <div className="bg-gray-700 rounded-full h-1">
+                <div className="bg-gray-700 rounded-full h-1 overflow-hidden">
                   <div
-                    className="bg-purple-500 h-1 rounded-full transition-all"
+                    className="bg-purple-500 h-1 rounded-full progress-bar-smooth"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -204,7 +204,7 @@ export function SpaceshipGoal() {
 
           <button
             onClick={() => setShowPrestigeDialog(true)}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 px-4 rounded-lg font-bold text-lg transition-colors shadow-lg flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 px-4 rounded-lg font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 animate-gentle-pulse hover-lift press-scale"
           >
             <span>🚀 Launch Spaceship</span>
             <span className="text-sm opacity-90">(+{shardsToEarn} 🎋)</span>

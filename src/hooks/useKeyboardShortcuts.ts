@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BiomeId } from '../types/game.types';
 
-type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills';
+type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
 
 interface UseKeyboardShortcutsProps {
   currentView: ViewType;

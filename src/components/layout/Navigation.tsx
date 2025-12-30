@@ -2,8 +2,8 @@ import { useGame } from '../../game/state/GameContext';
 import { isExpeditionComplete } from '../../game/config/expeditions';
 
 interface NavigationProps {
-  currentView: 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills';
-  onViewChange: (view: 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills') => void;
+  currentView: 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
+  onViewChange: (view: 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements') => void;
 }
 
 export function Navigation({ currentView, onViewChange }: NavigationProps) {
@@ -17,11 +17,15 @@ export function Navigation({ currentView, onViewChange }: NavigationProps) {
   // Show notification on skills if player has unspent shards
   const hasUnspentShards = state.prestige.cosmicBambooShards > 0;
 
+  // Show notification on achievements if there are pending achievements
+  const hasPendingAchievements = (state.achievements?.pending?.length || 0) > 0;
+
   const navItems = [
     { id: 'dashboard' as const, label: 'Home', icon: '🏠', showNotification: false },
     { id: 'biome' as const, label: 'Biome', icon: '🌲', showNotification: false },
     { id: 'expedition' as const, label: 'Explore', icon: '🗺️', showNotification: expeditionComplete },
     { id: 'skills' as const, label: 'Skills', icon: '✨', showNotification: hasUnspentShards },
+    { id: 'achievements' as const, label: 'Awards', icon: '🏆', showNotification: hasPendingAchievements },
     { id: 'statistics' as const, label: 'Stats', icon: '📊', showNotification: false },
   ];
 

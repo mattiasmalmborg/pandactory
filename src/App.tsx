@@ -3,10 +3,13 @@ import { GameProvider, getLastOfflineProgressResult, clearOfflineProgressResult 
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSmartTooltips } from './hooks/useSmartTooltips';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAchievements } from './hooks/useAchievements';
 import { Dashboard } from './components/layout/Dashboard';
 import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
 import { SkillTree } from './components/prestige/SkillTree';
+import { Achievements } from './components/achievements/Achievements';
+import { AchievementToast } from './components/achievements/AchievementToast';
 import { Navigation } from './components/layout/Navigation';
 import { ExpeditionLauncher } from './components/expedition/ExpeditionLauncher';
 import { ExpeditionTimer } from './components/expedition/ExpeditionTimer';
@@ -20,13 +23,13 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { BiomeId } from './types/game.types';
 import { OfflineProgressResult } from './utils/offlineProgress';
 
-type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills';
+type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
 
 // Load saved view from localStorage, default to 'dashboard'
 function getInitialView(): ViewType {
   try {
     const saved = localStorage.getItem('pandactory-current-view');
-    if (saved && ['dashboard', 'biome', 'expedition', 'statistics', 'skills'].includes(saved)) {
+    if (saved && ['dashboard', 'biome', 'expedition', 'statistics', 'skills', 'achievements'].includes(saved)) {
       return saved as ViewType;
     }
   } catch {
@@ -47,6 +50,9 @@ function GameContent() {
   // Initialize smart tooltips
   useSmartTooltips();
 
+  // Check for achievements
+  useAchievements();
+
   // Handle biome change
   const handleBiomeChange = (biomeId: BiomeId) => {
     dispatch({ type: 'SWITCH_BIOME', payload: { biomeId } });
@@ -59,6 +65,20 @@ function GameContent() {
     unlockedBiomes: state.unlockedBiomes,
     onBiomeChange: handleBiomeChange,
   });
+
+  // Initialize session on mount (for secret achievements)
+  useEffect(() => {
+    dispatch({ type: 'INIT_SESSION' });
+  }, [dispatch]);
+
+  // Track clicks globally (for Clicker Champion achievement)
+  useEffect(() => {
+    const handleClick = () => {
+      dispatch({ type: 'TRACK_CLICK' });
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [dispatch]);
 
   // Show loading spinner for initial render and check for offline progress
   useEffect(() => {
@@ -146,6 +166,7 @@ function GameContent() {
               {currentView === 'expedition' && <ExpeditionLauncher />}
               {currentView === 'statistics' && <Statistics />}
               {currentView === 'skills' && <SkillTree />}
+              {currentView === 'achievements' && <Achievements />}
             </div>
           </div>
         </div>
@@ -153,6 +174,9 @@ function GameContent() {
 
       {/* Bottom Navigation - fixed at bottom */}
       <Navigation currentView={currentView} onViewChange={setCurrentView} />
+
+      {/* Achievement Toast Notifications */}
+      <AchievementToast />
     </div>
   );
 }

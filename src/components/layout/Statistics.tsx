@@ -8,12 +8,27 @@ import { ResourceId, FoodId } from '../../types/game.types';
 import { SaveManager } from './SaveManager';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
+import { calculateBiomeProductionRates } from '../../utils/allocation';
+import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
+import { getMasteryBonus } from '../../game/config/achievements';
 
 export function Statistics() {
   const { state } = useGame();
 
   // Calculate all resources and production rates across all biomes
   const allResources: Partial<Record<ResourceId, { amount: number; productionRate: number; isFood: boolean }>> = {};
+
+  // Context for production calculations
+  const productionContext = {
+    unlockedSkills: state.prestige.unlockedSkills,
+    unlockedAchievements: state.achievements?.unlocked || [],
+    allBiomes: state.biomes,
+  };
+
+  // Get skill and mastery bonuses for food production
+  const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
+  const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
+  const totalInstalledCells = countInstalledPowerCells(state.biomes);
 
   state.unlockedBiomes.forEach((biomeId) => {
     const biome = state.biomes[biomeId];
@@ -30,34 +45,46 @@ export function Statistics() {
       allResources[rid]!.amount += amount;
     });
 
-    // Calculate production rates
+    // Calculate production rates using the shared calculation function
+    const { production } = calculateBiomeProductionRates(biome, productionContext);
+
+    // Add production rates to allResources
+    Object.entries(production).forEach(([resourceId, rate]) => {
+      const rid = resourceId as ResourceId;
+      if (!allResources[rid]) {
+        allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
+      }
+      allResources[rid]!.productionRate += rate;
+    });
+
+    // Calculate food production rates with all bonuses
     biome.automations.forEach((automation) => {
       const config = AUTOMATIONS[automation.type];
-      if (!config) return;
+      if (!config || !config.producesFood || automation.paused) return;
 
-      let rate = calculateProductionRate(config.baseProductionRate, automation.level);
-      if (automation.powerCell?.bonus) {
-        rate *= (1 + automation.powerCell.bonus);
-      }
+      // Calculate effective power cell bonus with skill bonuses
+      const basePowerCellBonus = automation.powerCell?.bonus || 0;
+      const effectivePowerCellBonus = getEffectivePowerCellBonus(
+        basePowerCellBonus,
+        totalInstalledCells,
+        state.prestige.unlockedSkills
+      );
 
-      config.produces.forEach((produce) => {
-        const rid = produce.resourceId;
-        if (!allResources[rid]) {
-          allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
+      // Use same production rate calculation as for resources (with all bonuses)
+      const rate = calculateProductionRate(
+        config.baseProductionRate,
+        automation.level,
+        productionSpeedBonus + masteryBonus.productionBonus,
+        effectivePowerCellBonus
+      );
+
+      config.producesFood.forEach((foodProduce) => {
+        const fid = foodProduce.foodId as unknown as ResourceId;
+        if (!allResources[fid]) {
+          allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
         }
-        allResources[rid]!.productionRate += produce.amount * rate;
+        allResources[fid]!.productionRate += foodProduce.amount * rate;
       });
-
-      // Calculate food production rates
-      if (config.producesFood) {
-        config.producesFood.forEach((foodProduce) => {
-          const fid = foodProduce.foodId as unknown as ResourceId;
-          if (!allResources[fid]) {
-            allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
-          }
-          allResources[fid]!.productionRate += foodProduce.amount * rate;
-        });
-      }
     });
   });
 

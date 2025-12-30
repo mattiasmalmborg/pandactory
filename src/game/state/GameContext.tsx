@@ -169,6 +169,37 @@ function migrateGameState(state: GameState): GameState {
     }
   }
 
+  // Migrate achievements for older saves
+  if (!migratedState.achievements) {
+    migratedState = {
+      ...migratedState,
+      achievements: {
+        unlocked: [],
+        pending: [],
+      },
+    };
+  }
+
+  // Migrate lifetimeStats for older saves
+  if (!migratedState.lifetimeStats) {
+    migratedState = {
+      ...migratedState,
+      lifetimeStats: {
+        totalResourcesGathered: 0,
+        totalAutomationsBuilt: 0,
+        totalUpgradesPurchased: 0,
+        totalExpeditionsCompleted: 0,
+        expeditionsByTier: {
+          quick_dash: 0,
+          quick_scout: 0,
+          standard_expedition: 0,
+          deep_exploration: 0,
+          epic_journey: 0,
+        },
+      },
+    };
+  }
+
   return migratedState;
 }
 

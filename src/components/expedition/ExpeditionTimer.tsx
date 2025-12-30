@@ -168,11 +168,11 @@ export function ExpeditionTimer() {
             <span>{progressPercent}%</span>
           </div>
           <div
-            className="w-full bg-gray-900 rounded-full h-4"
+            className="w-full bg-gray-900 rounded-full h-4 overflow-hidden"
             style={{ borderWidth: '1px', borderColor: `${biomeAccentColor}99` }}
           >
             <div
-              className="h-full rounded-full transition-all duration-1000"
+              className="h-full rounded-full progress-bar-smooth"
               style={{
                 width: `${progressPercent}%`,
                 background: `linear-gradient(to right, ${biomeAccentColor}, ${biomeAccentColor}CC)`

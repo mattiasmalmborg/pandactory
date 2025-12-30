@@ -11,8 +11,10 @@ import { BiomeIntroPopup } from "./BiomeIntroPopup";
 import { useSwipe } from "../../hooks/useSwipe";
 import { BiomeId, ResourceId, FoodId } from "../../types/game.types";
 import { calculateLevelUpCost, calculateProductionRate } from "../../utils/calculations";
+import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
+import { getMasteryBonus } from "../../game/config/achievements";
 import { calculateBiomeProductionRates } from "../../utils/allocation";
-import { formatNumber } from "../../utils/formatters";
+import { AnimatedResourceRow } from "../ui/AnimatedResourceRow";
 
 interface BiomeViewProps {
   biomeId: BiomeId;
@@ -102,17 +104,43 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
 
   // Calculate production and consumption rates (memoized)
   const { production, consumption, foodProduction } = useMemo(() => {
-    const { production, consumption } = calculateBiomeProductionRates(biome);
+    // Pass context for accurate calculations including skill bonuses and power cells
+    const context = {
+      unlockedSkills: state.prestige.unlockedSkills,
+      unlockedAchievements: state.achievements?.unlocked || [],
+      allBiomes: state.biomes,
+    };
+    const { production, consumption } = calculateBiomeProductionRates(biome, context);
 
-    // Calculate food production rates
+    // Get skill and mastery bonuses for food production
+    const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
+    const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
+    const totalInstalledCells = countInstalledPowerCells(state.biomes);
+
+    // Calculate food production rates using same logic as resource production
     const foodProd: Record<string, number> = {};
     biome.automations.forEach(automation => {
       const config = AUTOMATIONS[automation.type];
       if (!config || !config.producesFood) return;
 
-      const rate = calculateProductionRate(config.baseProductionRate, automation.level);
-      const multiplier = automation.powerCell?.bonus ? (1 + automation.powerCell.bonus) : 1;
-      const effectiveRate = rate * multiplier;
+      // Skip paused automations
+      if (automation.paused) return;
+
+      // Calculate effective power cell bonus with skill bonuses
+      const basePowerCellBonus = automation.powerCell?.bonus || 0;
+      const effectivePowerCellBonus = getEffectivePowerCellBonus(
+        basePowerCellBonus,
+        totalInstalledCells,
+        state.prestige.unlockedSkills
+      );
+
+      // Use same production rate calculation as for resources (with all bonuses)
+      const effectiveRate = calculateProductionRate(
+        config.baseProductionRate,
+        automation.level,
+        productionSpeedBonus + masteryBonus.productionBonus,
+        effectivePowerCellBonus
+      );
 
       config.producesFood.forEach(foodProduce => {
         const amount = foodProduce.amount * effectiveRate;
@@ -121,7 +149,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     });
 
     return { production, consumption, foodProduction: foodProd };
-  }, [biome]);
+  }, [biome, state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes]);
 
   // Collect biome resources and food (memoized)
   const allResourcesAndFood = useMemo(() => {
@@ -184,68 +212,15 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
           </h3>
           {allResourcesAndFood.length > 0 ? (
             <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 divide-y divide-gray-700/50">
-              {allResourcesAndFood.map(({ resourceId, amount, produced, consumed, isFood: _isFood }) => {
-                const resource = RESOURCES[resourceId];
-                if (!resource) return null; // Skip unknown resources
-                const net = produced - consumed;
-                const descriptionText = resource.flavorText
-                  ? `${resource.description}\n\n"${resource.flavorText}"`
-                  : resource.description;
-                const exactAmount = Math.floor(amount);
-                const tooltipText = `${descriptionText}\n\nAmount: ${exactAmount.toLocaleString()}`;
-
-                return (
-                  <div
-                    key={resourceId}
-                    className="p-3 hover:bg-gray-750 transition-colors"
-                  >
-                    {/* Top row: Icon, Name, Amount */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl" data-tooltip={tooltipText}>
-                          {resource?.icon ?? "❓"}
-                        </span>
-                        <span className="font-medium text-white">
-                          {resource?.name ?? "Unknown"}
-                        </span>
-                      </div>
-                      <span
-                        className="text-lg font-bold text-white"
-                        data-tooltip={`Exact: ${exactAmount.toLocaleString()}`}
-                      >
-                        {formatNumber(amount)}
-                      </span>
-                    </div>
-                    {/* Bottom row: Production rates (only if there's production/consumption) */}
-                    {(produced > 0 || consumed > 0) && (
-                      <div className="flex items-center justify-end gap-2 mt-1 text-xs">
-                        {produced > 0 && (
-                          <span
-                            className="text-green-400"
-                            data-tooltip={`Exact: +${produced.toFixed(1)}/min`}
-                          >
-                            +{formatNumber(produced)}/min
-                          </span>
-                        )}
-                        {consumed > 0 && (
-                          <span
-                            className="text-orange-400"
-                            data-tooltip={`Exact: -${consumed.toFixed(1)}/min`}
-                          >
-                            -{formatNumber(consumed)}/min
-                          </span>
-                        )}
-                        <span
-                          className={net > 0 ? 'text-green-500 font-semibold' : net < 0 ? 'text-red-500 font-semibold' : 'text-gray-400'}
-                          data-tooltip={`Exact net: ${net > 0 ? '+' : ''}${net.toFixed(1)}/min`}
-                        >
-                          = {net > 0 ? '+' : ''}{formatNumber(Math.abs(net))}/min
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {allResourcesAndFood.map(({ resourceId, amount, produced, consumed }) => (
+                <AnimatedResourceRow
+                  key={resourceId}
+                  resourceId={resourceId}
+                  amount={amount}
+                  produced={produced}
+                  consumed={consumed}
+                />
+              ))}
             </div>
           ) : (
             <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 text-center">
@@ -282,7 +257,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                       });
                     }
                   }}
-                  className="bg-gray-800/80 hover:bg-gray-700/90 active:bg-gray-600/90 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 transition-all click-animation flex flex-col items-center gap-2"
+                  className="bg-gray-800/80 hover:bg-gray-700/90 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 transition-all active:scale-95 flex flex-col items-center gap-2"
                 >
                   <span className="text-3xl">{resource?.icon ?? "❓"}</span>
                   <span className="text-xs text-gray-300 font-semibold">

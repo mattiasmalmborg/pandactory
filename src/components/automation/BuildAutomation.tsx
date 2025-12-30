@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AutomationType, BiomeId, ResourceCost } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
 import { useGame } from '../../game/state/GameContext';
-import { canAfford } from '../../utils/calculations';
+import { canAfford, applyCostReduction } from '../../utils/calculations';
 import { calculateBiomeProductionRates } from '../../utils/allocation';
 import { getVisibleAutomations } from '../../utils/automation-visibility';
 import { formatNumber } from '../../utils/formatters';
@@ -53,18 +53,29 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
     });
   });
 
+  // Get achievement-based cost reduction
+  const unlockedAchievements = state.achievements?.unlocked || [];
+
+  // Helper to get costs with mastery reduction applied
+  const getAdjustedCosts = useMemo(() => (baseCost: ResourceCost[]) => {
+    return applyCostReduction(baseCost, unlockedAchievements);
+  }, [unlockedAchievements]);
+
   const buildAutomation = (type: AutomationType) => {
     const config = AUTOMATIONS[type];
     if (!config) return;
 
+    // Apply cost reduction from achievements
+    const adjustedCosts = getAdjustedCosts(config.baseCost);
+
     // Check if we can afford it (using resources from ALL biomes)
-    if (!canAfford(allResources, config.baseCost)) {
+    if (!canAfford(allResources, adjustedCosts)) {
       alert('Not enough resources!');
       return;
     }
 
-    // Deduct costs from the biome that HAS the resource
-    config.baseCost.forEach((cost) => {
+    // Deduct costs from the biome that HAS the resource (using adjusted costs)
+    adjustedCosts.forEach((cost) => {
       let remaining = cost.amount;
       // Find biomes with this resource and deduct from them
       for (const [bId, bState] of Object.entries(state.biomes)) {
@@ -111,7 +122,8 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
           {buildableAutomations.map((type: AutomationType) => {
             const config = AUTOMATIONS[type];
             if (!config) return null;
-            const canBuild = canAfford(allResources, config.baseCost);
+            const adjustedCosts = getAdjustedCosts(config.baseCost);
+            const canBuild = canAfford(allResources, adjustedCosts);
 
             return (
               <button
@@ -126,7 +138,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
               >
                 <div className="font-semibold text-white text-sm">{config.name}</div>
                 <div className="text-xs text-gray-400 mt-1">
-                  {config.baseCost.map((cost: ResourceCost) => {
+                  {adjustedCosts.map((cost: ResourceCost) => {
                     const resource = RESOURCES[cost.resourceId];
                     return (
                       <div key={cost.resourceId}>
@@ -155,7 +167,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
 
             <div className="bg-gray-900 rounded p-3 mb-4">
               <div className="text-xs text-gray-400 mb-2">Cost (from all biomes):</div>
-              {AUTOMATIONS[selectedType]!.baseCost.map((cost) => {
+              {getAdjustedCosts(AUTOMATIONS[selectedType]!.baseCost).map((cost) => {
                 const resource = RESOURCES[cost.resourceId];
                 const available = allResources[cost.resourceId] || 0;
                 return (

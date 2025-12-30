@@ -4,7 +4,7 @@ import { AUTOMATIONS } from '../../game/config/automations';
 import { POWER_CELLS } from '../../game/config/powerCells';
 import { RESOURCES } from '../../game/config/resources';
 import { FOOD_ITEMS } from '../../game/config/food';
-import { calculateLevelUpCost, calculateProductionRate, canAfford } from '../../utils/calculations';
+import { calculateLevelUpCost, calculateProductionRate, canAfford, applyCostReduction } from '../../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../../utils/allocation';
 import { countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
 import { useGame } from '../../game/state/GameContext';
@@ -45,12 +45,19 @@ export function AutomationCard({
     return resources;
   }, [state.biomes]);
 
+  // Context for production calculations
+  const productionContext = useMemo(() => ({
+    unlockedSkills: state.prestige.unlockedSkills,
+    unlockedAchievements: state.achievements?.unlocked || [],
+    allBiomes: state.biomes,
+  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes]);
+
   // Calculate GLOBAL production AND consumption rates from ALL biomes for efficiency calculation (memoized)
   const { globalProduction, globalConsumption } = useMemo(() => {
     const production: Record<string, number> = {};
     const consumption: Record<string, number> = {};
     Object.values(state.biomes).forEach(b => {
-      const { production: biomeProduction, consumption: biomeConsumption } = calculateBiomeProductionRates(b);
+      const { production: biomeProduction, consumption: biomeConsumption } = calculateBiomeProductionRates(b, productionContext);
       Object.entries(biomeProduction).forEach(([resId, rate]) => {
         production[resId] = (production[resId] || 0) + rate;
       });
@@ -59,7 +66,18 @@ export function AutomationCard({
       });
     });
     return { globalProduction: production, globalConsumption: consumption };
-  }, [state.biomes]);
+  }, [state.biomes, productionContext]);
+
+  // Count total installed power cells for resonance calculation
+  const totalInstalledCells = countInstalledPowerCells(state.biomes);
+
+  // Calculate effective power cell bonus with resonance
+  const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const effectivePowerCellBonus = getEffectivePowerCellBonus(
+    basePowerCellBonus,
+    totalInstalledCells,
+    state.prestige.unlockedSkills
+  );
 
   // Calculate efficiency based on NET production (production minus OTHER automations' consumption)
   // For each resource, calculate what's available AFTER other automations consume it
@@ -75,13 +93,9 @@ export function AutomationCard({
       // Calculate how much THIS automation needs
       let thisAutomationNeeds = 0;
       if (automationConfig?.consumes) {
-        const rate = calculateProductionRate(automationConfig.baseProductionRate, automation.level);
-        const multiplier = automation.powerCell?.bonus ?? 1;
-        const effectiveRate = rate * multiplier;
-
         automationConfig.consumes.forEach(consume => {
           if (consume.resourceId === resId) {
-            thisAutomationNeeds = consume.amount * effectiveRate;
+            thisAutomationNeeds = consume.amount;
           }
         });
       }
@@ -93,21 +107,10 @@ export function AutomationCard({
     });
 
     return net;
-  }, [globalProduction, globalConsumption, automation.type, automation.level, automation.powerCell]);
+  }, [globalProduction, globalConsumption, automation.type]);
 
-  const efficiency = getAutomationEfficiency(automation, netProduction);
+  const efficiency = getAutomationEfficiency(automation, netProduction, productionContext);
   const efficiencyPercent = Math.round(efficiency * 100);
-
-  // Count total installed power cells for resonance calculation
-  const totalInstalledCells = countInstalledPowerCells(state.biomes);
-
-  // Calculate effective power cell bonus with resonance
-  const basePowerCellBonus = automation.powerCell?.bonus || 0;
-  const effectivePowerCellBonus = getEffectivePowerCellBonus(
-    basePowerCellBonus,
-    totalInstalledCells,
-    state.prestige.unlockedSkills
-  );
 
   // Calculate production rates with new formula (+25% per level)
   const baseRate = calculateProductionRate(config.baseProductionRate, automation.level);
@@ -138,8 +141,12 @@ export function AutomationCard({
   const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, automation.level + 1);
   const boostPercent = Math.round(((nextLevelBaseRate - baseRate) / baseRate) * 100);
 
-  // Calculate upgrade cost (using resources from ALL biomes)
-  const upgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
+  // Get achievement-based cost reduction
+  const unlockedAchievements = state.achievements?.unlocked || [];
+
+  // Calculate upgrade cost (using resources from ALL biomes, with mastery discount)
+  const baseUpgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
+  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements);
   const canAffordUpgrade = canAfford(allResources, upgradeCost);
 
   const powerCellInfo = automation.powerCell
@@ -184,9 +191,9 @@ export function AutomationCard({
       {/* Efficiency Bar - compact */}
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-400 w-16">Efficiency</span>
-        <div className="flex-1 bg-gray-700 rounded-full h-1.5">
+        <div className="flex-1 bg-gray-700 rounded-full h-1.5 overflow-hidden">
           <div
-            className={`h-1.5 rounded-full transition-all ${
+            className={`h-1.5 rounded-full progress-bar-smooth ${
               efficiency >= 0.99 ? 'bg-green-500' :
               efficiency >= 0.7 ? 'bg-yellow-500' :
               'bg-red-500'

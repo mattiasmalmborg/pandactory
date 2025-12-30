@@ -5,6 +5,8 @@ import { RESOURCES } from '../game/config/resources';
 import { BiomeId } from '../types/game.types';
 import { calculateProductionRate } from '../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../utils/allocation';
+import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../game/config/skillTree';
+import { getMasteryBonus } from '../game/config/achievements';
 
 const TICK_INTERVAL = 1000; // 1 second
 const SAVE_INTERVAL = 5000; // 5 seconds (reduced from 30s for better save reliability)
@@ -34,18 +36,32 @@ export function useGameLoop() {
       lastTickRef.current = now;
 
       // Get current state snapshot from ref
-      const currentBiomes = stateRef.current.biomes;
-      const currentExpedition = stateRef.current.panda.expedition;
+      const currentState = stateRef.current;
+      const currentBiomes = currentState.biomes;
+      const currentExpedition = currentState.panda.expedition;
 
       // Don't process if expedition is active (game paused during expedition)
       if (currentExpedition !== null) {
         return;
       }
 
+      // Get skill tree and mastery bonuses
+      const unlockedSkills = currentState.prestige.unlockedSkills;
+      const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+      const masteryBonus = getMasteryBonus(currentState.achievements?.unlocked || []);
+      const totalInstalledCells = countInstalledPowerCells(currentBiomes);
+
+      // Context for production calculations
+      const productionContext = {
+        unlockedSkills,
+        unlockedAchievements: currentState.achievements?.unlocked || [],
+        allBiomes: currentBiomes,
+      };
+
       // Calculate global production rates from ALL biomes for efficiency calculation
       const globalProduction: Record<string, number> = {};
       Object.values(currentBiomes).forEach((b) => {
-        const { production } = calculateBiomeProductionRates(b);
+        const { production } = calculateBiomeProductionRates(b, productionContext);
         Object.entries(production).forEach(([resId, rate]) => {
           globalProduction[resId] = (globalProduction[resId] || 0) + rate;
         });
@@ -65,16 +81,24 @@ export function useGameLoop() {
           // Skip paused automations
           if (automation.paused) return;
 
-          // Calculate production rate with level scaling (+50% per level)
-          let productionRate = calculateProductionRate(config.baseProductionRate, automation.level);
+          // Calculate effective power cell bonus with skill bonuses
+          const basePowerCellBonus = automation.powerCell?.bonus || 0;
+          const effectivePowerCellBonus = getEffectivePowerCellBonus(
+            basePowerCellBonus,
+            totalInstalledCells,
+            unlockedSkills
+          );
 
-          // Apply power cell multiplier (bonus is additive, e.g., 0.5 = +50%)
-          if (automation.powerCell?.bonus) {
-            productionRate *= (1 + automation.powerCell.bonus);
-          }
+          // Calculate production rate with level scaling, skill bonuses, mastery, and power cell
+          const productionRate = calculateProductionRate(
+            config.baseProductionRate,
+            automation.level,
+            productionSpeedBonus + masteryBonus.productionBonus,
+            effectivePowerCellBonus
+          );
 
           // Calculate efficiency based on available inputs from ALL biomes (global production)
-          const efficiency = getAutomationEfficiency(automation, globalProduction);
+          const efficiency = getAutomationEfficiency(automation, globalProduction, productionContext);
 
           // Apply efficiency to production rate
           const effectiveRate = productionRate * efficiency;

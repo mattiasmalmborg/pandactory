@@ -1,4 +1,18 @@
-import { ResourceCost } from '../types/game.types';
+import { ResourceCost, AchievementId } from '../types/game.types';
+import { getMasteryBonus } from '../game/config/achievements';
+
+// Apply cost reduction from mastery bonus (all achievements unlocked)
+export function applyCostReduction(costs: ResourceCost[], unlockedAchievements: AchievementId[]): ResourceCost[] {
+  const masteryBonus = getMasteryBonus(unlockedAchievements);
+  if (masteryBonus.costReduction === 0) {
+    return costs;
+  }
+  // Apply 50% cost reduction
+  return costs.map(cost => ({
+    ...cost,
+    amount: Math.ceil(cost.amount * (1 - masteryBonus.costReduction)),
+  }));
+}
 
 export function canAfford(resources: Record<string, number>, costs: ResourceCost[]): boolean {
   return costs.every((cost) => (resources[cost.resourceId] || 0) >= cost.amount);

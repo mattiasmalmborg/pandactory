@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 
 /**
  * Hook that shows tooltips positioned from element toward screen center
+ * Supports live updating of tooltip content while hovering
  */
 export function useSmartTooltips() {
   useEffect(() => {
@@ -32,15 +33,34 @@ export function useSmartTooltips() {
         border: 1px solid rgba(55, 65, 81, 0.5);
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       }
+
+      .tooltip-box .tooltip-number {
+        font-variant-numeric: tabular-nums;
+      }
     `;
     document.head.appendChild(style);
 
     let tooltipElement: HTMLDivElement | null = null;
     let currentTarget: HTMLElement | null = null;
+    let attributeObserver: MutationObserver | null = null;
+
+    const updateTooltipContent = () => {
+      if (!currentTarget || !tooltipElement) return;
+
+      const text = currentTarget.getAttribute('data-tooltip');
+      if (!text) return;
+
+      const box = tooltipElement.firstElementChild as HTMLDivElement;
+      box.textContent = text;
+    };
 
     const hideTooltip = () => {
       if (tooltipElement) {
         tooltipElement.classList.remove('visible');
+      }
+      // Stop observing attribute changes when tooltip is hidden
+      if (attributeObserver) {
+        attributeObserver.disconnect();
       }
       currentTarget = null;
     };
@@ -77,6 +97,19 @@ export function useSmartTooltips() {
       tooltipElement.style.left = `${screenCenterX}px`;
       tooltipElement.style.top = `${elementCenterY}px`;
       tooltipElement.style.transform = `translate(-50%, -50%)`;
+
+      // Start observing attribute changes on the target for live updates
+      if (attributeObserver) {
+        attributeObserver.disconnect();
+      }
+      attributeObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-tooltip') {
+            updateTooltipContent();
+          }
+        }
+      });
+      attributeObserver.observe(target, { attributes: true, attributeFilter: ['data-tooltip'] });
 
       // Show tooltip
       setTimeout(() => {
@@ -134,6 +167,9 @@ export function useSmartTooltips() {
 
     return () => {
       observer.disconnect();
+      if (attributeObserver) {
+        attributeObserver.disconnect();
+      }
       document.removeEventListener('scroll', handleScroll, true);
       if (tooltipElement) {
         tooltipElement.remove();

@@ -4,7 +4,8 @@ import { AUTOMATIONS } from '../game/config/automations';
 import { calculateProductionRate } from './calculations';
 import { getAutomationEfficiency } from './allocation';
 import { calculateBiomeProductionRates } from './allocation';
-import { countInstalledPowerCells, getEffectivePowerCellBonus } from '../game/config/skillTree';
+import { countInstalledPowerCells, getEffectivePowerCellBonus, getSkillTreeBonus } from '../game/config/skillTree';
+import { getMasteryBonus } from '../game/config/achievements';
 
 // Offline production efficiency (20% of normal production)
 // Most idle games use 10-25% for offline efficiency
@@ -71,17 +72,29 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
 
   const newState = JSON.parse(JSON.stringify(loadedState)) as GameState;
 
+  // Get skill tree and mastery bonuses
+  const unlockedSkills = loadedState.prestige.unlockedSkills;
+  const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const masteryBonus = getMasteryBonus(loadedState.achievements?.unlocked || []);
+
+  // Count total installed power cells for resonance calculation
+  const totalInstalledCells = countInstalledPowerCells(loadedState.biomes);
+
+  // Context for production calculations
+  const productionContext = {
+    unlockedSkills,
+    unlockedAchievements: loadedState.achievements?.unlocked || [],
+    allBiomes: loadedState.biomes,
+  };
+
   // Calculate global production rates for efficiency
   const globalProduction: Record<string, number> = {};
   Object.values(newState.biomes).forEach((b) => {
-    const { production } = calculateBiomeProductionRates(b);
+    const { production } = calculateBiomeProductionRates(b, productionContext);
     Object.entries(production).forEach(([resId, rate]) => {
       globalProduction[resId] = (globalProduction[resId] || 0) + rate;
     });
   });
-
-  // Count total installed power cells for resonance calculation
-  const totalInstalledCells = countInstalledPowerCells(loadedState.biomes);
 
   // Process each biome's automations
   (Object.keys(newState.biomes) as BiomeId[]).forEach((biomeId) => {
@@ -93,22 +106,27 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
       const config = AUTOMATIONS[automation.type as AutomationType] as AutomationConfig | undefined;
       if (!config) return;
 
-      // Calculate production rate
-      let productionRate = calculateProductionRate(config.baseProductionRate, automation.level);
+      // Skip paused automations
+      if (automation.paused) return;
 
       // Apply power cell bonus with resonance
       const basePowerCellBonus = automation.powerCell?.bonus || 0;
       const effectivePowerCellBonus = getEffectivePowerCellBonus(
         basePowerCellBonus,
         totalInstalledCells,
-        loadedState.prestige.unlockedSkills
+        unlockedSkills
       );
-      if (effectivePowerCellBonus > 0) {
-        productionRate *= (1 + effectivePowerCellBonus);
-      }
+
+      // Calculate production rate with skill bonuses, mastery, and power cell
+      const productionRate = calculateProductionRate(
+        config.baseProductionRate,
+        automation.level,
+        productionSpeedBonus + masteryBonus.productionBonus,
+        effectivePowerCellBonus
+      );
 
       // Calculate efficiency based on resource availability
-      const efficiency = getAutomationEfficiency(automation, globalProduction);
+      const efficiency = getAutomationEfficiency(automation, globalProduction, productionContext);
 
       // Apply offline efficiency multiplier (20%)
       const effectiveRate = productionRate * efficiency * OFFLINE_EFFICIENCY_MULTIPLIER;

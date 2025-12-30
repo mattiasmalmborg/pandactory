@@ -84,9 +84,26 @@ export const INITIAL_GAME_STATE: GameState = {
     totalPrestiges: 0,
     unlockedSkills: [],
   },
+  achievements: {
+    unlocked: [],
+    pending: [],
+  },
+  lifetimeStats: {
+    totalResourcesGathered: 0,
+    totalAutomationsBuilt: 0,
+    totalUpgradesPurchased: 0,
+    totalExpeditionsCompleted: 0,
+    expeditionsByTier: {
+      quick_dash: 0,
+      quick_scout: 0,
+      standard_expedition: 0,
+      deep_exploration: 0,
+      epic_journey: 0,
+    },
+  },
   lastTick: Date.now(),
   lastSave: Date.now(),
-  version: '1.3.2',
+  version: '1.4.1',
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -101,6 +118,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ? [...existingDiscovered, resourceId]
         : existingDiscovered;
 
+      // Update lifetime stats (only count positive amounts)
+      const gatheredAmount = amount > 0 ? amount : 0;
+
       return {
         ...state,
         biomes: {
@@ -113,6 +133,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             },
             discoveredResources: newDiscovered,
           },
+        },
+        lifetimeStats: {
+          ...state.lifetimeStats,
+          totalResourcesGathered: (state.lifetimeStats?.totalResourcesGathered || 0) + gatheredAmount,
         },
       };
     }
@@ -143,6 +167,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             automations: [...state.biomes[biomeId].automations, newAutomation],
           },
         },
+        lifetimeStats: {
+          ...state.lifetimeStats,
+          totalAutomationsBuilt: (state.lifetimeStats?.totalAutomationsBuilt || 0) + 1,
+        },
       };
     }
 
@@ -158,6 +186,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               auto.id === automationId ? { ...auto, level: auto.level + 1 } : auto
             ),
           },
+        },
+        lifetimeStats: {
+          ...state.lifetimeStats,
+          totalUpgradesPurchased: (state.lifetimeStats?.totalUpgradesPurchased || 0) + 1,
         },
       };
     }
@@ -337,6 +369,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
 
+      // Update lifetime stats for expedition
+      const expeditionTier = state.panda.expedition?.tier;
+      if (expeditionTier) {
+        newState.lifetimeStats = {
+          ...state.lifetimeStats,
+          totalExpeditionsCompleted: (state.lifetimeStats?.totalExpeditionsCompleted || 0) + 1,
+          expeditionsByTier: {
+            ...state.lifetimeStats?.expeditionsByTier,
+            [expeditionTier]: ((state.lifetimeStats?.expeditionsByTier?.[expeditionTier]) || 0) + 1,
+          },
+        };
+      }
+
       // Reset panda state
       newState.panda = {
         status: 'home',
@@ -453,7 +498,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PRESTIGE': {
       const { shardsEarned } = action.payload;
 
-      // Reset everything except prestige data
+      // Reset everything except prestige data, achievements, and lifetime stats
       return {
         ...INITIAL_GAME_STATE,
         prestige: {
@@ -461,6 +506,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           totalPrestiges: state.prestige.totalPrestiges + 1,
           unlockedSkills: state.prestige.unlockedSkills, // Skills persist!
         },
+        achievements: state.achievements, // Achievements persist!
+        lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
       };
     }
 
@@ -557,16 +604,131 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ? migratedUnlockedBiomes
         : currentUnlocked;
 
+      // Migration: Always calculate lifetimeStats from existing game state
+      // and use the max of calculated values vs stored values
+      const existingStats = loadedState.lifetimeStats;
+
+      // Count existing automations across all biomes
+      let calculatedAutomations = 0;
+      let calculatedUpgrades = 0;
+      (Object.keys(loadedState.biomes) as BiomeId[]).forEach((biomeId) => {
+        const biome = loadedState.biomes[biomeId];
+        if (biome.automations) {
+          biome.automations.forEach((auto: { level: number }) => {
+            calculatedAutomations++;
+            // Each automation starts at level 1, so upgrades = level - 1
+            calculatedUpgrades += Math.max(0, auto.level - 1);
+          });
+        }
+      });
+
+      // Count total resources across all biomes
+      let calculatedResources = 0;
+      (Object.keys(loadedState.biomes) as BiomeId[]).forEach((biomeId) => {
+        const biome = loadedState.biomes[biomeId];
+        if (biome.resources) {
+          Object.values(biome.resources).forEach((amount) => {
+            calculatedResources += (amount as number) || 0;
+          });
+        }
+      });
+
+      // Use the max of calculated values vs stored values to ensure we never lose stats
+      const lifetimeStats = {
+        totalResourcesGathered: Math.max(existingStats?.totalResourcesGathered || 0, calculatedResources),
+        totalAutomationsBuilt: Math.max(existingStats?.totalAutomationsBuilt || 0, calculatedAutomations),
+        totalUpgradesPurchased: Math.max(existingStats?.totalUpgradesPurchased || 0, calculatedUpgrades),
+        totalExpeditionsCompleted: existingStats?.totalExpeditionsCompleted || loadedState.expeditionCount || 0,
+        expeditionsByTier: existingStats?.expeditionsByTier || {
+          quick_dash: 0,
+          quick_scout: 0,
+          standard_expedition: 0,
+          deep_exploration: 0,
+          epic_journey: 0,
+        },
+      };
+
+      // Migration: Ensure achievements structure exists
+      const achievements = loadedState.achievements || {
+        unlocked: [],
+        pending: [],
+      };
+
+      // Migration: Ensure discoveredProducedResources and discoveredProducedFoods exist
+      const discoveredProducedResources = loadedState.discoveredProducedResources || [];
+      const discoveredProducedFoods = loadedState.discoveredProducedFoods || [];
+
       return {
         ...loadedState,
         unlockedBiomes: finalUnlockedBiomes,
+        lifetimeStats,
+        achievements,
+        discoveredProducedResources,
+        discoveredProducedFoods,
+        pendingResourceDiscoveries: loadedState.pendingResourceDiscoveries || [],
+        pendingFoodDiscoveries: loadedState.pendingFoodDiscoveries || [],
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };
     }
 
+    case 'UNLOCK_ACHIEVEMENT': {
+      const { achievementId } = action.payload;
+      // Don't unlock if already unlocked
+      if (state.achievements.unlocked.includes(achievementId)) {
+        return state;
+      }
+      return {
+        ...state,
+        achievements: {
+          unlocked: [...state.achievements.unlocked, achievementId],
+          pending: [...state.achievements.pending, achievementId],
+        },
+      };
+    }
+
+    case 'ACKNOWLEDGE_ACHIEVEMENT': {
+      const { achievementId } = action.payload;
+      return {
+        ...state,
+        achievements: {
+          ...state.achievements,
+          pending: state.achievements.pending.filter(id => id !== achievementId),
+        },
+      };
+    }
+
     case 'RESET_GAME': {
       return INITIAL_GAME_STATE;
+    }
+
+    case 'TRACK_CLICK': {
+      const now = Date.now();
+      const currentSession = state.sessionStats || {
+        sessionStartTime: now,
+        clickCount: 0,
+        lastClickTime: now,
+      };
+      return {
+        ...state,
+        sessionStats: {
+          ...currentSession,
+          clickCount: currentSession.clickCount + 1,
+          lastClickTime: now,
+        },
+      };
+    }
+
+    case 'INIT_SESSION': {
+      const now = Date.now();
+      return {
+        ...state,
+        sessionStats: {
+          sessionStartTime: now,
+          clickCount: 0,
+          lastClickTime: now,
+        },
+      };
     }
 
     default:

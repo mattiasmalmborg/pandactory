@@ -3,6 +3,7 @@ import { AUTOMATIONS } from '../config/automations';
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../config/skillTree';
 import { calculateProductionRate } from '../../utils/calculations';
 import { RESOURCES } from '../config/resources';
+import { getMasteryBonus } from '../config/achievements';
 
 export interface ProductionResult {
   state: GameState;
@@ -16,6 +17,9 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
 
   // Get skill tree bonuses
   const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
+
+  // Get mastery bonus (200% production when all achievements unlocked)
+  const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
 
   // Count total installed power cells for resonance calculation
   const totalInstalledCells = countInstalledPowerCells(state.biomes);
@@ -43,7 +47,7 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
       const productionRate = calculateProductionRate(
         config.baseProductionRate,
         automation.level,
-        productionSpeedBonus,
+        productionSpeedBonus + masteryBonus.productionBonus,
         effectivePowerCellBonus
       );
 
