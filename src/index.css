@@ -333,6 +333,14 @@ body {
   transition: transform 0.1s ease-out;
 }
 
+/* Instant tactile feedback for touch devices */
+@media (pointer: coarse) {
+  button:active {
+    transform: scale(0.95);
+    transition: transform 0ms !important;
+  }
+}
+
 /* Hover lift effect */
 .hover-lift {
   transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;

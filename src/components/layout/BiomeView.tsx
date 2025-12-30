@@ -257,7 +257,8 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                       });
                     }
                   }}
-                  className="bg-gray-800/80 hover:bg-gray-700/90 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 transition-all active:scale-95 flex flex-col items-center gap-2"
+                  className="bg-gray-800/80 hover:bg-gray-700/90 backdrop-blur-sm p-4 rounded-lg border border-gray-700/50 transition-colors active:scale-95 active:bg-gray-600/90 flex flex-col items-center gap-2"
+                  style={{ touchAction: 'manipulation', transitionDuration: '100ms' }}
                 >
                   <span className="text-3xl">{resource?.icon ?? "❓"}</span>
                   <span className="text-xs text-gray-300 font-semibold">
