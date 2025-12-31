@@ -196,6 +196,7 @@ function migrateGameState(state: GameState): GameState {
           deep_exploration: 0,
           epic_journey: 0,
         },
+        totalSessions: 0,
       },
     };
   }
@@ -205,6 +206,26 @@ function migrateGameState(state: GameState): GameState {
     migratedState = {
       ...migratedState,
       gameStartTime: migratedState.lastSave || Date.now(),
+    };
+  }
+
+  // Migrate totalSessions for older saves and increment for new session
+  if (migratedState.lifetimeStats.totalSessions === undefined) {
+    migratedState = {
+      ...migratedState,
+      lifetimeStats: {
+        ...migratedState.lifetimeStats,
+        totalSessions: 1,
+      },
+    };
+  } else {
+    // Increment session count for returning players
+    migratedState = {
+      ...migratedState,
+      lifetimeStats: {
+        ...migratedState.lifetimeStats,
+        totalSessions: migratedState.lifetimeStats.totalSessions + 1,
+      },
     };
   }
 

@@ -446,34 +446,6 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     category: 'crashes',
     hidden: true,
   },
-  cosmic_bamboo_10: {
-    id: 'cosmic_bamboo_10',
-    name: 'Cosmic Collector',
-    description: 'Collect 10 Cosmic Bamboo Shards',
-    flavorText: 'The cosmos rewards your persistence.',
-    icon: '🎋',
-    category: 'crashes',
-    hidden: true,
-  },
-  cosmic_bamboo_50: {
-    id: 'cosmic_bamboo_50',
-    name: 'Cosmic Hoarder',
-    description: 'Collect 50 Cosmic Bamboo Shards',
-    flavorText: 'Your bamboo stash glows in the dark.',
-    icon: '🎋',
-    category: 'crashes',
-    hidden: true,
-  },
-  cosmic_bamboo_100: {
-    id: 'cosmic_bamboo_100',
-    name: 'Cosmic Master',
-    description: 'Collect 100 Cosmic Bamboo Shards',
-    flavorText: 'You are one with the cosmic bamboo.',
-    icon: '✨',
-    category: 'crashes',
-    hidden: true,
-  },
-
   // === SKILL ACHIEVEMENTS (6) ===
   first_skill: {
     id: 'first_skill',
@@ -597,15 +569,6 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     category: 'secret',
     hidden: true,
   },
-  double_digits: {
-    id: 'double_digits',
-    name: 'Double Digits',
-    description: 'Reach prestige level 10',
-    flavorText: 'Ten times reborn. Ten times stronger.',
-    icon: '🔟',
-    category: 'secret',
-    hidden: true,
-  },
   perfectionist: {
     id: 'perfectionist',
     name: 'Perfectionist',
@@ -621,6 +584,15 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     description: 'Have a save file that is 30+ days old',
     flavorText: 'Patience is the ultimate virtue. The pandas remember.',
     icon: '📜',
+    category: 'secret',
+    hidden: true,
+  },
+  dedicated: {
+    id: 'dedicated',
+    name: 'Dedicated',
+    description: 'Play 100 sessions',
+    flavorText: 'You keep coming back. The pandas appreciate your loyalty.',
+    icon: '🎮',
     category: 'secret',
     hidden: true,
   },
@@ -847,9 +819,6 @@ export function checkAchievements(state: GameState): AchievementId[] {
     check('crash_5', state.prestige.totalPrestiges >= 5);
     check('crash_10', state.prestige.totalPrestiges >= 10);
     check('crash_25', state.prestige.totalPrestiges >= 25);
-    check('cosmic_bamboo_10', state.prestige.cosmicBambooShards >= 10);
-    check('cosmic_bamboo_50', state.prestige.cosmicBambooShards >= 50);
-    check('cosmic_bamboo_100', state.prestige.cosmicBambooShards >= 100);
   }
 
   // === SKILL ACHIEVEMENTS ===
@@ -920,9 +889,6 @@ export function checkAchievements(state: GameState): AchievementId[] {
   const fiveMinutesFromStart = 5 * 60 * 1000;
   check('speed_demon', currentAutomationCount >= 6 && timeSinceSessionStart <= fiveMinutesFromStart);
 
-  // Double Digits - Reach prestige level 10
-  check('double_digits', state.prestige.totalPrestiges >= 10);
-
   // Perfectionist - All 59 automations with orange power cells
   check('perfectionist', installedCells.orange >= 59);
 
@@ -931,6 +897,10 @@ export function checkAchievements(state: GameState): AchievementId[] {
   const gameStartTime = state.gameStartTime || Date.now();
   const saveAge = Date.now() - gameStartTime;
   check('the_long_game', saveAge >= thirtyDaysMs);
+
+  // Dedicated - Play 100 sessions
+  const totalSessions = stats.totalSessions || 0;
+  check('dedicated', totalSessions >= 100);
 
   return newAchievements;
 }

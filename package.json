@@ -1,6 +1,6 @@
 {
   "name": "pandactory",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A web-based incremental automation game featuring a Red Panda",
   "type": "module",
   "scripts": {

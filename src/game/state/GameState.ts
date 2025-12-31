@@ -100,11 +100,12 @@ export const INITIAL_GAME_STATE: GameState = {
       deep_exploration: 0,
       epic_journey: 0,
     },
+    totalSessions: 1,
   },
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
-  version: '1.4.1',
+  version: '1.4.2',
 };
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -648,6 +649,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           deep_exploration: 0,
           epic_journey: 0,
         },
+        totalSessions: existingStats?.totalSessions || 1,
       };
 
       // Migration: Ensure achievements structure exists

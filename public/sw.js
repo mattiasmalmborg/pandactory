@@ -1,24 +1,27 @@
 // Pandactory Service Worker
-const CACHE_NAME = 'pandactory-v1.4.0';
+const CACHE_NAME = 'pandactory-v1.4.2';
 
-// Assets to cache immediately on install
+// Detect base path (works for both local dev and GitHub Pages)
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, '');
+
+// Assets to cache immediately on install (relative to base path)
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/assets/ui/logo.png',
-  '/assets/backgrounds/bg_dashboard.jpg',
-  '/assets/backgrounds/bg_lush_forest.jpg',
-  '/assets/backgrounds/bg_misty_lake.jpg',
-  '/assets/backgrounds/bg_arid_desert.jpg',
-  '/assets/backgrounds/bg_frozen_tundra.jpg',
-  '/assets/backgrounds/bg_volcanic_isle.jpg',
-  '/assets/backgrounds/bg_crystal_caverns.jpg',
-  '/assets/backgrounds/bg_skills_stats.jpg',
-  '/assets/sprites/expedition_panda.png',
-  '/assets/sprites/Spaceship.png',
-  '/assets/sprites/Spaceship_Panda.png',
-];
+  '',
+  'index.html',
+  'manifest.json',
+  'assets/ui/logo.png',
+  'assets/backgrounds/bg_dashboard.jpg',
+  'assets/backgrounds/bg_lush_forest.jpg',
+  'assets/backgrounds/bg_misty_lake.jpg',
+  'assets/backgrounds/bg_arid_desert.jpg',
+  'assets/backgrounds/bg_frozen_tundra.jpg',
+  'assets/backgrounds/bg_volcanic_isle.jpg',
+  'assets/backgrounds/bg_crystal_caverns.jpg',
+  'assets/backgrounds/bg_skills_stats.jpg',
+  'assets/sprites/expedition_panda.png',
+  'assets/sprites/Spaceship.png',
+  'assets/sprites/Spaceship_Panda.png',
+].map(asset => BASE_PATH + asset);
 
 // Install event - cache core assets
 self.addEventListener('install', (event) => {
@@ -90,7 +93,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // Fallback to cached index.html for offline
-          return caches.match('/index.html');
+          return caches.match(BASE_PATH + 'index.html');
         })
     );
     return;

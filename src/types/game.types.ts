@@ -85,16 +85,15 @@ export type AchievementId =
   // Biome achievements (7)
   | 'world_domination'
   | 'forest_resources' | 'lake_resources' | 'desert_resources' | 'tundra_resources' | 'volcano_resources' | 'caverns_resources'
-  // Crash/Prestige achievements (8) - all hidden until first prestige
+  // Crash/Prestige achievements (5) - all hidden until first prestige
   | 'first_crash' | 'crash_3' | 'crash_5' | 'crash_10' | 'crash_25'
-  | 'cosmic_bamboo_10' | 'cosmic_bamboo_50' | 'cosmic_bamboo_100'
   // Skill achievements (6)
   | 'first_skill' | 'production_branch' | 'economy_branch' | 'expedition_branch' | 'power_cells_branch' | 'all_skills'
   // Milestone achievements (3)
   | 'spaceship_started' | 'spaceship_halfway' | 'spaceship_complete'
   // Secret/Fun achievements (8)
   | 'night_owl' | 'clicker_champion' | 'patient_panda' | 'speed_demon' | 'hoarder_deluxe'
-  | 'double_digits' | 'perfectionist' | 'the_long_game';
+  | 'perfectionist' | 'the_long_game' | 'dedicated';
 
 export interface ResourceCost {
   resourceId: ResourceId;
@@ -138,6 +137,7 @@ export interface GameState {
     totalUpgradesPurchased: number;
     totalExpeditionsCompleted: number;
     expeditionsByTier: Record<ExpeditionTier, number>;
+    totalSessions: number; // Total number of play sessions
   };
   // Session stats for secret achievements (reset on page load)
   sessionStats?: {
