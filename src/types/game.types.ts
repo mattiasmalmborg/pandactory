@@ -94,7 +94,7 @@ export type AchievementId =
   | 'spaceship_started' | 'spaceship_halfway' | 'spaceship_complete'
   // Secret/Fun achievements (8)
   | 'night_owl' | 'clicker_champion' | 'patient_panda' | 'speed_demon' | 'hoarder_deluxe'
-  | 'bamboo_addict' | 'perfectionist' | 'completionist';
+  | 'double_digits' | 'perfectionist' | 'the_long_game';
 
 export interface ResourceCost {
   resourceId: ResourceId;
@@ -147,6 +147,7 @@ export interface GameState {
   };
   lastTick: number;
   lastSave: number;
+  gameStartTime: number; // When the save file was first created
   version: string;
 }
 

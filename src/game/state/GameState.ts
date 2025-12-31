@@ -103,6 +103,7 @@ export const INITIAL_GAME_STATE: GameState = {
   },
   lastTick: Date.now(),
   lastSave: Date.now(),
+  gameStartTime: Date.now(),
   version: '1.4.1',
 };
 
@@ -498,7 +499,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PRESTIGE': {
       const { shardsEarned } = action.payload;
 
-      // Reset everything except prestige data, achievements, and lifetime stats
+      // Reset everything except prestige data, achievements, lifetime stats, and gameStartTime
       return {
         ...INITIAL_GAME_STATE,
         prestige: {
@@ -508,6 +509,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
+        gameStartTime: state.gameStartTime, // Keep original start time!
       };
     }
 

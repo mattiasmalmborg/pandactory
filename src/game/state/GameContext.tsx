@@ -200,6 +200,14 @@ function migrateGameState(state: GameState): GameState {
     };
   }
 
+  // Migrate gameStartTime for older saves (use lastSave as fallback)
+  if (!migratedState.gameStartTime) {
+    migratedState = {
+      ...migratedState,
+      gameStartTime: migratedState.lastSave || Date.now(),
+    };
+  }
+
   return migratedState;
 }
 

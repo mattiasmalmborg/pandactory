@@ -597,12 +597,12 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     category: 'secret',
     hidden: true,
   },
-  bamboo_addict: {
-    id: 'bamboo_addict',
-    name: 'Bamboo Addict',
-    description: 'Spend over 50 Cosmic Bamboo Shards on skills',
-    flavorText: 'The bamboo flows through you.',
-    icon: '🎋',
+  double_digits: {
+    id: 'double_digits',
+    name: 'Double Digits',
+    description: 'Reach prestige level 10',
+    flavorText: 'Ten times reborn. Ten times stronger.',
+    icon: '🔟',
     category: 'secret',
     hidden: true,
   },
@@ -615,12 +615,12 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     category: 'secret',
     hidden: true,
   },
-  completionist: {
-    id: 'completionist',
-    name: 'Completionist',
-    description: 'Unlock all other achievements',
-    flavorText: 'You did it. You actually did it. Now go outside.',
-    icon: '🏅',
+  the_long_game: {
+    id: 'the_long_game',
+    name: 'The Long Game',
+    description: 'Have a save file that is 30+ days old',
+    flavorText: 'Patience is the ultimate virtue. The pandas remember.',
+    icon: '📜',
     category: 'secret',
     hidden: true,
   },
@@ -920,20 +920,17 @@ export function checkAchievements(state: GameState): AchievementId[] {
   const fiveMinutesFromStart = 5 * 60 * 1000;
   check('speed_demon', currentAutomationCount >= 6 && timeSinceSessionStart <= fiveMinutesFromStart);
 
-  // Bamboo Addict - Spend over 50 Cosmic Bamboo Shards on skills (skills cost varies, but estimate spending)
-  // Total shards ever earned = current shards + shards spent on skills
-  // Each skill tier costs: tier1=1, tier2=2, tier3=3, tier4=5 (approximately)
-  // We can estimate by counting unlocked skills
-  const skillCostEstimate = skills.length * 2; // Rough estimate
-  check('bamboo_addict', skillCostEstimate >= 50);
+  // Double Digits - Reach prestige level 10
+  check('double_digits', state.prestige.totalPrestiges >= 10);
 
   // Perfectionist - All 59 automations with orange power cells
   check('perfectionist', installedCells.orange >= 59);
 
-  // Completionist - Unlock all other achievements (total - 1 for completionist itself)
-  const totalAchievementCount = Object.keys(ACHIEVEMENTS).length;
-  // Don't count completionist itself
-  check('completionist', unlocked.length >= totalAchievementCount - 1);
+  // The Long Game - Have a save file that is 30+ days old
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const gameStartTime = state.gameStartTime || Date.now();
+  const saveAge = Date.now() - gameStartTime;
+  check('the_long_game', saveAge >= thirtyDaysMs);
 
   return newAchievements;
 }
