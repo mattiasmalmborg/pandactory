@@ -48,7 +48,6 @@ export function BackgroundWrapper({
   children,
 }: BackgroundWrapperProps) {
   const backgroundImage = useAssetImage(backgroundPath);
-  const overlayClass = `bg-black bg-opacity-${overlayOpacity}`;
 
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -65,7 +64,7 @@ export function BackgroundWrapper({
           <div className={`absolute inset-0 bg-gradient-to-br ${fallbackGradient}`} />
         )}
         {/* Overlay for better text readability */}
-        <div className={`absolute inset-0 ${overlayClass}`} />
+        <div className="absolute inset-0 bg-black" style={{ opacity: overlayOpacity / 100 }} />
       </div>
 
       {/* Content Layer - Scrollable */}

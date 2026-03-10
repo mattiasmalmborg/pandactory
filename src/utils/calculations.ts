@@ -1,5 +1,73 @@
-import { ResourceCost, AchievementId } from '../types/game.types';
+import { ResourceCost, AchievementId, BiomeId, BiomeState, SkillId, Automation } from '../types/game.types';
 import { getMasteryBonus } from '../game/config/achievements';
+import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../game/config/skillTree';
+import { AUTOMATIONS } from '../game/config/automations';
+import { BiomeProductionContext } from './allocation';
+
+/**
+ * Gather all resources from ALL biomes into a single record.
+ * Used for cross-biome affordability checks.
+ */
+export function getAllBiomeResources(biomes: Record<BiomeId, BiomeState>): Record<string, number> {
+  const allResources: Record<string, number> = {};
+  Object.values(biomes).forEach(b => {
+    Object.entries(b.resources).forEach(([resId, amount]) => {
+      allResources[resId] = (allResources[resId] || 0) + amount;
+    });
+  });
+  return allResources;
+}
+
+/**
+ * Create the production context needed for production rate calculations.
+ * Eliminates duplication of this pattern across components.
+ */
+export function createProductionContext(state: {
+  prestige: { unlockedSkills: SkillId[] };
+  achievements?: { unlocked: AchievementId[] };
+  biomes: Record<BiomeId, BiomeState>;
+}): BiomeProductionContext {
+  return {
+    unlockedSkills: state.prestige.unlockedSkills,
+    unlockedAchievements: state.achievements?.unlocked || [],
+    allBiomes: state.biomes,
+  };
+}
+
+/**
+ * Calculate the effective production rate for a single automation,
+ * including skill bonuses, mastery bonus, and power cell bonus.
+ * Eliminates duplication of this calculation across 4+ files.
+ */
+export function getAutomationProductionRate(
+  automation: Automation,
+  context: BiomeProductionContext
+): number {
+  const config = AUTOMATIONS[automation.type];
+  if (!config) return 0;
+
+  const unlockedSkills = context.unlockedSkills || [];
+  const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const masteryBonus = getMasteryBonus(context.unlockedAchievements || []);
+
+  const totalInstalledCells = context.allBiomes
+    ? countInstalledPowerCells(context.allBiomes)
+    : 0;
+
+  const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const effectivePowerCellBonus = getEffectivePowerCellBonus(
+    basePowerCellBonus,
+    totalInstalledCells,
+    unlockedSkills
+  );
+
+  return calculateProductionRate(
+    config.baseProductionRate,
+    automation.level,
+    productionSpeedBonus + masteryBonus.productionBonus,
+    effectivePowerCellBonus
+  );
+}
 
 // Apply cost reduction from mastery bonus (all achievements unlocked)
 export function applyCostReduction(costs: ResourceCost[], unlockedAchievements: AchievementId[]): ResourceCost[] {

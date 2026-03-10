@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../../game/state/GameContext';
+import { GameState, BiomeState } from '../../types/game.types';
 
 export type HintId =
   | 'welcome'
@@ -15,7 +16,7 @@ interface Hint {
   id: HintId;
   title: string;
   message: string;
-  triggerCondition: (state: any) => boolean;
+  triggerCondition: (state: GameState) => boolean;
   priority: number; // Lower = higher priority
 }
 
@@ -27,7 +28,7 @@ const HINTS: Hint[] = [
     triggerCondition: (state) => {
       // Show on first load when player has no resources
       const biome = state.biomes.lush_forest;
-      const hasAnyResources = Object.values(biome.resources).some((amount: any) => amount > 0);
+      const hasAnyResources = Object.values(biome.resources).some((amount) => amount > 0);
       return !hasAnyResources;
     },
     priority: 1,
@@ -49,7 +50,7 @@ const HINTS: Hint[] = [
     triggerCondition: (state) => {
       // Show when player has built their first automation
       const totalAutomations = Object.values(state.biomes).reduce(
-        (sum: number, biome: any) => sum + biome.automations.length,
+        (sum: number, biome: BiomeState) => sum + biome.automations.length,
         0
       );
       return totalAutomations >= 1;
@@ -62,7 +63,7 @@ const HINTS: Hint[] = [
     message: 'Send Dr. Redd Pawston III on expeditions to discover new biomes, find power cells, and gather resources! Expeditions require food to begin.',
     triggerCondition: (state) => {
       // Show when player has 10+ food
-      const totalFood = Object.values(state.food).reduce((sum: number, amount: any) => sum + amount, 0);
+      const totalFood = Object.values(state.food).reduce((sum: number, amount) => sum + amount, 0);
       return totalFood >= 10 && state.expeditionCount === 0;
     },
     priority: 4,
@@ -84,7 +85,7 @@ const HINTS: Hint[] = [
     triggerCondition: (state) => {
       // Show when player has 3+ automations
       const totalAutomations = Object.values(state.biomes).reduce(
-        (sum: number, biome: any) => sum + biome.automations.length,
+        (sum: number, biome: BiomeState) => sum + biome.automations.length,
         0
       );
       return totalAutomations >= 3;
@@ -108,7 +109,7 @@ const HINTS: Hint[] = [
     triggerCondition: (state) => {
       // Show when player has played for a while (has 5+ automations)
       const totalAutomations = Object.values(state.biomes).reduce(
-        (sum: number, biome: any) => sum + biome.automations.length,
+        (sum: number, biome: BiomeState) => sum + biome.automations.length,
         0
       );
       return totalAutomations >= 5;

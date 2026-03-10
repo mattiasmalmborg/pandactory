@@ -1,4 +1,4 @@
-import { AchievementId, AchievementCategory, GameState, BiomeId, ResourceId } from '../../types/game.types';
+import { AchievementId, AchievementCategory, GameState, BiomeId, ResourceId, SkillId } from '../../types/game.types';
 import { BIOMES } from './biomes';
 import { RESOURCES } from './resources';
 
@@ -825,15 +825,15 @@ export function checkAchievements(state: GameState): AchievementId[] {
   const skills = state.prestige.unlockedSkills || [];
   check('first_skill', skills.length >= 1);
 
-  const productionBranch = ['prod_1', 'prod_2', 'prod_3', 'prod_4'];
-  const economyBranch = ['econ_1', 'econ_2', 'econ_3', 'econ_4'];
-  const expeditionBranch = ['exp_1', 'exp_2', 'exp_3', 'exp_4'];
-  const powerCellsBranch = ['cell_1', 'cell_2', 'cell_3', 'cell_4'];
+  const productionBranch: SkillId[] = ['prod_1', 'prod_2', 'prod_3', 'prod_4'];
+  const economyBranch: SkillId[] = ['econ_1', 'econ_2', 'econ_3', 'econ_4'];
+  const expeditionBranch: SkillId[] = ['exp_1', 'exp_2', 'exp_3', 'exp_4'];
+  const powerCellsBranch: SkillId[] = ['cell_1', 'cell_2', 'cell_3', 'cell_4'];
 
-  check('production_branch', productionBranch.every(s => skills.includes(s as any)));
-  check('economy_branch', economyBranch.every(s => skills.includes(s as any)));
-  check('expedition_branch', expeditionBranch.every(s => skills.includes(s as any)));
-  check('power_cells_branch', powerCellsBranch.every(s => skills.includes(s as any)));
+  check('production_branch', productionBranch.every(s => skills.includes(s)));
+  check('economy_branch', economyBranch.every(s => skills.includes(s)));
+  check('expedition_branch', expeditionBranch.every(s => skills.includes(s)));
+  check('power_cells_branch', powerCellsBranch.every(s => skills.includes(s)));
   check('all_skills', skills.length >= 16);
 
   // === MILESTONE ACHIEVEMENTS ===

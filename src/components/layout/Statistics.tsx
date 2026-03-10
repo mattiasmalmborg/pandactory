@@ -1,202 +1,143 @@
+import { useMemo, memo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { RESOURCES } from '../../game/config/resources';
 import { FOOD_ITEMS } from '../../game/config/food';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { formatNumber } from '../../utils/formatters';
-import { calculateProductionRate } from '../../utils/calculations';
+import { createProductionContext, getAutomationProductionRate } from '../../utils/calculations';
 import { ResourceId, FoodId } from '../../types/game.types';
 import { SaveManager } from './SaveManager';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 import { calculateBiomeProductionRates } from '../../utils/allocation';
-import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
-import { getMasteryBonus } from '../../game/config/achievements';
 
 export function Statistics() {
   const { state } = useGame();
 
-  // Calculate all resources and production rates across all biomes
-  const allResources: Partial<Record<ResourceId, { amount: number; productionRate: number; isFood: boolean }>> = {};
+  // Memoize expensive resource/production calculations
+  const { resources, foods, totalResourceAmount, totalFoodAmount, builtAutomations, totalAutomationLevels, powerCellStats, prestigeStats } = useMemo(() => {
+    const allResources: Partial<Record<ResourceId, { amount: number; productionRate: number; isFood: boolean }>> = {};
+    const productionContext = createProductionContext(state);
 
-  // Context for production calculations
-  const productionContext = {
-    unlockedSkills: state.prestige.unlockedSkills,
-    unlockedAchievements: state.achievements?.unlocked || [],
-    allBiomes: state.biomes,
-  };
+    state.unlockedBiomes.forEach((biomeId) => {
+      const biome = state.biomes[biomeId];
 
-  // Get skill and mastery bonuses for food production
-  const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
-  const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
-  const totalInstalledCells = countInstalledPowerCells(state.biomes);
-
-  state.unlockedBiomes.forEach((biomeId) => {
-    const biome = state.biomes[biomeId];
-
-    // Add resource amounts (exclude food items - they come from state.food)
-    Object.entries(biome.resources).forEach(([resourceId, amount]) => {
-      const rid = resourceId as ResourceId;
-      // Skip food items from biome.resources
-      if (RESOURCES[rid]?.category === 'food') return;
-
-      if (!allResources[rid]) {
-        allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
-      }
-      allResources[rid]!.amount += amount;
-    });
-
-    // Calculate production rates using the shared calculation function
-    const { production } = calculateBiomeProductionRates(biome, productionContext);
-
-    // Add production rates to allResources
-    Object.entries(production).forEach(([resourceId, rate]) => {
-      const rid = resourceId as ResourceId;
-      if (!allResources[rid]) {
-        allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
-      }
-      allResources[rid]!.productionRate += rate;
-    });
-
-    // Calculate food production rates with all bonuses
-    biome.automations.forEach((automation) => {
-      const config = AUTOMATIONS[automation.type];
-      if (!config || !config.producesFood || automation.paused) return;
-
-      // Calculate effective power cell bonus with skill bonuses
-      const basePowerCellBonus = automation.powerCell?.bonus || 0;
-      const effectivePowerCellBonus = getEffectivePowerCellBonus(
-        basePowerCellBonus,
-        totalInstalledCells,
-        state.prestige.unlockedSkills
-      );
-
-      // Use same production rate calculation as for resources (with all bonuses)
-      const rate = calculateProductionRate(
-        config.baseProductionRate,
-        automation.level,
-        productionSpeedBonus + masteryBonus.productionBonus,
-        effectivePowerCellBonus
-      );
-
-      config.producesFood.forEach((foodProduce) => {
-        const fid = foodProduce.foodId as unknown as ResourceId;
-        if (!allResources[fid]) {
-          allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
+      Object.entries(biome.resources).forEach(([resourceId, amount]) => {
+        const rid = resourceId as ResourceId;
+        if (RESOURCES[rid]?.category === 'food') return;
+        if (!allResources[rid]) {
+          allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
         }
-        allResources[fid]!.productionRate += foodProduce.amount * rate;
+        allResources[rid]!.amount += amount;
+      });
+
+      const { production } = calculateBiomeProductionRates(biome, productionContext);
+      Object.entries(production).forEach(([resourceId, rate]) => {
+        const rid = resourceId as ResourceId;
+        if (!allResources[rid]) {
+          allResources[rid] = { amount: 0, productionRate: 0, isFood: false };
+        }
+        allResources[rid]!.productionRate += rate;
+      });
+
+      biome.automations.forEach((automation) => {
+        const config = AUTOMATIONS[automation.type];
+        if (!config || !config.producesFood || automation.paused) return;
+        const rate = getAutomationProductionRate(automation, productionContext);
+        config.producesFood.forEach((foodProduce) => {
+          const fid = foodProduce.foodId as ResourceId;
+          if (!allResources[fid]) {
+            allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
+          }
+          allResources[fid]!.productionRate += foodProduce.amount * rate;
+        });
       });
     });
-  });
 
-  // Add food items from state.food
-  Object.entries(state.food).forEach(([foodId, amount]) => {
-    const fid = foodId as unknown as ResourceId;
-    if (!allResources[fid]) {
-      allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
-    }
-    allResources[fid]!.amount += amount;
-  });
-
-  // Separate resources and food
-  const resources = Object.entries(allResources)
-    .filter(([resourceId, data]) => {
-      const resource = RESOURCES[resourceId as ResourceId];
-      return resource && resource.category !== 'food' && (Math.floor(data.amount) >= 1 || data.productionRate > 0);
-    })
-    .sort((a, b) => {
-      const resourceA = RESOURCES[a[0] as ResourceId];
-      const resourceB = RESOURCES[b[0] as ResourceId];
-      if (!resourceA || !resourceB) return 0;
-      return resourceA.name.localeCompare(resourceB.name);
+    Object.entries(state.food).forEach(([foodId, amount]) => {
+      const fid = foodId as ResourceId;
+      if (!allResources[fid]) {
+        allResources[fid] = { amount: 0, productionRate: 0, isFood: false };
+      }
+      allResources[fid]!.amount += amount;
     });
 
-  const foods = Object.entries(allResources)
-    .filter(([resourceId, data]) => {
-      const foodItem = FOOD_ITEMS[resourceId as any as FoodId];
-      return foodItem && (Math.floor(data.amount) >= 1 || data.productionRate > 0);
-    })
-    .sort((a, b) => {
-      const foodA = FOOD_ITEMS[a[0] as any as FoodId];
-      const foodB = FOOD_ITEMS[b[0] as any as FoodId];
-      if (!foodA || !foodB) return 0;
-      return foodA.name.localeCompare(foodB.name);
+    const resources = Object.entries(allResources)
+      .filter(([resourceId, data]) => {
+        const resource = RESOURCES[resourceId as ResourceId];
+        return resource && resource.category !== 'food' && (Math.floor(data.amount) >= 1 || data.productionRate > 0);
+      })
+      .sort((a, b) => {
+        const resourceA = RESOURCES[a[0] as ResourceId];
+        const resourceB = RESOURCES[b[0] as ResourceId];
+        if (!resourceA || !resourceB) return 0;
+        return resourceA.name.localeCompare(resourceB.name);
+      });
+
+    const foods = Object.entries(allResources)
+      .filter(([resourceId, data]) => {
+        const foodItem = FOOD_ITEMS[resourceId as FoodId];
+        return foodItem && (Math.floor(data.amount) >= 1 || data.productionRate > 0);
+      })
+      .sort((a, b) => {
+        const foodA = FOOD_ITEMS[a[0] as FoodId];
+        const foodB = FOOD_ITEMS[b[0] as FoodId];
+        if (!foodA || !foodB) return 0;
+        return foodA.name.localeCompare(foodB.name);
+      });
+
+    const totalResourceAmount = Object.values(state.biomes).reduce(
+      (sum, biome) => sum + Object.values(biome.resources).reduce((s, amount) => s + amount, 0),
+      0
+    );
+    const totalFoodAmount = Object.values(state.food).reduce((sum, amount) => sum + amount, 0);
+
+    const builtAutomations = Object.values(state.biomes).reduce(
+      (sum, biome) => sum + biome.automations.length,
+      0
+    );
+    const totalAutomationLevels = Object.values(state.biomes).reduce(
+      (sum, biome) => sum + biome.automations.reduce((s, a) => s + a.level, 0),
+      0
+    );
+
+    const installedCells: { green: number; blue: number; orange: number } = { green: 0, blue: 0, orange: 0 };
+    Object.values(state.biomes).forEach(biome => {
+      biome.automations.forEach(a => {
+        if (a.powerCell?.tier) {
+          installedCells[a.powerCell.tier]++;
+        }
+      });
     });
 
-  // Count total resource and food types (all available in game)
+    const powerCellStats = {
+      inventoryGreen: state.powerCellInventory.filter(pc => pc.tier === 'green').length,
+      inventoryBlue: state.powerCellInventory.filter(pc => pc.tier === 'blue').length,
+      inventoryOrange: state.powerCellInventory.filter(pc => pc.tier === 'orange').length,
+      installedGreen: installedCells.green,
+      installedBlue: installedCells.blue,
+      installedOrange: installedCells.orange,
+      green: state.powerCellInventory.filter(pc => pc.tier === 'green').length + installedCells.green,
+      blue: state.powerCellInventory.filter(pc => pc.tier === 'blue').length + installedCells.blue,
+      orange: state.powerCellInventory.filter(pc => pc.tier === 'orange').length + installedCells.orange,
+      installed: installedCells.green + installedCells.blue + installedCells.orange,
+      inInventory: state.powerCellInventory.length,
+    };
+
+    const prestigeStats = {
+      totalPrestiges: state.prestige.totalPrestiges,
+      cosmicBambooShards: state.prestige.cosmicBambooShards,
+      unlockedSkills: state.prestige.unlockedSkills.length,
+    };
+
+    return { resources, foods, totalResourceAmount, totalFoodAmount, builtAutomations, totalAutomationLevels, powerCellStats, prestigeStats };
+  }, [state]);
+
   const totalResourceTypes = Object.values(RESOURCES).filter(r => r.category !== 'food').length;
   const totalFoodTypes = Object.keys(FOOD_ITEMS).length;
-
-  // Count unlocked types
   const unlockedResourceTypes = resources.length;
   const unlockedFoodTypes = foods.length;
-
-  // Calculate total automations built
-  const builtAutomations = Object.values(state.biomes).reduce(
-    (sum, biome) => sum + biome.automations.length,
-    0
-  );
-
-  // Calculate total available automation types in game
   const totalAutomationTypes = Object.keys(AUTOMATIONS).length;
-
-  // Calculate total automation levels
-  const totalAutomationLevels = Object.values(state.biomes).reduce(
-    (sum, biome) => sum + biome.automations.reduce((s, a) => s + a.level, 0),
-    0
-  );
-
-  // Count resources with at least 1 unit
-  const resourceTypes = new Set<ResourceId>();
-  Object.values(state.biomes).forEach(biome => {
-    Object.entries(biome.resources).forEach(([resourceId, amount]) => {
-      if (amount >= 1) {
-        resourceTypes.add(resourceId as ResourceId);
-      }
-    });
-  });
-
-  // Calculate total resources
-  const totalResourceAmount = Object.values(state.biomes).reduce(
-    (sum, biome) => sum + Object.values(biome.resources).reduce((s, amount) => s + amount, 0),
-    0
-  );
-
-  // Calculate total food
-  const totalFoodAmount = Object.values(state.food).reduce((sum, amount) => sum + amount, 0);
-
-  // Power cell stats - count both inventory and installed cells
-  const installedCells: { green: number; blue: number; orange: number } = { green: 0, blue: 0, orange: 0 };
-  Object.values(state.biomes).forEach(biome => {
-    biome.automations.forEach(a => {
-      if (a.powerCell?.tier) {
-        installedCells[a.powerCell.tier]++;
-      }
-    });
-  });
-
-  const powerCellStats = {
-    // Inventory counts
-    inventoryGreen: state.powerCellInventory.filter(pc => pc.tier === 'green').length,
-    inventoryBlue: state.powerCellInventory.filter(pc => pc.tier === 'blue').length,
-    inventoryOrange: state.powerCellInventory.filter(pc => pc.tier === 'orange').length,
-    // Installed counts
-    installedGreen: installedCells.green,
-    installedBlue: installedCells.blue,
-    installedOrange: installedCells.orange,
-    // Totals (inventory + installed)
-    green: state.powerCellInventory.filter(pc => pc.tier === 'green').length + installedCells.green,
-    blue: state.powerCellInventory.filter(pc => pc.tier === 'blue').length + installedCells.blue,
-    orange: state.powerCellInventory.filter(pc => pc.tier === 'orange').length + installedCells.orange,
-    installed: installedCells.green + installedCells.blue + installedCells.orange,
-    inInventory: state.powerCellInventory.length,
-  };
-
-  // Prestige stats
-  const prestigeStats = {
-    totalPrestiges: state.prestige.totalPrestiges,
-    cosmicBambooShards: state.prestige.cosmicBambooShards,
-    unlockedSkills: state.prestige.unlockedSkills.length,
-  };
 
   const statisticsContent = (
     <div className="p-4 space-y-4 pb-24">
@@ -305,7 +246,7 @@ export function Statistics() {
         {foods.length > 0 ? (
           <div className="bg-gray-900/50 rounded-lg border border-gray-700/30 divide-y divide-gray-700/30">
             {foods.map(([foodId, data]) => {
-              const foodItem = FOOD_ITEMS[foodId as any as FoodId];
+              const foodItem = FOOD_ITEMS[foodId as FoodId];
               const name = foodItem?.name || foodId;
               const icon = foodItem?.icon || "🍽️";
               const description = foodItem?.description || '';
@@ -498,7 +439,7 @@ interface StatCardProps {
   icon: string;
 }
 
-function StatCard({ label, value, max, icon }: StatCardProps) {
+const StatCard = memo(function StatCard({ label, value, max, icon }: StatCardProps) {
   return (
     <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/30">
       <div className="flex items-center gap-2 mb-1">
@@ -513,4 +454,4 @@ function StatCard({ label, value, max, icon }: StatCardProps) {
       </div>
     </div>
   );
-}
+});

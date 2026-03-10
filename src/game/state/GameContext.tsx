@@ -74,14 +74,14 @@ function migrateGameState(state: GameState): GameState {
     'cactus_fruit': 'cactus_juice',
   };
 
-  // Migrate food inventory
-  const migratedFood = { ...migratedState.food };
+  // Migrate food inventory - use Record<string, number> to handle legacy food IDs
+  const migratedFood: Record<string, number> = { ...migratedState.food };
   let foodMigrated = false;
   Object.entries(oldToNewFoodMapping).forEach(([oldId, newId]) => {
-    if ((migratedFood as any)[oldId] !== undefined) {
-      const oldAmount = (migratedFood as any)[oldId];
+    if (migratedFood[oldId] !== undefined) {
+      const oldAmount = migratedFood[oldId];
       migratedFood[newId] = (migratedFood[newId] || 0) + oldAmount;
-      delete (migratedFood as any)[oldId];
+      delete migratedFood[oldId];
       foodMigrated = true;
     }
   });
@@ -89,8 +89,8 @@ function migrateGameState(state: GameState): GameState {
   // Remove deleted food items from inventory
   const deletedFoodIds = ['protein_bars', 'vegetables'];
   deletedFoodIds.forEach(deletedId => {
-    if ((migratedFood as any)[deletedId] !== undefined) {
-      delete (migratedFood as any)[deletedId];
+    if (migratedFood[deletedId] !== undefined) {
+      delete migratedFood[deletedId];
       foodMigrated = true;
     }
   });
@@ -108,12 +108,13 @@ function migrateGameState(state: GameState): GameState {
 
   Object.keys(biomesToClean).forEach(biomeKey => {
     const biome = biomesToClean[biomeKey as BiomeId];
-    const cleanedResources = { ...biome.resources };
+    // Use Record<string, number> to handle legacy resource IDs not in ResourceId type
+    const cleanedResources: Record<string, number> = { ...biome.resources };
     let biomeChanged = false;
 
     deletedResourceIds.forEach(deletedId => {
-      if ((cleanedResources as any)[deletedId] !== undefined) {
-        delete (cleanedResources as any)[deletedId];
+      if (cleanedResources[deletedId] !== undefined) {
+        delete cleanedResources[deletedId];
         biomeChanged = true;
       }
     });
@@ -284,7 +285,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const currentState = state;
     const currentBiomeId = state.player.currentBiome;
 
-    (window as any).resetGame = () => {
+    window.resetGame = () => {
       try {
         // Set flag to prevent auto-save from overwriting
         isResetting = true;
@@ -299,18 +300,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    (window as any).getGameState = () => {
+    window.getGameState = () => {
       return currentState;
     };
 
-    (window as any).addResource = (resourceId: string, amount: number) => {
+    window.addResource = (resourceId: string, amount: number) => {
       currentDispatch({
         type: 'GATHER_RESOURCE',
-        payload: { biomeId: currentBiomeId, resourceId: resourceId as any, amount },
+        payload: { biomeId: currentBiomeId, resourceId: resourceId as ResourceId, amount },
       });
     };
 
-    (window as any).addFood = (foodId: FoodId, amount: number) => {
+    window.addFood = (foodId: FoodId, amount: number) => {
       currentDispatch({
         type: 'GATHER_FOOD',
         payload: { foodId, amount },
@@ -318,10 +319,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
 
     return () => {
-      delete (window as any).resetGame;
-      delete (window as any).getGameState;
-      delete (window as any).addResource;
-      delete (window as any).addFood;
+      delete window.resetGame;
+      delete window.getGameState;
+      delete window.addResource;
+      delete window.addFood;
     };
   }, [state, dispatch]);
 

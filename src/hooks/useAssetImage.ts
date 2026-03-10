@@ -20,8 +20,6 @@ export function useAssetImage(path: string): string | null {
     };
 
     img.onerror = () => {
-      // Image doesn't exist, use fallback
-      console.log(`[Asset] Image not found: ${path}`);
       setImageUrl(null);
       setIsLoading(false);
     };

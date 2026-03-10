@@ -86,7 +86,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
           dispatch({
             type: 'GATHER_RESOURCE',
             payload: {
-              biomeId: bId as any,
+              biomeId: bId as BiomeId,
               resourceId: cost.resourceId,
               amount: -toDeduct,
             },
