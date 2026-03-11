@@ -13,21 +13,12 @@ function formatTimeRemaining(ms: number): string {
   return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
 }
 
-function ActiveResearchBar({
-  activeResearch,
-  onComplete,
-}: {
-  activeResearch: ActiveResearch;
-  onComplete: () => void;
-}) {
+function useResearchTimer(activeResearch: ActiveResearch | null, onComplete: () => void) {
   const [now, setNow] = useState(Date.now());
-  const node = RESEARCH_NODES[activeResearch.researchId];
-  const totalDuration = activeResearch.endTime - activeResearch.startTime;
-  const elapsed = now - activeResearch.startTime;
-  const progress = Math.min(elapsed / totalDuration, 1);
-  const remaining = Math.max(activeResearch.endTime - now, 0);
 
   useEffect(() => {
+    if (!activeResearch) return;
+    const remaining = activeResearch.endTime - Date.now();
     if (remaining <= 0) {
       onComplete();
       return;
@@ -42,28 +33,15 @@ function ActiveResearchBar({
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [activeResearch.endTime, remaining, onComplete]);
+  }, [activeResearch, onComplete]);
 
-  return (
-    <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-500/60 rounded-lg p-3 shadow-[0_0_12px_rgba(168,85,247,0.2)]">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg animate-pulse">{node.icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-purple-300 font-semibold">Researching: {node.name}</p>
-          <p className="text-[10px] text-gray-400">{formatTimeRemaining(remaining)}</p>
-        </div>
-        {progress >= 1 && (
-          <span className="text-[10px] text-green-400 font-bold animate-pulse">READY!</span>
-        )}
-      </div>
-      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-100"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
-    </div>
-  );
+  if (!activeResearch) return { progress: 0, remaining: 0 };
+  const totalDuration = activeResearch.endTime - activeResearch.startTime;
+  const elapsed = now - activeResearch.startTime;
+  return {
+    progress: Math.min(elapsed / totalDuration, 1),
+    remaining: Math.max(activeResearch.endTime - now, 0),
+  };
 }
 
 function ResearchCard({
@@ -71,16 +49,21 @@ function ResearchCard({
   currentLevel,
   researchData,
   isResearching,
-  isThisResearching,
+  activeResearch,
+  timerProgress,
+  timerRemaining,
   onStart,
 }: {
   node: ResearchNode;
   currentLevel: number;
   researchData: number;
   isResearching: boolean;
-  isThisResearching: boolean;
+  activeResearch: ActiveResearch | null;
+  timerProgress: number;
+  timerRemaining: number;
   onStart: (id: ResearchId, cost: number) => void;
 }) {
+  const isThisResearching = activeResearch?.researchId === node.id;
   const cost = getResearchCost(node.id, currentLevel);
   const isMaxed = cost === null;
   const canAfford = cost !== null && researchData >= cost;
@@ -94,7 +77,7 @@ function ResearchCard({
         isMaxed
           ? 'bg-purple-900/20 border-purple-600/30'
           : isThisResearching
-          ? 'bg-purple-900/30 border-purple-500/60'
+          ? 'bg-purple-900/30 border-purple-500/60 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
           : canAfford
           ? 'bg-gray-900/60 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.15)]'
           : 'bg-gray-900/60 border-gray-700/40'
@@ -103,69 +86,82 @@ function ResearchCard({
       <div className="flex items-start gap-3">
         <span className={`text-2xl mt-0.5 ${isThisResearching ? 'animate-pulse' : ''}`}>{node.icon}</span>
         <div className="flex-1 min-w-0">
+          {/* Title row: name + level badge + current bonus */}
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-sm font-semibold text-white truncate">{node.name}</h4>
-            <span
-              className={`text-[10px] font-mono whitespace-nowrap px-1.5 py-0.5 rounded ${
-                isMaxed ? 'bg-purple-900/50 text-purple-300' : 'bg-gray-800 text-gray-400'
-              }`}
-            >
-              {currentLevel}/{node.maxLevel}
-            </span>
+            <div className="flex items-center gap-1.5">
+              {currentLevel > 0 && (
+                <span className="text-[10px] text-green-400 font-semibold whitespace-nowrap">
+                  +{Math.round(currentBonus * 100)}%
+                </span>
+              )}
+              <span
+                className={`text-[10px] font-bold whitespace-nowrap px-1.5 py-0.5 rounded ${
+                  isMaxed
+                    ? 'bg-purple-600/40 text-purple-200'
+                    : currentLevel > 0
+                    ? 'bg-purple-900/60 text-purple-300 border border-purple-500/30'
+                    : 'bg-gray-800 text-gray-400'
+                }`}
+              >
+                {currentLevel}/{node.maxLevel}
+              </span>
+            </div>
           </div>
 
           <p className="text-[11px] text-gray-300 mt-0.5">{node.description}</p>
 
-          {/* Current bonus */}
-          {currentLevel > 0 && (
-            <p className="text-[10px] text-green-400 mt-1">
-              Current: +{Math.round(currentBonus * 100)}%
-            </p>
-          )}
-
-          {/* Level progress bar */}
-          <div className="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-purple-500 rounded-full transition-all duration-500"
-              style={{ width: `${(currentLevel / node.maxLevel) * 100}%` }}
-            />
-          </div>
-
           {/* Flavor text */}
-          <p className="text-[10px] text-gray-400 italic mt-1.5 leading-relaxed">
+          <p className="text-[10px] text-gray-400 italic mt-1 leading-relaxed">
             {node.flavorText}
           </p>
 
-          {/* Purchase button */}
-          <div className="mt-2 flex items-center justify-between">
-            {isMaxed ? (
-              <span className="text-[10px] text-purple-400 font-semibold">MAX LEVEL</span>
-            ) : isThisResearching ? (
-              <span className="text-[10px] text-purple-300 italic">In progress...</span>
-            ) : (
-              <>
-                <div>
-                  <span className="text-[10px] text-gray-400">
-                    Cost: <span className={canAfford ? 'text-purple-300' : 'text-red-400'}>{formatNumber(cost)}</span> 🔬
-                  </span>
-                  <span className="text-[10px] text-gray-500 ml-2">
-                    {formatTimeRemaining(duration)}
-                  </span>
-                </div>
-                <button
-                  onClick={() => onStart(node.id, cost)}
-                  disabled={!canStart}
-                  className={`text-[11px] font-bold px-3 py-1 rounded transition-colors ${
-                    canStart
-                      ? 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
-                      : 'bg-gray-800/50 text-gray-600 border border-gray-700/30 cursor-not-allowed'
-                  }`}
-                >
-                  {isResearching && !isThisResearching ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
-                </button>
-              </>
-            )}
-          </div>
+          {/* Active research progress bar (inline on this card) */}
+          {isThisResearching && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-purple-300 font-semibold">Researching...</span>
+                <span className="text-[10px] text-gray-400">{formatTimeRemaining(timerRemaining)}</span>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-100"
+                  style={{ width: `${timerProgress * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Action row */}
+          {!isThisResearching && (
+            <div className="mt-2 flex items-center justify-between">
+              {isMaxed ? (
+                <span className="text-[10px] text-purple-400 font-semibold">✓ MAX LEVEL</span>
+              ) : (
+                <>
+                  <div>
+                    <span className="text-[10px] text-gray-400">
+                      <span className={canAfford ? 'text-purple-300' : 'text-red-400'}>{formatNumber(cost)}</span> 🔬
+                    </span>
+                    <span className="text-[10px] text-gray-500 ml-2">
+                      ⏱ {formatTimeRemaining(duration)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => onStart(node.id, cost)}
+                    disabled={!canStart}
+                    className={`text-[11px] font-bold px-3 py-1 rounded transition-colors ${
+                      canStart
+                        ? 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
+                        : 'bg-gray-800/50 text-gray-600 border border-gray-700/30 cursor-not-allowed'
+                    }`}
+                  >
+                    {isResearching ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -178,6 +174,12 @@ export function PandaLab() {
   const levels = state.research.levels;
   const activeResearch = state.research.activeResearch;
 
+  const handleComplete = useCallback(() => {
+    if (activeResearch) {
+      dispatch({ type: 'COMPLETE_RESEARCH', payload: { researchId: activeResearch.researchId } });
+    }
+  }, [dispatch, activeResearch]);
+
   const handleStart = useCallback((researchId: ResearchId, cost: number) => {
     const currentLevel = levels[researchId] || 0;
     const duration = getResearchDuration(currentLevel);
@@ -188,11 +190,8 @@ export function PandaLab() {
     });
   }, [dispatch, levels]);
 
-  const handleComplete = useCallback(() => {
-    if (activeResearch) {
-      dispatch({ type: 'COMPLETE_RESEARCH', payload: { researchId: activeResearch.researchId } });
-    }
-  }, [dispatch, activeResearch]);
+  // Shared timer state — ticks in one place, passed to the active card
+  const { progress: timerProgress, remaining: timerRemaining } = useResearchTimer(activeResearch, handleComplete);
 
   // Auto-complete research if we load with an already-finished timer
   useEffect(() => {
@@ -270,50 +269,38 @@ export function PandaLab() {
         </p>
       </div>
 
-      {/* Research Data balance + progress */}
-      <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3">
+      {/* Combined: Research Data + Progress + Active Bonuses */}
+      <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-purple-400">🔬</span>
             <div>
-              <p className="text-xs text-gray-400">Research Data</p>
+              <p className="text-[10px] text-gray-500">Research Data</p>
               <p className="text-lg font-bold text-purple-300">{formatNumber(researchData)}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-500">Research Progress</p>
-            <p className="text-xs text-gray-300">
-              {totalResearched}/{totalMaxLevels} levels
+            <p className="text-[10px] text-gray-500">Progress</p>
+            <p className="text-sm font-bold text-gray-300">
+              {totalResearched}<span className="text-gray-500 font-normal">/{totalMaxLevels}</span>
             </p>
           </div>
         </div>
-        <p className="text-[10px] text-gray-500 mt-1.5">
-          Earn Research Data from Dr. Redd's Chore List
-        </p>
-      </div>
 
-      {/* Active research timer */}
-      {activeResearch && (
-        <ActiveResearchBar
-          activeResearch={activeResearch}
-          onComplete={handleComplete}
-        />
-      )}
-
-      {/* Active bonuses summary (if any) */}
-      {activeBonuses.length > 0 && (
-        <div className="bg-gray-900/60 backdrop-blur-sm border border-green-700/30 rounded-lg p-2.5">
-          <p className="text-[10px] text-green-400 font-semibold mb-1.5">Active Research Bonuses</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-            {activeBonuses.map(b => (
-              <div key={b.label} className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 truncate">{b.label}</span>
-                <span className="text-[10px] text-green-300 font-mono ml-1">{b.value}</span>
-              </div>
-            ))}
+        {/* Active bonuses inline */}
+        {activeBonuses.length > 0 && (
+          <div className="border-t border-gray-700/40 pt-2">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+              {activeBonuses.map(b => (
+                <div key={b.label} className="flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400 truncate">{b.label}</span>
+                  <span className="text-[10px] text-green-400 font-mono ml-1">{b.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Research categories */}
       {categories.map(cat => (
@@ -329,7 +316,9 @@ export function PandaLab() {
               currentLevel={levels[node.id] || 0}
               researchData={researchData}
               isResearching={activeResearch !== null}
-              isThisResearching={activeResearch?.researchId === node.id}
+              activeResearch={activeResearch}
+              timerProgress={timerProgress}
+              timerRemaining={timerRemaining}
               onStart={handleStart}
             />
           ))}
