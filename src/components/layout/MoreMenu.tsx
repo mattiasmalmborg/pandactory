@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 
-export type MoreViewType = 'skills' | 'achievements' | 'statistics' | 'trophy_room';
+export type MoreViewType = 'skills' | 'achievements' | 'statistics';
 
 interface MoreMenuProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
   const hasUnspentShards = state.prestige.cosmicBambooShards > 0;
   const hasPendingAchievements = (state.achievements?.pending?.length || 0) > 0;
   const totalAchievements = state.achievements?.unlocked?.length || 0;
+  const artifactsFound = state.artifacts?.totalFound || 0;
 
   const handleClose = () => {
     setClosing(true);
@@ -45,10 +46,17 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
         className={`absolute bottom-0 left-0 right-0 ${closing ? 'animate-menu-slide-down' : 'animate-menu-slide-up'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="max-w-md mx-auto bg-gray-900/95 backdrop-blur-md border-t border-gray-700/50 rounded-t-2xl pb-24">
-          {/* Handle bar */}
-          <div className="flex justify-center pt-3 pb-2">
+        <div className="max-w-md mx-auto bg-gray-900/95 backdrop-blur-md border-t border-gray-700/50 rounded-t-2xl pb-6">
+          {/* Handle bar + Close button */}
+          <div className="relative flex justify-center pt-3 pb-2">
             <div className="w-10 h-1 bg-gray-600 rounded-full" />
+            <button
+              onClick={handleClose}
+              className="absolute right-4 top-2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors text-lg"
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="px-4 pb-4 space-y-1">
@@ -71,35 +79,21 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
               )}
             </button>
 
-            {/* Achievements */}
+            {/* Achievements & Trophy Room (combined) */}
             <button
               onClick={() => handleNavigate('achievements')}
               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors text-left"
             >
               <span className="text-xl">🏆</span>
               <div className="flex-1">
-                <span className="text-white font-medium">Achievements</span>
+                <span className="text-white font-medium">Collection</span>
                 <span className="ml-2 text-xs text-gray-400">
-                  {totalAchievements} unlocked
+                  {totalAchievements} achievements · {artifactsFound} artifacts
                 </span>
               </div>
               {hasPendingAchievements && (
                 <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
               )}
-            </button>
-
-            {/* Trophy Room */}
-            <button
-              onClick={() => handleNavigate('trophy_room')}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors text-left"
-            >
-              <span className="text-xl">🏆</span>
-              <div className="flex-1">
-                <span className="text-white font-medium">Trophy Room</span>
-                <span className="ml-2 text-xs text-gray-400">
-                  {state.artifacts?.totalFound || 0} found
-                </span>
-              </div>
             </button>
 
             {/* Statistics */}

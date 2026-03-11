@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES, getAchievementsByCategory, getTotalAchievementCount } from '../../game/config/achievements';
 import { AchievementCategory, AchievementId } from '../../types/game.types';
 import { BackgroundWrapper } from '../layout/BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
+import { TrophyRoom } from '../artifacts/TrophyRoom';
+
+type CollectionTab = 'achievements' | 'trophy_room';
 
 interface AchievementCardProps {
   id: AchievementId;
@@ -88,12 +92,11 @@ function CategorySection({ category, unlockedAchievements }: CategorySectionProp
   );
 }
 
-export function Achievements() {
+function AchievementsContent() {
   const { state } = useGame();
   const unlockedAchievements = state.achievements?.unlocked || [];
   const hasPrestiged = state.prestige.totalPrestiges >= 1;
 
-  // Hide crashes category entirely before first prestige
   const visibleCategories: AchievementCategory[] = [
     'gathering',
     'automation',
@@ -106,14 +109,13 @@ export function Achievements() {
     'secret',
   ];
 
-  // Calculate total achievements excluding hidden crashes if not prestiged
   const crashesAchievementCount = getAchievementsByCategory('crashes').length;
   const totalAchievements = getTotalAchievementCount() - (hasPrestiged ? 0 : crashesAchievementCount);
   const unlockedCount = unlockedAchievements.length;
   const progressPercent = Math.round((unlockedCount / totalAchievements) * 100);
 
-  const achievementsContent = (
-    <div className="p-4 pb-24 space-y-4">
+  return (
+    <div className="space-y-4">
       {/* Header */}
       <div className="bg-gradient-to-br from-yellow-900/50 to-amber-900/50 backdrop-blur-sm rounded-lg border border-yellow-500/50 p-4">
         <div className="flex items-center justify-between mb-2">
@@ -124,7 +126,6 @@ export function Achievements() {
             {unlockedCount}/{totalAchievements}
           </span>
         </div>
-        {/* Progress bar */}
         <div className="relative h-3 bg-gray-700/50 rounded-full overflow-hidden">
           <div
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-500"
@@ -136,7 +137,6 @@ export function Achievements() {
         </p>
       </div>
 
-      {/* Categories */}
       {visibleCategories.map(category => (
         <CategorySection
           key={category}
@@ -146,6 +146,10 @@ export function Achievements() {
       ))}
     </div>
   );
+}
+
+export function Achievements() {
+  const [activeTab, setActiveTab] = useState<CollectionTab>('achievements');
 
   return (
     <BackgroundWrapper
@@ -153,7 +157,35 @@ export function Achievements() {
       fallbackGradient={getFallbackGradient('skills_stats')}
       overlayOpacity={50}
     >
-      {achievementsContent}
+      <div className="p-4 pb-24 space-y-4">
+        {/* Tab bar */}
+        <div className="flex bg-gray-900/80 rounded-lg border border-gray-700/50 p-1 gap-1">
+          <button
+            onClick={() => setActiveTab('achievements')}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+              activeTab === 'achievements'
+                ? 'bg-amber-600/80 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            🏆 Achievements
+          </button>
+          <button
+            onClick={() => setActiveTab('trophy_room')}
+            className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+              activeTab === 'trophy_room'
+                ? 'bg-amber-600/80 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            🏺 Trophy Room
+          </button>
+        </div>
+
+        {/* Tab content */}
+        {activeTab === 'achievements' && <AchievementsContent />}
+        {activeTab === 'trophy_room' && <TrophyRoom />}
+      </div>
     </BackgroundWrapper>
   );
 }

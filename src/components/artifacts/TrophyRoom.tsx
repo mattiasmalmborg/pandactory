@@ -25,11 +25,10 @@ export function TrophyRoom() {
   }, []);
 
   return (
-    <div className="p-4 pt-0 pb-24 space-y-3">
+    <div className="space-y-3">
       {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-lg font-bold text-white">🏆 Trophy Room</h1>
-        <p className="text-[11px] text-gray-400 mt-0.5">
+      <div className="text-center">
+        <p className="text-[11px] text-gray-400 italic">
           "Every artifact tells a story. Most of them are about me." — Dr. Redd
         </p>
       </div>
