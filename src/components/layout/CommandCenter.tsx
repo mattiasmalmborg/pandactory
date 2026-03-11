@@ -100,9 +100,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
     return steps.slice(0, 3); // Max 3 steps
   }, [state]);
 
-  // Lab status
-  const labUnlocked = state.prestige.totalPrestiges > 0;
-
   return (
     <div className="p-4 pt-0 space-y-3 pb-24">
       {/* Compact Header */}
@@ -174,23 +171,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
             <div className="flex-1">
               <p className="text-xs text-blue-300 font-medium">Expedition in progress</p>
               <p className="text-[10px] text-gray-400">Tap to view details</p>
-            </div>
-            <span className="text-gray-600 text-xs">›</span>
-          </div>
-        </div>
-      )}
-
-      {/* Lab status (only if unlocked) */}
-      {labUnlocked && (
-        <div
-          className="bg-gray-900/70 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3 cursor-pointer hover:bg-gray-800/70 transition-colors"
-          onClick={() => onNavigate('lab')}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-purple-400">🔬</span>
-            <div className="flex-1">
-              <p className="text-xs text-purple-300 font-medium">Dr. Redd's Lab</p>
-              <p className="text-[10px] text-gray-400">Research and experiments await</p>
             </div>
             <span className="text-gray-600 text-xs">›</span>
           </div>

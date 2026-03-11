@@ -125,7 +125,19 @@ export const RESEARCH_NODES: Record<ResearchId, ResearchNode> = {
 
 export const INITIAL_RESEARCH_STATE: ResearchState = {
   levels: {},
+  activeResearch: null,
 };
+
+/**
+ * Get research duration in milliseconds.
+ * Starts at 5 seconds for level 0→1, scales up with level.
+ * Formula: baseDuration * (1 + level * 0.6)
+ * Level 0→1: 5s, Level 4→5: 17s, Level 9→10: 32s, Level 14→15: 47s
+ */
+export function getResearchDuration(currentLevel: number): number {
+  const baseDurationMs = 5000;
+  return Math.ceil(baseDurationMs * (1 + currentLevel * 0.6));
+}
 
 /**
  * Get the cost to upgrade a research node to the next level.

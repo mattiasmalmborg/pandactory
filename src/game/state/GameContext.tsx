@@ -249,6 +249,17 @@ function migrateGameState(state: GameState): GameState {
     };
   }
 
+  // Migrate activeResearch field (added for research timers)
+  if (migratedState.research && migratedState.research.activeResearch === undefined) {
+    migratedState = {
+      ...migratedState,
+      research: {
+        ...migratedState.research,
+        activeResearch: null,
+      },
+    };
+  }
+
   return migratedState;
 }
 

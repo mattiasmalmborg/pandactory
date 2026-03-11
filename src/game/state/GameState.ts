@@ -772,9 +772,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'PURCHASE_RESEARCH': {
-      const { researchId, cost } = action.payload;
-      const currentLevel = state.research.levels[researchId] || 0;
+    case 'START_RESEARCH': {
+      const { researchId, cost, startTime, endTime } = action.payload;
 
       return {
         ...state,
@@ -784,10 +783,35 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         research: {
           ...state.research,
+          activeResearch: { researchId, startTime, endTime },
+        },
+      };
+    }
+
+    case 'COMPLETE_RESEARCH': {
+      const { researchId } = action.payload;
+      const currentLevel = state.research.levels[researchId] || 0;
+
+      return {
+        ...state,
+        research: {
+          ...state.research,
           levels: {
             ...state.research.levels,
             [researchId]: currentLevel + 1,
           },
+          activeResearch: null,
+        },
+      };
+    }
+
+    case 'CANCEL_RESEARCH': {
+      // Refund is not given — research data was already spent
+      return {
+        ...state,
+        research: {
+          ...state.research,
+          activeResearch: null,
         },
       };
     }

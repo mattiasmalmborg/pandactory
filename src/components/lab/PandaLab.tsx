@@ -1,37 +1,107 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../game/state/GameContext';
-import { RESEARCH_NODES, getResearchCost, getResearchBonus } from '../../game/config/research';
-import { ResearchId, ResearchNode } from '../../types/game.types';
+import { RESEARCH_NODES, getResearchCost, getResearchBonus, getResearchDuration } from '../../game/config/research';
+import { ResearchId, ResearchNode, ActiveResearch } from '../../types/game.types';
 import { formatNumber } from '../../utils/formatters';
+
+function formatTimeRemaining(ms: number): string {
+  if (ms <= 0) return 'Done!';
+  const totalSeconds = Math.ceil(ms / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+}
+
+function ActiveResearchBar({
+  activeResearch,
+  onComplete,
+}: {
+  activeResearch: ActiveResearch;
+  onComplete: () => void;
+}) {
+  const [now, setNow] = useState(Date.now());
+  const node = RESEARCH_NODES[activeResearch.researchId];
+  const totalDuration = activeResearch.endTime - activeResearch.startTime;
+  const elapsed = now - activeResearch.startTime;
+  const progress = Math.min(elapsed / totalDuration, 1);
+  const remaining = Math.max(activeResearch.endTime - now, 0);
+
+  useEffect(() => {
+    if (remaining <= 0) {
+      onComplete();
+      return;
+    }
+    const interval = setInterval(() => {
+      const currentTime = Date.now();
+      if (currentTime >= activeResearch.endTime) {
+        onComplete();
+        clearInterval(interval);
+      } else {
+        setNow(currentTime);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [activeResearch.endTime, remaining, onComplete]);
+
+  return (
+    <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-500/60 rounded-lg p-3 shadow-[0_0_12px_rgba(168,85,247,0.2)]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg animate-pulse">{node.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-purple-300 font-semibold">Researching: {node.name}</p>
+          <p className="text-[10px] text-gray-400">{formatTimeRemaining(remaining)}</p>
+        </div>
+        {progress >= 1 && (
+          <span className="text-[10px] text-green-400 font-bold animate-pulse">READY!</span>
+        )}
+      </div>
+      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-100"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 function ResearchCard({
   node,
   currentLevel,
   researchData,
-  onPurchase,
+  isResearching,
+  isThisResearching,
+  onStart,
 }: {
   node: ResearchNode;
   currentLevel: number;
   researchData: number;
-  onPurchase: (id: ResearchId, cost: number) => void;
+  isResearching: boolean;
+  isThisResearching: boolean;
+  onStart: (id: ResearchId, cost: number) => void;
 }) {
   const cost = getResearchCost(node.id, currentLevel);
   const isMaxed = cost === null;
   const canAfford = cost !== null && researchData >= cost;
+  const canStart = canAfford && !isResearching;
   const currentBonus = node.bonusPerLevel * currentLevel;
+  const duration = getResearchDuration(currentLevel);
 
   return (
     <div
       className={`rounded-lg border p-3 transition-all ${
         isMaxed
           ? 'bg-purple-900/20 border-purple-600/30'
+          : isThisResearching
+          ? 'bg-purple-900/30 border-purple-500/60'
           : canAfford
           ? 'bg-gray-900/60 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.15)]'
           : 'bg-gray-900/60 border-gray-700/40'
       }`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl mt-0.5">{node.icon}</span>
+        <span className={`text-2xl mt-0.5 ${isThisResearching ? 'animate-pulse' : ''}`}>{node.icon}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-sm font-semibold text-white truncate">{node.name}</h4>
@@ -62,7 +132,7 @@ function ResearchCard({
           </div>
 
           {/* Flavor text */}
-          <p className="text-[10px] text-gray-500 italic mt-1.5 leading-relaxed">
+          <p className="text-[10px] text-gray-400 italic mt-1.5 leading-relaxed">
             {node.flavorText}
           </p>
 
@@ -70,21 +140,28 @@ function ResearchCard({
           <div className="mt-2 flex items-center justify-between">
             {isMaxed ? (
               <span className="text-[10px] text-purple-400 font-semibold">MAX LEVEL</span>
+            ) : isThisResearching ? (
+              <span className="text-[10px] text-purple-300 italic">In progress...</span>
             ) : (
               <>
-                <span className="text-[10px] text-gray-400">
-                  Cost: <span className={canAfford ? 'text-purple-300' : 'text-red-400'}>{formatNumber(cost)}</span> 🔬
-                </span>
+                <div>
+                  <span className="text-[10px] text-gray-400">
+                    Cost: <span className={canAfford ? 'text-purple-300' : 'text-red-400'}>{formatNumber(cost)}</span> 🔬
+                  </span>
+                  <span className="text-[10px] text-gray-500 ml-2">
+                    {formatTimeRemaining(duration)}
+                  </span>
+                </div>
                 <button
-                  onClick={() => onPurchase(node.id, cost)}
-                  disabled={!canAfford}
+                  onClick={() => onStart(node.id, cost)}
+                  disabled={!canStart}
                   className={`text-[11px] font-bold px-3 py-1 rounded transition-colors ${
-                    canAfford
+                    canStart
                       ? 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
                       : 'bg-gray-800/50 text-gray-600 border border-gray-700/30 cursor-not-allowed'
                   }`}
                 >
-                  {currentLevel === 0 ? 'Research' : 'Upgrade'}
+                  {isResearching && !isThisResearching ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
                 </button>
               </>
             )}
@@ -99,10 +176,30 @@ export function PandaLab() {
   const { state, dispatch } = useGame();
   const researchData = state.contracts.researchData;
   const levels = state.research.levels;
+  const activeResearch = state.research.activeResearch;
 
-  const handlePurchase = (researchId: ResearchId, cost: number) => {
-    dispatch({ type: 'PURCHASE_RESEARCH', payload: { researchId, cost } });
-  };
+  const handleStart = useCallback((researchId: ResearchId, cost: number) => {
+    const currentLevel = levels[researchId] || 0;
+    const duration = getResearchDuration(currentLevel);
+    const now = Date.now();
+    dispatch({
+      type: 'START_RESEARCH',
+      payload: { researchId, cost, startTime: now, endTime: now + duration },
+    });
+  }, [dispatch, levels]);
+
+  const handleComplete = useCallback(() => {
+    if (activeResearch) {
+      dispatch({ type: 'COMPLETE_RESEARCH', payload: { researchId: activeResearch.researchId } });
+    }
+  }, [dispatch, activeResearch]);
+
+  // Auto-complete research if we load with an already-finished timer
+  useEffect(() => {
+    if (activeResearch && Date.now() >= activeResearch.endTime) {
+      handleComplete();
+    }
+  }, [activeResearch, handleComplete]);
 
   // Group research into categories for display
   const categories = useMemo(() => {
@@ -195,6 +292,14 @@ export function PandaLab() {
         </p>
       </div>
 
+      {/* Active research timer */}
+      {activeResearch && (
+        <ActiveResearchBar
+          activeResearch={activeResearch}
+          onComplete={handleComplete}
+        />
+      )}
+
       {/* Active bonuses summary (if any) */}
       {activeBonuses.length > 0 && (
         <div className="bg-gray-900/60 backdrop-blur-sm border border-green-700/30 rounded-lg p-2.5">
@@ -223,7 +328,9 @@ export function PandaLab() {
               node={node}
               currentLevel={levels[node.id] || 0}
               researchData={researchData}
-              onPurchase={handlePurchase}
+              isResearching={activeResearch !== null}
+              isThisResearching={activeResearch?.researchId === node.id}
+              onStart={handleStart}
             />
           ))}
         </div>

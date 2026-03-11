@@ -261,8 +261,15 @@ export interface ResearchNode {
     | 'food_waste' | 'power_cell' | 'spaceship';
 }
 
+export interface ActiveResearch {
+  researchId: ResearchId;
+  startTime: number;   // Date.now() when research started
+  endTime: number;     // Date.now() when research completes
+}
+
 export interface ResearchState {
   levels: Partial<Record<ResearchId, number>>;  // Current level of each research
+  activeResearch: ActiveResearch | null;         // Currently researching
 }
 
 // === Contracts (Daily/Weekly Quests) ===
@@ -338,4 +345,6 @@ export type GameAction =
   | { type: 'RESET_GAME' }
   | { type: 'UPDATE_CONTRACTS'; payload: { contracts: ContractState } }
   | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } }
-  | { type: 'PURCHASE_RESEARCH'; payload: { researchId: ResearchId; cost: number } };
+  | { type: 'START_RESEARCH'; payload: { researchId: ResearchId; cost: number; startTime: number; endTime: number } }
+  | { type: 'COMPLETE_RESEARCH'; payload: { researchId: ResearchId } }
+  | { type: 'CANCEL_RESEARCH' };
