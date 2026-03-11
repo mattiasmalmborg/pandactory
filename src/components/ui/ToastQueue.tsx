@@ -43,44 +43,46 @@ const COLOR_SCHEMES = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [queue, setQueue] = useState<ToastItem[]>([]);
   const [current, setCurrent] = useState<ToastItem | null>(null);
   const [visible, setVisible] = useState(false);
+  const queueRef = useRef<ToastItem[]>([]);
   const showingRef = useRef(false);
-  const [tick, setTick] = useState(0);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const enqueue = useCallback((toast: ToastItem) => {
-    setQueue(prev => [...prev, toast]);
-  }, []);
+  const processNext = useCallback(() => {
+    if (showingRef.current || queueRef.current.length === 0) return;
 
-  // Process queue: show one toast at a time
-  useEffect(() => {
-    if (showingRef.current || queue.length === 0) return;
-
-    const next = queue[0];
+    const next = queueRef.current.shift()!;
     showingRef.current = true;
     setCurrent(next);
-    setQueue(prev => prev.slice(1));
 
-    // Show
+    // Show (next frame so CSS transition triggers)
     requestAnimationFrame(() => setVisible(true));
 
     // Hide after 3s
-    const hideTimer = setTimeout(() => setVisible(false), 3000);
+    hideTimerRef.current = setTimeout(() => setVisible(false), 3000);
 
-    // Remove after fade-out animation, then tick to re-trigger for next in queue
-    const removeTimer = setTimeout(() => {
+    // Remove after fade-out, then process next
+    removeTimerRef.current = setTimeout(() => {
       setCurrent(null);
       showingRef.current = false;
-      setTick(t => t + 1);
+      processNext();
     }, 3500);
+  }, []);
 
+  const enqueue = useCallback((toast: ToastItem) => {
+    queueRef.current.push(toast);
+    processNext();
+  }, [processNext]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
-      clearTimeout(hideTimer);
-      clearTimeout(removeTimer);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, tick]);
+  }, []);
 
   const scheme = current ? COLOR_SCHEMES[current.colorScheme] : null;
 
