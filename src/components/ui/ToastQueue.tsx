@@ -47,6 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [current, setCurrent] = useState<ToastItem | null>(null);
   const [visible, setVisible] = useState(false);
   const showingRef = useRef(false);
+  const [tick, setTick] = useState(0);
 
   const enqueue = useCallback((toast: ToastItem) => {
     setQueue(prev => [...prev, toast]);
@@ -67,10 +68,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     // Hide after 3s
     const hideTimer = setTimeout(() => setVisible(false), 3000);
 
-    // Remove after fade-out animation
+    // Remove after fade-out animation, then tick to re-trigger for next in queue
     const removeTimer = setTimeout(() => {
       setCurrent(null);
       showingRef.current = false;
+      setTick(t => t + 1);
     }, 3500);
 
     return () => {
@@ -78,7 +80,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       clearTimeout(removeTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue]);
+  }, [queue, tick]);
 
   const scheme = current ? COLOR_SCHEMES[current.colorScheme] : null;
 
