@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { SpaceshipGoal } from './SpaceshipGoal';
 import { ASSET_CONFIG } from '../../config/assets';
@@ -65,40 +64,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
     ? CRASH_DESCRIPTIONS[crashNumber]
     : CRASH_DESCRIPTIONS[CRASH_DESCRIPTIONS.length - 1];
 
-  // Calculate next steps
-  const nextSteps = useMemo(() => {
-    const steps: Array<{ text: string; action?: string; view?: string }> = [];
-
-    // Unspent shards
-    if (state.prestige.cosmicBambooShards > 0) {
-      steps.push({
-        text: `${state.prestige.cosmicBambooShards} unspent Bamboo Shards`,
-        action: 'Spend in Skill Tree',
-        view: 'skills',
-      });
-    }
-
-    // Check if enough food for an expedition (rough check: 500 is cheapest tier)
-    const totalFood = Object.values(state.food).reduce((sum, amount) => sum + amount, 0);
-    if (totalFood >= 500 && state.panda.status === 'home') {
-      steps.push({
-        text: 'Enough food for an expedition!',
-        action: 'Go explore',
-        view: 'expedition',
-      });
-    }
-
-    // New biomes available
-    if (state.unlockedBiomes.length < 6 && state.panda.status === 'home') {
-      steps.push({
-        text: `${state.unlockedBiomes.length}/6 biomes discovered`,
-        action: 'Send expeditions to find more',
-        view: 'expedition',
-      });
-    }
-
-    return steps.slice(0, 3); // Max 3 steps
-  }, [state]);
 
   return (
     <div className="p-4 pt-0 space-y-3 pb-24">
@@ -133,32 +98,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
       {/* Dr. Redd's Chore List */}
       <ChoresList />
 
-      {/* Next Steps */}
-      {nextSteps.length > 0 && (
-        <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-700/40 rounded-lg p-3 space-y-2">
-          <p className="text-xs text-gray-400 font-semibold">💡 Recommended</p>
-          {nextSteps.map((step, i) => (
-            <button
-              key={i}
-              onClick={() => step.view && onNavigate(step.view)}
-              className={`w-full flex items-center gap-2 text-left rounded p-1.5 transition-colors ${
-                step.view ? 'hover:bg-gray-800/50 cursor-pointer' : 'cursor-default'
-              }`}
-            >
-              <span className="text-gray-500 text-xs">•</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-200 truncate">{step.text}</p>
-                {step.action && (
-                  <p className="text-[10px] text-panda-orange">{step.action} →</p>
-                )}
-              </div>
-              {step.view && (
-                <span className="text-gray-600 text-xs">›</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Active Timers */}
       {state.panda.status === 'expedition' && state.panda.expedition && (

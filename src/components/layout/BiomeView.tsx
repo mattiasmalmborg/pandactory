@@ -196,26 +196,38 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
 
   // Biome progress stats
   const biomeStats = useMemo(() => {
-    // Total possible resources: primary + discoverable + unique produced by automations
+    // Total possible resources: primary + discoverable + automation-produced (both resources and food)
     const allResourceIds = new Set<string>([
       ...(biomeConfig.primaryResources || []),
       ...(biomeConfig.discoverableResources || []),
     ]);
-    // Add resources produced by this biome's automations
+    const foodIds = new Set<string>();
     for (const autoType of biomeConfig.availableAutomations) {
       const autoConfig = AUTOMATIONS[autoType];
       if (!autoConfig) continue;
       for (const p of autoConfig.produces) {
         allResourceIds.add(p.resourceId);
       }
+      if (autoConfig.producesFood) {
+        for (const f of autoConfig.producesFood) {
+          allResourceIds.add(f.foodId);
+          foodIds.add(f.foodId);
+        }
+      }
+    }
+    // Primary food resources (e.g. berries) are also food
+    for (const resId of biomeConfig.primaryResources) {
+      if (resId in state.food) foodIds.add(resId);
     }
     const totalResources = allResourceIds.size;
 
-    // Discovered: count resources the player actually has > 0 in this biome
+    // Discovered: check biome.resources for regular resources, state.food for food items
     let discoveredCount = 0;
     for (const resId of allResourceIds) {
-      if ((biome.resources[resId as ResourceId] || 0) >= 1) {
-        discoveredCount++;
+      if (foodIds.has(resId)) {
+        if ((state.food[resId as FoodId] || 0) >= 1) discoveredCount++;
+      } else {
+        if ((biome.resources[resId as ResourceId] || 0) >= 1) discoveredCount++;
       }
     }
 
@@ -225,7 +237,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     const builtCount = builtAutomationTypes.size;
 
     return { discoveredCount, totalResources, builtCount, totalAutomations };
-  }, [biome.resources, biome.automations, biomeConfig]);
+  }, [biome.resources, biome.automations, biomeConfig, state.food]);
 
   return (
     <div ref={swipeRef} className="pb-24">

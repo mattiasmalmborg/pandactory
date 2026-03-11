@@ -121,7 +121,7 @@ export function ChoresList() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm">📋</span>
-            <h3 className="text-xs font-bold text-white">Dr. Redd's Chore List</h3>
+            <h3 className="text-sm font-bold text-white">Dr. Redd's Chore List</h3>
             {totalUnclaimed > 0 && (
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             )}
