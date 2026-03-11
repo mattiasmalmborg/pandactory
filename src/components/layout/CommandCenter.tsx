@@ -3,6 +3,7 @@ import { useGame } from '../../game/state/GameContext';
 import { SpaceshipGoal } from './SpaceshipGoal';
 import { ASSET_CONFIG } from '../../config/assets';
 import { getSmartBottleneck } from '../../utils/smart-recommendations';
+import { ChoresList } from '../chores/ChoresList';
 
 interface CommandCenterProps {
   onNavigate: (view: string) => void;
@@ -159,6 +160,9 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
           )}
         </div>
       )}
+
+      {/* Dr. Redd's Chore List */}
+      <ChoresList />
 
       {/* Next Steps */}
       {nextSteps.length > 0 && (

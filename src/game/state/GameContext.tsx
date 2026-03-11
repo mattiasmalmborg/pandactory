@@ -3,6 +3,7 @@ import { GameState, GameAction, FoodId, BiomeId, ResourceId } from '../../types/
 import { gameReducer, INITIAL_GAME_STATE } from './GameState';
 import { applyOfflineProgress, OfflineProgressResult } from '../../utils/offlineProgress';
 import { BIOMES } from '../config/biomes';
+import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { STORAGE_KEYS } from '../../config/storage';
 
 // Store the offline progress result globally so it can be accessed by the app
@@ -228,6 +229,14 @@ function migrateGameState(state: GameState): GameState {
         ...migratedState.lifetimeStats,
         totalSessions: migratedState.lifetimeStats.totalSessions + 1,
       },
+    };
+  }
+
+  // Migrate contracts (added in v1.5.0)
+  if (!migratedState.contracts) {
+    migratedState = {
+      ...migratedState,
+      contracts: { ...INITIAL_CONTRACT_STATE },
     };
   }
 

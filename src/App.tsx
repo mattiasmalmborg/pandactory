@@ -4,6 +4,7 @@ import { useGameLoop } from './hooks/useGameLoop';
 import { useSmartTooltips } from './hooks/useSmartTooltips';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAchievements } from './hooks/useAchievements';
+import { useContracts } from './hooks/useContracts';
 import { CommandCenter } from './components/layout/CommandCenter';
 import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
@@ -58,6 +59,9 @@ function GameContent() {
 
   // Check for achievements
   useAchievements();
+
+  // Contract/chore tracking
+  useContracts();
 
   // Handle biome change
   const handleBiomeChange = (biomeId: BiomeId) => {

@@ -4,6 +4,7 @@ import { EXPEDITION_TIERS } from '../config/expeditions';
 import { SKILL_TREE } from '../config/skillTree';
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
+import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -102,6 +103,7 @@ export const INITIAL_GAME_STATE: GameState = {
     },
     totalSessions: 1,
   },
+  contracts: { ...INITIAL_CONTRACT_STATE },
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
@@ -731,6 +733,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           sessionStartTime: now,
           clickCount: 0,
           lastClickTime: now,
+        },
+      };
+    }
+
+    case 'UPDATE_CONTRACTS': {
+      return {
+        ...state,
+        contracts: action.payload.contracts,
+      };
+    }
+
+    case 'CLAIM_CONTRACT': {
+      const { contractId, period } = action.payload;
+      const contractList = period === 'daily' ? [...state.contracts.daily] : [...state.contracts.weekly];
+      const idx = contractList.findIndex(c => c.id === contractId);
+      if (idx === -1 || !contractList[idx].completed || contractList[idx].claimed) return state;
+
+      const reward = contractList[idx].researchDataReward;
+      contractList[idx] = { ...contractList[idx], claimed: true };
+
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          [period]: contractList,
+          researchData: state.contracts.researchData + reward,
+          totalResearchDataEarned: state.contracts.totalResearchDataEarned + reward,
         },
       };
     }

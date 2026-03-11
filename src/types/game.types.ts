@@ -147,6 +147,7 @@ export interface GameState {
   };
   lastTick: number;
   lastSave: number;
+  contracts: ContractState;
   gameStartTime: number; // When the save file was first created
   version: string;
 }
@@ -230,6 +231,49 @@ export interface Discovery {
   timestamp: number;
 }
 
+// === Contracts (Daily/Weekly Quests) ===
+
+export type ContractCategory =
+  | 'gather'       // Gather X of a specific resource
+  | 'build'        // Build N automations
+  | 'upgrade'      // Upgrade automations N times
+  | 'expedition'   // Complete N expeditions
+  | 'produce'      // Produce X of an intermediate resource
+  | 'level_up'     // Get an automation to level X
+  | 'food'         // Accumulate X total nutrition
+  | 'discover';    // Discover a new resource
+
+export type ContractPeriod = 'daily' | 'weekly';
+
+export interface Contract {
+  id: string;                    // Unique ID (e.g. "daily-2026-03-11-0")
+  category: ContractCategory;
+  period: ContractPeriod;
+  description: string;           // Human-readable description
+  icon: string;                  // Emoji icon
+  target: number;                // Target amount
+  progress: number;              // Current progress
+  researchDataReward: number;    // Research Data earned on completion
+  completed: boolean;
+  claimed: boolean;              // Whether reward has been collected
+  // Context for tracking progress
+  trackingParams?: {
+    resourceId?: ResourceId;
+    automationType?: AutomationType;
+    expeditionTier?: ExpeditionTier;
+    targetLevel?: number;
+  };
+}
+
+export interface ContractState {
+  daily: Contract[];
+  weekly: Contract[];
+  lastDailyReset: string;       // ISO date string (YYYY-MM-DD)
+  lastWeeklyReset: string;      // ISO date string (YYYY-MM-DD), week start (Monday)
+  researchData: number;          // Accumulated Research Data currency
+  totalResearchDataEarned: number; // Lifetime total
+}
+
 export type GameAction =
   | { type: 'GATHER_RESOURCE'; payload: { biomeId: BiomeId; resourceId: ResourceId; amount: number } }
   | { type: 'GATHER_FOOD'; payload: { foodId: FoodId; amount: number } }
@@ -257,4 +301,6 @@ export type GameAction =
   | { type: 'INIT_SESSION' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: { gameState: GameState } }
-  | { type: 'RESET_GAME' };
+  | { type: 'RESET_GAME' }
+  | { type: 'UPDATE_CONTRACTS'; payload: { contracts: ContractState } }
+  | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } };
