@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pandactory Dev Tools</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: white;
+    }
+    h1 {
+      color: #ff6b35;
+    }
+    h2 {
+      color: #4a90a4;
+      margin-top: 30px;
+      border-bottom: 2px solid #4a90a4;
+      padding-bottom: 10px;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
+      margin: 10px 5px 10px 0;
+    }
+    button:hover {
+      background: #ff5722;
+    }
+    button.secondary {
+      background: #4a90a4;
+    }
+    button.secondary:hover {
+      background: #357a8a;
+    }
+    button.success {
+      background: #4caf50;
+    }
+    button.success:hover {
+      background: #45a049;
+    }
+    .message {
+      color: #4caf50;
+      margin-top: 20px;
+      padding: 10px;
+      background: rgba(76, 175, 80, 0.1);
+      border-left: 4px solid #4caf50;
+      border-radius: 4px;
+    }
+    .error {
+      color: #f44336;
+      background: rgba(244, 67, 54, 0.1);
+      border-left: 4px solid #f44336;
+    }
+    .section {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .resource-item {
+      background: #333;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #444;
+    }
+    .resource-item label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #4a90a4;
+    }
+    .resource-item input {
+      width: 100%;
+      padding: 8px;
+      background: #1a1a1a;
+      border: 1px solid #555;
+      color: white;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .expedition-info {
+      background: #2d3748;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .expedition-info p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐼 Pandactory Dev Tools</h1>
+  <p>Development utilities for testing and debugging.</p>
+  <p style="background: #3d2a1a; padding: 10px; border-radius: 6px; border-left: 4px solid #ff6b35;">
+    <strong>💡 How to use:</strong> Make changes here, then <strong>reload the game tab (F5)</strong> to see the changes.
+    The game auto-saves frequently, so reload quickly after making changes!
+  </p>
+
+  <!-- Reset Section -->
+  <div class="section">
+    <h2>🔄 Reset Game</h2>
+    <button onclick="resetGame()">Reset Game</button>
+    <div id="reset-message"></div>
+  </div>
+
+  <!-- Expedition Tools -->
+  <div class="section">
+    <h2>🚀 Expedition Tools</h2>
+    <div id="expedition-status"></div>
+    <button class="secondary" onclick="completeExpedition()">Complete Current Expedition</button>
+    <button class="secondary" onclick="startTestExpedition()">Start Test Expedition (10 sec)</button>
+    <div id="expedition-message"></div>
+  </div>
+
+  <!-- Resource Tools -->
+  <div class="section">
+    <h2>💎 Add Resources</h2>
+    <p>Add resources to your current game. Enter amount (positive or negative) for each resource.</p>
+    <div class="resource-grid" id="resource-grid"></div>
+    <button class="success" onclick="addResources()" style="margin-top: 20px;">Add Resources to Game</button>
+    <button class="secondary" onclick="add1000EachResource()" style="margin-top: 20px;">Add 1000 of Each Resource</button>
+    <div id="resource-message"></div>
+  </div>
+
+  <!-- Food Tools -->
+  <div class="section">
+    <h2>🍖 Add Food</h2>
+    <div class="resource-grid" id="food-grid"></div>
+    <button class="success" onclick="addFood()" style="margin-top: 20px;">Add Food to Game</button>
+    <div id="food-message"></div>
+  </div>
+
+  <!-- Prestige Tools -->
+  <div class="section">
+    <h2>✨ Prestige Simulation</h2>
+    <p>Set prestige level and cosmic bamboo shards for testing.</p>
+    <div id="prestige-status" class="expedition-info"></div>
+    <div class="resource-grid">
+      <div class="resource-item">
+        <label>Total Prestiges</label>
+        <input type="number" id="prestige-count" value="0" min="0" max="999">
+      </div>
+      <div class="resource-item">
+        <label>Cosmic Bamboo Shards</label>
+        <input type="number" id="cosmic-shards" value="0" min="0" max="999">
+      </div>
+    </div>
+    <div style="margin-top: 15px;">
+      <button class="success" onclick="setPrestige()">Set Prestige Level</button>
+      <button class="secondary" onclick="unlockAllSkills()">Unlock All Skills</button>
+      <button class="secondary" onclick="clearAllSkills()">Clear All Skills</button>
+    </div>
+    <div id="prestige-message"></div>
+  </div>
+
+  <!-- Biome Tools -->
+  <div class="section">
+    <h2>🌍 Biome Tools</h2>
+    <p>Unlock and activate biomes for testing.</p>
+    <div id="biome-status" class="expedition-info"></div>
+    <button class="success" onclick="unlockAllBiomes()">Unlock All Biomes</button>
+    <button class="secondary" onclick="discoverAllResources()">Discover All Resources</button>
+    <div id="biome-message"></div>
+  </div>
+
+  <!-- Spaceship Parts Tools -->
+  <div class="section">
+    <h2>🚀 Spaceship Parts</h2>
+    <p>Add all spaceship parts to complete the S.S. Bamboozle instantly.</p>
+    <button class="success" onclick="addSpaceshipParts()">Add 100 of Each Part</button>
+    <div id="spaceship-message"></div>
+  </div>
+
+  <script>
+    // Resource definitions
+    const RESOURCES = [
+      // Lush Forest
+      'wood', 'stone', 'berries', 'rubber_sap', 'nitrogen_nodules',
+      // Processed
+      'planks', 'stone_bricks', 'charcoal', 'rubber',
+      // Misty Lake
+      'fresh_water', 'fish', 'clay', 'clean_water', 'ceramics',
+      // Arid Desert
+      'quartz_sand', 'crude_oil', 'cactus', 'sulfur', 'glass', 'kerosene',
+      // Frozen Tundra
+      'ice', 'rutile_ore', 'iron_ore', 'arctic_moss', 'iron_ingots',
+      // Volcanic Isle
+      'nickel_cobalt_ore', 'obsidian', 'geothermal_energy',
+      // Crystal Caverns
+      'lithium_crystals', 'copper_ore', 'phosphorus', 'quartz_crystals',
+      // Advanced
+      'aluminum_ingots', 'silicon_ingot',
+      'hydrogen', 'oxygen', 'ammonia', 'precision_quartz',
+      'hull_plates', 'tank_shell', 'aluminum_frame', 'cathode_powder',
+      'liquid_oxygen', 'doped_silicon', 'graphite', 'hydrazine', 'insulation',
+      'battery_cells', 'solar_cells',
+      'microchips', 'rocket_fuel', 'thrusters', 'oxygen_tanks', 'batteries', 'solar_arrays', 'titanium_hull'
+    ];
+
+    const FOOD = ['berries', 'cactus_juice', 'smoked_fish', 'greenhouse_veggies'];
+
+    // Initialize resource inputs
+    function initResourceGrid() {
+      const grid = document.getElementById('resource-grid');
+      RESOURCES.forEach(resource => {
+        const div = document.createElement('div');
+        div.className = 'resource-item';
+        div.innerHTML = `
+          <label>${resource.replace(/_/g, ' ')}</label>
+          <input type="number" id="res-${resource}" value="0" min="-9999" max="9999">
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function initFoodGrid() {
+      const grid = document.getElementById('food-grid');
+      FOOD.forEach(food => {
+        const div = document.createElement('div');
+        div.className = 'resource-item';
+        div.innerHTML = `
+          <label>${food.replace(/_/g, ' ')}</label>
+          <input type="number" id="food-${food}" value="0" min="-9999" max="9999">
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    // Update expedition status
+    function updateExpeditionStatus() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('expedition-status').innerHTML =
+            '<div class="expedition-info"><p>No saved game found.</p></div>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const statusDiv = document.getElementById('expedition-status');
+
+        if (state.panda.status === 'expedition' && state.panda.expedition) {
+          const exp = state.panda.expedition;
+          const now = Date.now();
+          const elapsed = now - exp.startTime;
+          const remaining = Math.max(0, exp.durationMs - elapsed);
+          const progress = Math.min(100, (elapsed / exp.durationMs) * 100);
+
+          statusDiv.innerHTML = `
+            <div class="expedition-info">
+              <p><strong>Status:</strong> Expedition in progress</p>
+              <p><strong>Tier:</strong> ${exp.tier}</p>
+              <p><strong>Progress:</strong> ${progress.toFixed(1)}%</p>
+              <p><strong>Time remaining:</strong> ${Math.floor(remaining / 1000)}s</p>
+            </div>
+          `;
+        } else {
+          statusDiv.innerHTML =
+            '<div class="expedition-info"><p><strong>Status:</strong> No active expedition</p></div>';
+        }
+      } catch (e) {
+        document.getElementById('expedition-status').innerHTML =
+          '<div class="expedition-info error"><p>Error reading game state: ' + e.message + '</p></div>';
+      }
+    }
+
+    function resetGame() {
+      if (!confirm('Are you sure you want to reset the game?\nThis cannot be undone!')) {
+        return;
+      }
+
+      try {
+        // Set localStorage flag - the game will see this and reset on next load
+        // Using localStorage (not sessionStorage) so it works across tabs
+        localStorage.setItem('pandactory-reset-pending', 'true');
+
+        // Clear the save data
+        localStorage.removeItem('pandactory-save');
+        localStorage.removeItem('pandactory-current-view');
+
+        document.getElementById('reset-message').innerHTML =
+          '<p class="message">✅ Reset flag set!<br><br>' +
+          'Click the button below to open a fresh game.<br><br>' +
+          '<button onclick="window.open(\'/\', \'_blank\')" style="font-size: 18px; padding: 15px 30px;">🎮 Open Fresh Game</button></p>';
+        updateExpeditionStatus();
+      } catch (e) {
+        document.getElementById('reset-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function completeExpedition() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('expedition-message').innerHTML =
+            '<p class="message error">❌ No saved game found.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        if (state.panda.status !== 'expedition' || !state.panda.expedition) {
+          document.getElementById('expedition-message').innerHTML =
+            '<p class="message error">❌ No active expedition to complete.</p>';
+          return;
+        }
+
+        // Set expedition to completed by setting startTime to past
+        const completionTime = Date.now() - state.panda.expedition.durationMs - 1000;
+        state.panda.expedition.startTime = completionTime;
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('expedition-message').innerHTML =
+          '<p class="message">✅ Expedition completed! Switch to main game tab and press F5 to reload.</p>';
+        updateExpeditionStatus();
+      } catch (e) {
+        document.getElementById('expedition-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function startTestExpedition() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('expedition-message').innerHTML =
+            '<p class="message error">❌ No saved game found.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        if (state.panda.status === 'expedition') {
+          document.getElementById('expedition-message').innerHTML =
+            '<p class="message error">❌ Already on an expedition. Complete it first.</p>';
+          return;
+        }
+
+        // Start a 10-second test expedition
+        state.panda.status = 'expedition';
+        state.panda.expedition = {
+          tier: 'quick_scout',
+          startTime: Date.now(),
+          durationMs: 10000, // 10 seconds
+          foodConsumed: [],
+          completed: false,
+          collectedAt: null
+        };
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('expedition-message').innerHTML =
+          '<p class="message">✅ Test expedition started! (10 seconds). Switch to main game tab and press F5 to reload.</p>';
+        updateExpeditionStatus();
+      } catch (e) {
+        document.getElementById('expedition-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function addResources() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('resource-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const currentBiome = state.player.currentBiome;
+        let addedCount = 0;
+
+        RESOURCES.forEach(resource => {
+          const input = document.getElementById(`res-${resource}`);
+          const amount = parseInt(input.value) || 0;
+
+          if (amount !== 0) {
+            if (!state.biomes[currentBiome].resources[resource]) {
+              state.biomes[currentBiome].resources[resource] = 0;
+            }
+            state.biomes[currentBiome].resources[resource] += amount;
+
+            // Ensure non-negative
+            if (state.biomes[currentBiome].resources[resource] < 0) {
+              state.biomes[currentBiome].resources[resource] = 0;
+            }
+
+            addedCount++;
+            input.value = 0; // Reset input
+          }
+        });
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('resource-message').innerHTML =
+          `<p class="message">✅ Modified ${addedCount} resources in ${currentBiome}! Reload the main game.</p>`;
+      } catch (e) {
+        document.getElementById('resource-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    // Map resources to their home biomes (raw resources go to specific biomes)
+    const RESOURCE_BIOME_MAP = {
+      // Lush Forest
+      wood: 'lush_forest',
+      stone: 'lush_forest',
+      berries: 'lush_forest',
+      rubber_sap: 'lush_forest',
+      nitrogen_nodules: 'lush_forest',
+      planks: 'lush_forest',
+      stone_bricks: 'lush_forest',
+      charcoal: 'lush_forest',
+      rubber: 'lush_forest',
+      graphite: 'lush_forest',
+
+      // Misty Lake
+      fresh_water: 'misty_lake',
+      fish: 'misty_lake',
+      algae: 'misty_lake',
+      clay: 'misty_lake',
+      clean_water: 'misty_lake',
+      ceramics: 'misty_lake',
+      smoked_fish: 'misty_lake',
+      protein_bars: 'misty_lake',
+      hydrogen: 'misty_lake',
+      oxygen: 'misty_lake',
+      aluminum_ingots: 'misty_lake',
+
+      // Arid Desert
+      quartz_sand: 'arid_desert',
+      crude_oil: 'arid_desert',
+      cactus: 'arid_desert',
+      sulfur: 'arid_desert',
+      glass: 'arid_desert',
+      kerosene: 'arid_desert',
+      cactus_fruit: 'arid_desert',
+      silicon_ingot: 'arid_desert',
+      ammonia: 'arid_desert',
+      hydrazine: 'arid_desert',
+      rocket_fuel: 'arid_desert',
+
+      // Frozen Tundra
+      ice: 'frozen_tundra',
+      rutile_ore: 'frozen_tundra',
+      iron_ore: 'frozen_tundra',
+      arctic_moss: 'frozen_tundra',
+      iron_ingots: 'frozen_tundra',
+      aluminum_frame: 'frozen_tundra',
+      hull_plates: 'frozen_tundra',
+      liquid_oxygen: 'frozen_tundra',
+      insulation: 'frozen_tundra',
+      titanium_hull: 'frozen_tundra',
+
+      // Volcanic Isle
+      nickel_cobalt_ore: 'volcanic_isle',
+      obsidian: 'volcanic_isle',
+      geothermal_energy: 'volcanic_isle',
+      refined_alloy: 'volcanic_isle',
+      cathode_powder: 'volcanic_isle',
+      thrusters: 'volcanic_isle',
+      tank_shell: 'volcanic_isle',
+
+      // Crystal Caverns
+      lithium_crystals: 'crystal_caverns',
+      copper_ore: 'crystal_caverns',
+      phosphorus: 'crystal_caverns',
+      quartz_crystals: 'crystal_caverns',
+      copper_wire: 'crystal_caverns',
+      precision_quartz: 'crystal_caverns',
+      doped_silicon: 'crystal_caverns',
+      battery_cells: 'crystal_caverns',
+      solar_cells: 'crystal_caverns',
+      microchips: 'crystal_caverns',
+      batteries: 'crystal_caverns',
+      solar_arrays: 'crystal_caverns',
+      oxygen_tanks: 'crystal_caverns',
+    };
+
+    function add1000EachResource() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('resource-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const currentBiome = state.player.currentBiome;
+        let addedCounts = {};
+
+        // Add 1000 of each resource to its respective biome
+        RESOURCES.forEach(resource => {
+          // Determine target biome - use mapped biome or fall back to current biome
+          const targetBiome = RESOURCE_BIOME_MAP[resource] || currentBiome;
+
+          // Make sure the biome exists in state
+          if (!state.biomes[targetBiome]) {
+            return; // Skip if biome doesn't exist
+          }
+
+          if (!state.biomes[targetBiome].resources[resource]) {
+            state.biomes[targetBiome].resources[resource] = 0;
+          }
+          state.biomes[targetBiome].resources[resource] += 1000;
+
+          // Track count per biome
+          addedCounts[targetBiome] = (addedCounts[targetBiome] || 0) + 1;
+        });
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+
+        // Build summary message
+        let summary = Object.entries(addedCounts)
+          .map(([biome, count]) => `${biome}: ${count} resources`)
+          .join('<br>');
+
+        document.getElementById('resource-message').innerHTML =
+          `<p class="message">✅ Added 1000 of each resource to their respective biomes!<br><br>${summary}<br><br>` +
+          `<strong>Reload the main game (F5) to see changes.</strong></p>`;
+      } catch (e) {
+        document.getElementById('resource-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function addFood() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('food-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        let addedCount = 0;
+
+        FOOD.forEach(food => {
+          const input = document.getElementById(`food-${food}`);
+          const amount = parseInt(input.value) || 0;
+
+          if (amount !== 0) {
+            if (!state.food[food]) {
+              state.food[food] = 0;
+            }
+            state.food[food] += amount;
+
+            // Ensure non-negative
+            if (state.food[food] < 0) {
+              state.food[food] = 0;
+            }
+
+            addedCount++;
+            input.value = 0; // Reset input
+          }
+        });
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('food-message').innerHTML =
+          `<p class="message">✅ Modified ${addedCount} food items! Reload the main game.</p>`;
+      } catch (e) {
+        document.getElementById('food-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    // All available skill IDs (removed storage branch - game has no storage limits)
+    const ALL_SKILLS = [
+      'prod_1', 'prod_2', 'prod_3', 'prod_4',
+      'econ_1', 'econ_2', 'econ_3', 'econ_4',
+      'exp_1', 'exp_2', 'exp_3', 'exp_4',
+      'cell_1', 'cell_2', 'cell_3', 'cell_4'
+    ];
+
+    function updatePrestigeStatus() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('prestige-status').innerHTML =
+            '<p>No saved game found.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const prestige = state.prestige || { totalPrestiges: 0, cosmicBambooShards: 0, unlockedSkills: [] };
+
+        document.getElementById('prestige-status').innerHTML = `
+          <p><strong>Current Prestige:</strong> ${prestige.totalPrestiges}</p>
+          <p><strong>Cosmic Bamboo Shards:</strong> ${prestige.cosmicBambooShards}</p>
+          <p><strong>Unlocked Skills:</strong> ${prestige.unlockedSkills.length}/${ALL_SKILLS.length}</p>
+        `;
+
+        // Update input fields
+        document.getElementById('prestige-count').value = prestige.totalPrestiges;
+        document.getElementById('cosmic-shards').value = prestige.cosmicBambooShards;
+      } catch (e) {
+        document.getElementById('prestige-status').innerHTML =
+          '<p class="error">Error reading game state: ' + e.message + '</p>';
+      }
+    }
+
+    function setPrestige() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('prestige-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const prestigeCount = parseInt(document.getElementById('prestige-count').value) || 0;
+        const cosmicShards = parseInt(document.getElementById('cosmic-shards').value) || 0;
+
+        // Ensure prestige object exists with correct structure
+        if (!state.prestige) {
+          state.prestige = {
+            totalPrestiges: 0,
+            cosmicBambooShards: 0,
+            unlockedSkills: []
+          };
+        }
+
+        // Update values
+        state.prestige.totalPrestiges = prestigeCount;
+        state.prestige.cosmicBambooShards = cosmicShards;
+
+        // Save back to localStorage
+        const jsonString = JSON.stringify(state);
+        localStorage.setItem('pandactory-save', jsonString);
+
+        // Verify it was saved
+        const verified = localStorage.getItem('pandactory-save');
+        const verifiedState = JSON.parse(verified);
+
+        document.getElementById('prestige-message').innerHTML =
+          `<p class="message">✅ Prestige set to ${prestigeCount} with ${cosmicShards} shards!<br>` +
+          `Verified: ${verifiedState.prestige.totalPrestiges} prestiges, ${verifiedState.prestige.cosmicBambooShards} shards<br>` +
+          `<strong>Reload the main game (F5) to see changes.</strong></p>`;
+        updatePrestigeStatus();
+      } catch (e) {
+        document.getElementById('prestige-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '<br>Stack: ' + e.stack + '</p>';
+      }
+    }
+
+    function unlockAllSkills() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('prestige-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        if (!state.prestige) {
+          state.prestige = {
+            totalPrestiges: 0,
+            cosmicBambooShards: 0,
+            unlockedSkills: []
+          };
+        }
+
+        state.prestige.unlockedSkills = [...ALL_SKILLS];
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('prestige-message').innerHTML =
+          `<p class="message">✅ All ${ALL_SKILLS.length} skills unlocked! Reload the main game.</p>`;
+        updatePrestigeStatus();
+      } catch (e) {
+        document.getElementById('prestige-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function clearAllSkills() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('prestige-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        if (!state.prestige) {
+          state.prestige = {
+            totalPrestiges: 0,
+            cosmicBambooShards: 0,
+            unlockedSkills: []
+          };
+        }
+
+        state.prestige.unlockedSkills = [];
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('prestige-message').innerHTML =
+          '<p class="message">✅ All skills cleared! Reload the main game.</p>';
+        updatePrestigeStatus();
+      } catch (e) {
+        document.getElementById('prestige-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function addSpaceshipParts() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('spaceship-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        const currentBiome = state.player.currentBiome;
+
+        // All spaceship parts
+        const SPACESHIP_PARTS = [
+          'microchips',
+          'rocket_fuel',
+          'thrusters',
+          'oxygen_tanks',
+          'batteries',
+          'solar_arrays',
+          'titanium_hull'
+        ];
+
+        // Add 100 of each part to current biome
+        SPACESHIP_PARTS.forEach(part => {
+          if (!state.biomes[currentBiome].resources[part]) {
+            state.biomes[currentBiome].resources[part] = 0;
+          }
+          state.biomes[currentBiome].resources[part] += 100;
+        });
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('spaceship-message').innerHTML =
+          `<p class="message">✅ Added 100 of each spaceship part to ${currentBiome}!<br>` +
+          `<strong>Reload the main game (F5) to see changes.</strong><br>` +
+          `You can now launch the S.S. Bamboozle!</p>`;
+      } catch (e) {
+        document.getElementById('spaceship-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    // Biome definitions
+    const ALL_BIOMES = ['lush_forest', 'misty_lake', 'arid_desert', 'frozen_tundra', 'volcanic_isle', 'crystal_caverns'];
+
+    // Resources that can be discovered per biome
+    const BIOME_DISCOVERABLE_RESOURCES = {
+      lush_forest: ['rubber_sap', 'nitrogen_nodules'],
+      misty_lake: ['algae', 'clay'],
+      arid_desert: ['crude_oil', 'sulfur'],
+      frozen_tundra: ['rutile_ore', 'arctic_moss'],
+      volcanic_isle: ['nickel_cobalt_ore', 'sulfur'],
+      crystal_caverns: ['phosphorus', 'quartz_crystals']
+    };
+
+    // Primary resources per biome (auto-discovered when biome is activated)
+    const BIOME_PRIMARY_RESOURCES = {
+      lush_forest: ['wood', 'stone', 'berries'],
+      misty_lake: ['fresh_water', 'fish'],
+      arid_desert: ['quartz_sand', 'cactus'],
+      frozen_tundra: ['ice', 'iron_ore'],
+      volcanic_isle: ['obsidian', 'geothermal_energy'],
+      crystal_caverns: ['lithium_crystals', 'copper_ore']
+    };
+
+    function updateBiomeStatus() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('biome-status').innerHTML = '<p>No saved game found.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        let html = '<p><strong>Biome Status:</strong></p>';
+
+        ALL_BIOMES.forEach(biomeId => {
+          const biome = state.biomes[biomeId];
+          const discovered = biome?.discovered ? '✅' : '❌';
+          const activated = biome?.activated ? '✅' : '❌';
+          const resources = biome?.discoveredResources?.length || 0;
+          html += `<p style="margin: 2px 0;">${biomeId}: Discovered ${discovered} | Activated ${activated} | Resources: ${resources}</p>`;
+        });
+
+        document.getElementById('biome-status').innerHTML = html;
+      } catch (e) {
+        document.getElementById('biome-status').innerHTML = '<p class="error">Error: ' + e.message + '</p>';
+      }
+    }
+
+    function unlockAllBiomes() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('biome-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        // Unlock and activate all biomes
+        ALL_BIOMES.forEach(biomeId => {
+          if (!state.biomes[biomeId]) {
+            state.biomes[biomeId] = {
+              id: biomeId,
+              resources: {},
+              automations: [],
+              discovered: true,
+              activated: true,
+              discoveredResources: []
+            };
+          } else {
+            state.biomes[biomeId].discovered = true;
+            state.biomes[biomeId].activated = true;
+          }
+
+          // Add primary resources to discoveredResources
+          const primaryResources = BIOME_PRIMARY_RESOURCES[biomeId] || [];
+          const currentDiscovered = state.biomes[biomeId].discoveredResources || [];
+          primaryResources.forEach(res => {
+            if (!currentDiscovered.includes(res)) {
+              currentDiscovered.push(res);
+            }
+          });
+          state.biomes[biomeId].discoveredResources = currentDiscovered;
+        });
+
+        // Update unlockedBiomes array
+        state.unlockedBiomes = [...ALL_BIOMES];
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('biome-message').innerHTML =
+          '<p class="message">✅ All biomes unlocked and activated!<br><strong>Reload the main game (F5) to see changes.</strong></p>';
+        updateBiomeStatus();
+      } catch (e) {
+        document.getElementById('biome-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function discoverAllResources() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('biome-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+
+        // For each biome, add all discoverable resources
+        ALL_BIOMES.forEach(biomeId => {
+          if (!state.biomes[biomeId]) return;
+
+          const currentDiscovered = state.biomes[biomeId].discoveredResources || [];
+          const discoverableResources = BIOME_DISCOVERABLE_RESOURCES[biomeId] || [];
+          const primaryResources = BIOME_PRIMARY_RESOURCES[biomeId] || [];
+
+          // Add all resources
+          [...primaryResources, ...discoverableResources].forEach(res => {
+            if (!currentDiscovered.includes(res)) {
+              currentDiscovered.push(res);
+            }
+          });
+
+          state.biomes[biomeId].discoveredResources = currentDiscovered;
+        });
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('biome-message').innerHTML =
+          '<p class="message">✅ All resources discovered in all biomes!<br><strong>Reload the main game (F5) to see changes.</strong></p>';
+        updateBiomeStatus();
+      } catch (e) {
+        document.getElementById('biome-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    // Initialize on load
+    initResourceGrid();
+    initFoodGrid();
+    updateExpeditionStatus();
+    updatePrestigeStatus();
+    updateBiomeStatus();
+
+    // Update status every 2 seconds
+    setInterval(() => {
+      updateExpeditionStatus();
+      updatePrestigeStatus();
+      updateBiomeStatus();
+    }, 2000);
+  </script>
+</body>
+</html>

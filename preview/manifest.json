@@ -1,0 +1,34 @@
+{
+  "name": "Pandactory",
+  "short_name": "Pandactory",
+  "description": "Help Dr. Redd Pawston III build a spaceship and escape! An incremental idle game with automation, exploration, and pandas.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#2d5016",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/ui/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/ui/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "screenshots": [
+    {
+      "src": "assets/backgrounds/bg_dashboard.jpg",
+      "sizes": "1024x768",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Dashboard view"
+    }
+  ]
+}
