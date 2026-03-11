@@ -92,6 +92,7 @@ function getTimeUntilReset(period: ContractPeriod): string {
 export function ChoresList() {
   const { state, dispatch } = useGame();
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly'>('daily');
+  const [collapsed, setCollapsed] = useState(false);
 
   const contracts = state.contracts;
   if (!contracts) return null;
@@ -102,6 +103,9 @@ export function ChoresList() {
 
   const dailyCompleted = daily.filter(c => c.completed).length;
   const weeklyCompleted = weekly.filter(c => c.completed).length;
+  const dailyUnclaimed = daily.filter(c => c.completed && !c.claimed).length;
+  const weeklyUnclaimed = weekly.filter(c => c.completed && !c.claimed).length;
+  const totalUnclaimed = dailyUnclaimed + weeklyUnclaimed;
 
   const handleClaim = (contractId: string, period: ContractPeriod) => {
     dispatch({ type: 'CLAIM_CONTRACT', payload: { contractId, period } });
@@ -109,70 +113,91 @@ export function ChoresList() {
 
   return (
     <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-700/40 rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="px-3 pt-3 pb-2">
+      {/* Header — always visible, clickable to toggle */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full px-3 pt-3 pb-2 text-left hover:bg-gray-800/30 transition-colors"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm">📋</span>
             <h3 className="text-xs font-bold text-white">Dr. Redd's Chore List</h3>
+            {totalUnclaimed > 0 && (
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-purple-400 text-[10px]">🔬</span>
-            <span className="text-xs font-bold text-purple-300">{formatNumber(contracts.researchData)}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-purple-400 text-[10px]">🔬</span>
+              <span className="text-xs font-bold text-purple-300">{formatNumber(contracts.researchData)}</span>
+            </div>
+            <span className={`text-gray-500 text-xs transition-transform ${collapsed ? '' : 'rotate-180'}`}>▾</span>
           </div>
         </div>
-        <p className="text-[10px] text-gray-500 mt-0.5 italic">
-          "Someone has to do it. That someone is you." — Dr. Redd
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-gray-700/50">
-        <button
-          onClick={() => setActiveTab('daily')}
-          className={`flex-1 text-xs py-2 font-medium transition-colors ${
-            activeTab === 'daily'
-              ? 'text-amber-400 border-b-2 border-amber-400'
-              : 'text-gray-500 hover:text-gray-300'
-          }`}
-        >
-          Daily ({dailyCompleted}/{daily.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('weekly')}
-          className={`flex-1 text-xs py-2 font-medium transition-colors ${
-            activeTab === 'weekly'
-              ? 'text-blue-400 border-b-2 border-blue-400'
-              : 'text-gray-500 hover:text-gray-300'
-          }`}
-        >
-          Weekly ({weeklyCompleted}/{weekly.length})
-        </button>
-      </div>
-
-      {/* Contract list */}
-      <div className="p-3 space-y-2">
-        {activeContracts.length > 0 ? (
-          activeContracts.map(contract => (
-            <ChoreCard
-              key={contract.id}
-              contract={contract}
-              onClaim={() => handleClaim(contract.id, activeTab)}
-            />
-          ))
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-gray-500 text-xs">No chores today. Dr. Redd is suspicious.</p>
-          </div>
+        {collapsed && (
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {dailyCompleted}/{daily.length} daily · {weeklyCompleted}/{weekly.length} weekly
+          </p>
         )}
-      </div>
+        {!collapsed && (
+          <p className="text-[10px] text-gray-400 mt-0.5 italic">
+            "Someone has to do it. That someone is you." — Dr. Redd
+          </p>
+        )}
+      </button>
 
-      {/* Timer */}
-      <div className="px-3 pb-2 text-center">
-        <p className="text-[10px] text-gray-600">
-          New {activeTab} chores in {getTimeUntilReset(activeTab)}
-        </p>
-      </div>
+      {/* Collapsible content */}
+      {!collapsed && (
+        <>
+          {/* Tabs */}
+          <div className="flex border-b border-gray-700/50">
+            <button
+              onClick={() => setActiveTab('daily')}
+              className={`flex-1 text-xs py-2 font-medium transition-colors ${
+                activeTab === 'daily'
+                  ? 'text-amber-400 border-b-2 border-amber-400'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Daily ({dailyCompleted}/{daily.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('weekly')}
+              className={`flex-1 text-xs py-2 font-medium transition-colors ${
+                activeTab === 'weekly'
+                  ? 'text-blue-400 border-b-2 border-blue-400'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Weekly ({weeklyCompleted}/{weekly.length})
+            </button>
+          </div>
+
+          {/* Contract list */}
+          <div className="p-3 space-y-2">
+            {activeContracts.length > 0 ? (
+              activeContracts.map(contract => (
+                <ChoreCard
+                  key={contract.id}
+                  contract={contract}
+                  onClaim={() => handleClaim(contract.id, activeTab)}
+                />
+              ))
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-500 text-xs">No chores today. Dr. Redd is suspicious.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Timer */}
+          <div className="px-3 pb-2 text-center">
+            <p className="text-[10px] text-gray-600">
+              New {activeTab} chores in {getTimeUntilReset(activeTab)}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

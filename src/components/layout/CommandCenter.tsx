@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { SpaceshipGoal } from './SpaceshipGoal';
 import { ASSET_CONFIG } from '../../config/assets';
-import { getSmartBottleneck } from '../../utils/smart-recommendations';
 import { ChoresList } from '../chores/ChoresList';
 
 interface CommandCenterProps {
@@ -65,9 +64,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
   const description = crashNumber < CRASH_DESCRIPTIONS.length
     ? CRASH_DESCRIPTIONS[crashNumber]
     : CRASH_DESCRIPTIONS[CRASH_DESCRIPTIONS.length - 1];
-
-  // Smart bottleneck — traces production chains to find what's actionable NOW
-  const smartBottleneck = useMemo(() => getSmartBottleneck(state), [state]);
 
   // Calculate next steps
   const nextSteps = useMemo(() => {
@@ -136,30 +132,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
 
       {/* Spaceship Progress — always visible, compact */}
       <SpaceshipGoal />
-
-      {/* Smart bottleneck indicator — adapts to game phase */}
-      {smartBottleneck && (
-        <div className="bg-gray-900/70 backdrop-blur-sm border border-amber-700/40 rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{smartBottleneck.icon}</span>
-            <div className="flex-1">
-              <p className="text-xs text-amber-300 font-medium">{smartBottleneck.label}</p>
-              <p className="text-xs text-gray-300">{smartBottleneck.text}</p>
-            </div>
-            {smartBottleneck.percent !== undefined && (
-              <span className="text-xs text-amber-400 font-mono">{smartBottleneck.percent}%</span>
-            )}
-          </div>
-          {smartBottleneck.percent !== undefined && (
-            <div className="mt-2 h-1 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-500/70 rounded-full transition-all duration-500"
-                style={{ width: `${smartBottleneck.percent}%` }}
-              />
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Dr. Redd's Chore List */}
       <ChoresList />

@@ -146,13 +146,15 @@ export function useContracts() {
           if ((contract.category === 'produce' || contract.category === 'gather') && contract.trackingParams?.resourceId) {
             const resourceId = contract.trackingParams.resourceId;
             const currentAmount = Math.floor(allResources[resourceId] || 0);
-            const lastAmount = lastResourcesRef.current[`${contract.category}-${resourceId}`] || 0;
+            const key = `${contract.category}-${resourceId}`;
+            const lastAmount = lastResourcesRef.current[key];
 
-            if (currentAmount > lastAmount && lastAmount > 0) {
+            // Only track delta if we have a previous baseline (skip first tick)
+            if (lastAmount !== undefined && currentAmount > lastAmount) {
               newProgress += (currentAmount - lastAmount);
             }
             // Update baseline
-            lastResourcesRef.current[`${contract.category}-${resourceId}`] = currentAmount;
+            lastResourcesRef.current[key] = currentAmount;
           }
 
           if (contract.category === 'food') {
