@@ -196,17 +196,36 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
 
   // Biome progress stats
   const biomeStats = useMemo(() => {
-    // Resources: primary + discoverable = total possible
-    const totalResources = (biomeConfig.primaryResources?.length || 0) + (biomeConfig.discoverableResources?.length || 0);
-    const discoveredCount = biome.discoveredResources?.length || 0;
+    // Total possible resources: primary + discoverable + unique produced by automations
+    const allResourceIds = new Set<string>([
+      ...(biomeConfig.primaryResources || []),
+      ...(biomeConfig.discoverableResources || []),
+    ]);
+    // Add resources produced by this biome's automations
+    for (const autoType of biomeConfig.availableAutomations) {
+      const autoConfig = AUTOMATIONS[autoType];
+      if (!autoConfig) continue;
+      for (const p of autoConfig.produces) {
+        allResourceIds.add(p.resourceId);
+      }
+    }
+    const totalResources = allResourceIds.size;
 
-    // Automations: count built vs total available (that are currently visible)
+    // Discovered: count resources the player actually has > 0 in this biome
+    let discoveredCount = 0;
+    for (const resId of allResourceIds) {
+      if ((biome.resources[resId as ResourceId] || 0) >= 1) {
+        discoveredCount++;
+      }
+    }
+
+    // Automations: count built vs total available
     const totalAutomations = biomeConfig.availableAutomations.length;
     const builtAutomationTypes = new Set(biome.automations.map(a => a.type));
     const builtCount = builtAutomationTypes.size;
 
     return { discoveredCount, totalResources, builtCount, totalAutomations };
-  }, [biome.discoveredResources, biome.automations, biomeConfig]);
+  }, [biome.resources, biome.automations, biomeConfig]);
 
   return (
     <div ref={swipeRef} className="pb-24">
