@@ -66,7 +66,7 @@ export type SkillId =
   | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4' | 'exp_5'
   | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4' | 'cell_5';
 
-export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'secret';
+export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'research' | 'artifacts' | 'chores' | 'secret';
 
 export type AchievementId =
   // Gathering achievements (10)
@@ -91,6 +91,14 @@ export type AchievementId =
   | 'first_skill' | 'production_branch' | 'economy_branch' | 'expedition_branch' | 'power_cells_branch' | 'all_skills'
   // Milestone achievements (3)
   | 'spaceship_started' | 'spaceship_halfway' | 'spaceship_complete'
+  // Research achievements (4)
+  | 'first_research' | 'research_5' | 'research_max_node' | 'research_all_max'
+  // Artifact achievements (6)
+  | 'first_artifact' | 'artifact_6' | 'artifact_12' | 'full_collection' | 'first_set_bonus' | 'legendary_find'
+  // Chore achievements (4)
+  | 'first_chore' | 'chores_25' | 'chores_100' | 'weekly_complete'
+  // Prestige additions (1)
+  | 'double_digits'
   // Secret/Fun achievements (8)
   | 'night_owl' | 'clicker_champion' | 'patient_panda' | 'speed_demon' | 'hoarder_deluxe'
   | 'perfectionist' | 'the_long_game' | 'dedicated';
@@ -138,6 +146,7 @@ export interface GameState {
     totalExpeditionsCompleted: number;
     expeditionsByTier: Record<ExpeditionTier, number>;
     totalSessions: number; // Total number of play sessions
+    totalChoresCompleted: number; // Total chores/contracts completed
   };
   // Session stats for secret achievements (reset on page load)
   sessionStats?: {

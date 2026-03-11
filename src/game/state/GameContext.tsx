@@ -202,6 +202,7 @@ function migrateGameState(state: GameState): GameState {
           epic_journey: 0,
         },
         totalSessions: 0,
+        totalChoresCompleted: 0,
       },
     };
   }

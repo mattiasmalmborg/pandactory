@@ -104,6 +104,7 @@ export const INITIAL_GAME_STATE: GameState = {
       epic_journey: 0,
     },
     totalSessions: 1,
+    totalChoresCompleted: 0,
   },
   contracts: { ...INITIAL_CONTRACT_STATE },
   research: { ...INITIAL_RESEARCH_STATE },
@@ -672,6 +673,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           epic_journey: 0,
         },
         totalSessions: existingStats?.totalSessions || 1,
+        totalChoresCompleted: existingStats?.totalChoresCompleted || 0,
       };
 
       // Migration: Ensure achievements structure exists
@@ -780,6 +782,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           [period]: contractList,
           researchData: state.contracts.researchData + reward,
           totalResearchDataEarned: state.contracts.totalResearchDataEarned + reward,
+        },
+        lifetimeStats: {
+          ...state.lifetimeStats,
+          totalChoresCompleted: (state.lifetimeStats?.totalChoresCompleted || 0) + 1,
         },
       };
     }
