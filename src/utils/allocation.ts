@@ -1,14 +1,16 @@
-import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId } from '../types/game.types';
+import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId, ResearchId } from '../types/game.types';
 import { AUTOMATIONS } from '../game/config/automations';
 import { calculateProductionRate } from './calculations';
 import { getEffectivePowerCellBonus, countInstalledPowerCells, getSkillTreeBonus } from '../game/config/skillTree';
 import { getMasteryBonus } from '../game/config/achievements';
+import { getResearchBonus } from '../game/config/research';
 import { AchievementId } from '../types/game.types';
 
 export interface BiomeProductionContext {
   unlockedSkills?: SkillId[];
   unlockedAchievements?: AchievementId[];
   allBiomes?: Record<BiomeId, BiomeState>;
+  researchLevels?: Partial<Record<ResearchId, number>>;
 }
 
 /**
@@ -27,6 +29,7 @@ export function calculateBiomeProductionRates(
   // Get skill bonuses if context provided
   const unlockedSkills = context?.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context?.researchLevels || {}, 'production');
 
   // Get mastery bonus
   const masteryBonus = getMasteryBonus(context?.unlockedAchievements || []);
@@ -51,11 +54,11 @@ export function calculateBiomeProductionRates(
       unlockedSkills
     );
 
-    // Calculate effective production rate with level scaling, skills, mastery, and power cell
+    // Calculate effective production rate with level scaling, skills, mastery, research, and power cell
     const effectiveRate = calculateProductionRate(
       config.baseProductionRate,
       automation.level,
-      productionSpeedBonus + masteryBonus.productionBonus,
+      productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
       effectivePowerCellBonus
     );
 
@@ -98,6 +101,7 @@ export function getAutomationEfficiency(
   // Get skill bonuses
   const unlockedSkills = context?.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context?.researchLevels || {}, 'production');
   const masteryBonus = getMasteryBonus(context?.unlockedAchievements || []);
 
   // Count installed power cells for resonance
@@ -116,7 +120,7 @@ export function getAutomationEfficiency(
   const effectiveRate = calculateProductionRate(
     config.baseProductionRate,
     automation.level,
-    productionSpeedBonus + masteryBonus.productionBonus,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
     effectivePowerCellBonus
   );
 

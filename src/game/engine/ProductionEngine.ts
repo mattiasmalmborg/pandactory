@@ -4,6 +4,7 @@ import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus
 import { calculateProductionRate } from '../../utils/calculations';
 import { RESOURCES } from '../config/resources';
 import { getMasteryBonus } from '../config/achievements';
+import { getResearchBonus } from '../config/research';
 
 export interface ProductionResult {
   state: GameState;
@@ -17,6 +18,7 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
 
   // Get skill tree bonuses
   const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(state.research?.levels || {}, 'production');
 
   // Get mastery bonus (200% production when all achievements unlocked)
   const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
@@ -47,7 +49,7 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
       const productionRate = calculateProductionRate(
         config.baseProductionRate,
         automation.level,
-        productionSpeedBonus + masteryBonus.productionBonus,
+        productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
         effectivePowerCellBonus
       );
 

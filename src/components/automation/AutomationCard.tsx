@@ -50,7 +50,8 @@ export function AutomationCard({
     unlockedSkills: state.prestige.unlockedSkills,
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
-  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes]);
+    researchLevels: state.research?.levels || {},
+  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels]);
 
   // Calculate GLOBAL production AND consumption rates from ALL biomes for efficiency calculation (memoized)
   const { globalProduction, globalConsumption } = useMemo(() => {
@@ -144,9 +145,9 @@ export function AutomationCard({
   // Get achievement-based cost reduction
   const unlockedAchievements = state.achievements?.unlocked || [];
 
-  // Calculate upgrade cost (using resources from ALL biomes, with mastery discount)
+  // Calculate upgrade cost (using resources from ALL biomes, with mastery + research discount)
   const baseUpgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
-  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements);
+  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade');
   const canAffordUpgrade = canAfford(allResources, upgradeCost);
 
   const powerCellInfo = automation.powerCell

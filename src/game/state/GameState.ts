@@ -5,6 +5,7 @@ import { SKILL_TREE } from '../config/skillTree';
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
+import { INITIAL_RESEARCH_STATE } from '../config/research';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -104,6 +105,7 @@ export const INITIAL_GAME_STATE: GameState = {
     totalSessions: 1,
   },
   contracts: { ...INITIAL_CONTRACT_STATE },
+  research: { ...INITIAL_RESEARCH_STATE },
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
@@ -502,7 +504,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PRESTIGE': {
       const { shardsEarned } = action.payload;
 
-      // Reset everything except prestige data, achievements, lifetime stats, and gameStartTime
+      // Reset everything except prestige data, achievements, lifetime stats, research, and gameStartTime
       return {
         ...INITIAL_GAME_STATE,
         prestige: {
@@ -512,6 +514,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
+        research: state.research, // Research persists!
+        contracts: {
+          ...INITIAL_CONTRACT_STATE,
+          researchData: state.contracts.researchData, // Keep unspent Research Data
+          totalResearchDataEarned: state.contracts.totalResearchDataEarned,
+        },
         gameStartTime: state.gameStartTime, // Keep original start time!
       };
     }
@@ -760,6 +768,26 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           [period]: contractList,
           researchData: state.contracts.researchData + reward,
           totalResearchDataEarned: state.contracts.totalResearchDataEarned + reward,
+        },
+      };
+    }
+
+    case 'PURCHASE_RESEARCH': {
+      const { researchId, cost } = action.payload;
+      const currentLevel = state.research.levels[researchId] || 0;
+
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData - cost,
+        },
+        research: {
+          ...state.research,
+          levels: {
+            ...state.research.levels,
+            [researchId]: currentLevel + 1,
+          },
         },
       };
     }

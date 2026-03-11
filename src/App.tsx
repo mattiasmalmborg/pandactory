@@ -10,7 +10,9 @@ import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
 import { SkillTree } from './components/prestige/SkillTree';
 import { Achievements } from './components/achievements/Achievements';
-import { AchievementToast } from './components/achievements/AchievementToast';
+import { ToastProvider } from './components/ui/ToastQueue';
+import { useAchievementToasts } from './components/achievements/AchievementToast';
+import { useChoreToasts } from './components/chores/ChoreToast';
 import { Navigation } from './components/layout/Navigation';
 import type { ViewType, MainViewType } from './components/layout/Navigation';
 import { MoreMenu } from './components/layout/MoreMenu';
@@ -216,17 +218,25 @@ function GameContent() {
       {/* Bottom Navigation - fixed at bottom */}
       <Navigation currentView={currentView} onViewChange={handleMainNavChange} />
 
-      {/* Achievement Toast Notifications */}
-      <AchievementToast />
+      {/* Toast notification hooks (queue-based, renders via ToastProvider) */}
+      <ToastHooks />
     </div>
   );
+}
+
+function ToastHooks() {
+  useAchievementToasts();
+  useChoreToasts();
+  return null;
 }
 
 function App() {
   return (
     <ErrorBoundary>
       <GameProvider>
-        <GameContent />
+        <ToastProvider>
+          <GameContent />
+        </ToastProvider>
       </GameProvider>
     </ErrorBoundary>
   );

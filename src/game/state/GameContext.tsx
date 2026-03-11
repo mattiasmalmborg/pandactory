@@ -4,6 +4,7 @@ import { gameReducer, INITIAL_GAME_STATE } from './GameState';
 import { applyOfflineProgress, OfflineProgressResult } from '../../utils/offlineProgress';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
+import { INITIAL_RESEARCH_STATE } from '../config/research';
 import { STORAGE_KEYS } from '../../config/storage';
 
 // Store the offline progress result globally so it can be accessed by the app
@@ -237,6 +238,14 @@ function migrateGameState(state: GameState): GameState {
     migratedState = {
       ...migratedState,
       contracts: { ...INITIAL_CONTRACT_STATE },
+    };
+  }
+
+  // Migrate research (added in v1.5.0)
+  if (!migratedState.research) {
+    migratedState = {
+      ...migratedState,
+      research: { ...INITIAL_RESEARCH_STATE },
     };
   }
 

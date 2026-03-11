@@ -148,6 +148,7 @@ export interface GameState {
   lastTick: number;
   lastSave: number;
   contracts: ContractState;
+  research: ResearchState;
   gameStartTime: number; // When the save file was first created
   version: string;
 }
@@ -231,6 +232,39 @@ export interface Discovery {
   timestamp: number;
 }
 
+// === Research (Panda Lab) ===
+
+export type ResearchId =
+  | 'efficient_gathering'    // +X% gather yield per click
+  | 'overclocked_machines'   // +X% automation production speed
+  | 'bulk_purchasing'        // -X% build costs
+  | 'smart_upgrades'         // -X% upgrade costs
+  | 'expedition_logistics'   // -X% expedition food cost
+  | 'scout_training'         // -X% expedition duration
+  | 'resource_radar'         // +X% expedition resource rewards
+  | 'food_preservation'      // -X% food waste on expeditions
+  | 'power_cell_tuning'      // +X% power cell effectiveness
+  | 'alien_metallurgy';      // +X% spaceship part production
+
+export interface ResearchNode {
+  id: ResearchId;
+  name: string;
+  description: string;
+  flavorText: string;
+  icon: string;
+  maxLevel: number;
+  baseCost: number;           // Research Data cost at level 0→1
+  costMultiplier: number;     // Cost scales: baseCost * multiplier^level
+  bonusPerLevel: number;      // e.g. 0.03 = +3% per level
+  bonusType: 'production' | 'gather' | 'build_cost' | 'upgrade_cost'
+    | 'expedition_food' | 'expedition_time' | 'expedition_resource'
+    | 'food_waste' | 'power_cell' | 'spaceship';
+}
+
+export interface ResearchState {
+  levels: Partial<Record<ResearchId, number>>;  // Current level of each research
+}
+
 // === Contracts (Daily/Weekly Quests) ===
 
 export type ContractCategory =
@@ -303,4 +337,5 @@ export type GameAction =
   | { type: 'LOAD_GAME'; payload: { gameState: GameState } }
   | { type: 'RESET_GAME' }
   | { type: 'UPDATE_CONTRACTS'; payload: { contracts: ContractState } }
-  | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } };
+  | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } }
+  | { type: 'PURCHASE_RESEARCH'; payload: { researchId: ResearchId; cost: number } };

@@ -1,6 +1,7 @@
-import { ResourceCost, AchievementId, BiomeId, BiomeState, SkillId, Automation } from '../types/game.types';
+import { ResourceCost, AchievementId, BiomeId, BiomeState, SkillId, Automation, ResearchId, ResearchState } from '../types/game.types';
 import { getMasteryBonus } from '../game/config/achievements';
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../game/config/skillTree';
+import { getResearchBonus } from '../game/config/research';
 import { AUTOMATIONS } from '../game/config/automations';
 import { BiomeProductionContext } from './allocation';
 
@@ -26,11 +27,13 @@ export function createProductionContext(state: {
   prestige: { unlockedSkills: SkillId[] };
   achievements?: { unlocked: AchievementId[] };
   biomes: Record<BiomeId, BiomeState>;
+  research?: ResearchState;
 }): BiomeProductionContext {
   return {
     unlockedSkills: state.prestige.unlockedSkills,
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
+    researchLevels: state.research?.levels || {},
   };
 }
 
@@ -48,6 +51,7 @@ export function getAutomationProductionRate(
 
   const unlockedSkills = context.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context.researchLevels || {}, 'production');
   const masteryBonus = getMasteryBonus(context.unlockedAchievements || []);
 
   const totalInstalledCells = context.allBiomes
@@ -64,21 +68,38 @@ export function getAutomationProductionRate(
   return calculateProductionRate(
     config.baseProductionRate,
     automation.level,
-    productionSpeedBonus + masteryBonus.productionBonus,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
     effectivePowerCellBonus
   );
 }
 
-// Apply cost reduction from mastery bonus (all achievements unlocked)
-export function applyCostReduction(costs: ResourceCost[], unlockedAchievements: AchievementId[]): ResourceCost[] {
+// Apply cost reduction from mastery bonus and research
+export function applyCostReduction(
+  costs: ResourceCost[],
+  unlockedAchievements: AchievementId[],
+  researchLevels?: Partial<Record<ResearchId, number>>,
+  costType?: 'build' | 'upgrade'
+): ResourceCost[] {
   const masteryBonus = getMasteryBonus(unlockedAchievements);
-  if (masteryBonus.costReduction === 0) {
+
+  // Research cost reduction (build or upgrade)
+  let researchReduction = 0;
+  if (researchLevels && costType === 'build') {
+    researchReduction = getResearchBonus(researchLevels, 'build_cost');
+  } else if (researchLevels && costType === 'upgrade') {
+    researchReduction = getResearchBonus(researchLevels, 'upgrade_cost');
+  }
+
+  const totalReduction = masteryBonus.costReduction + researchReduction;
+  if (totalReduction === 0) {
     return costs;
   }
-  // Apply 50% cost reduction
+
+  // Cap at 80% reduction to keep some cost
+  const clampedReduction = Math.min(totalReduction, 0.8);
   return costs.map(cost => ({
     ...cost,
-    amount: Math.ceil(cost.amount * (1 - masteryBonus.costReduction)),
+    amount: Math.ceil(cost.amount * (1 - clampedReduction)),
   }));
 }
 

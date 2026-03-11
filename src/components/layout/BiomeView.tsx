@@ -13,6 +13,7 @@ import { BiomeId, ResourceId, FoodId } from "../../types/game.types";
 import { calculateLevelUpCost, calculateProductionRate } from "../../utils/calculations";
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
 import { getMasteryBonus } from "../../game/config/achievements";
+import { getResearchBonus } from "../../game/config/research";
 import { calculateBiomeProductionRates } from "../../utils/allocation";
 import { AnimatedResourceRow } from "../ui/AnimatedResourceRow";
 
@@ -109,6 +110,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
       unlockedSkills: state.prestige.unlockedSkills,
       unlockedAchievements: state.achievements?.unlocked || [],
       allBiomes: state.biomes,
+      researchLevels: state.research?.levels || {},
     };
     const { production, consumption } = calculateBiomeProductionRates(biome, context);
 
@@ -149,7 +151,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     });
 
     return { production, consumption, foodProduction: foodProd };
-  }, [biome, state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes]);
+  }, [biome, state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels]);
 
   // Collect biome resources and food (memoized)
   const allResourcesAndFood = useMemo(() => {
@@ -272,16 +274,19 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                 <button
                   key={resourceId}
                   onClick={() => {
+                    // Apply research gather bonus
+                    const gatherBonus = getResearchBonus(state.research?.levels || {}, 'gather');
+                    const gatherAmount = 1 * (1 + gatherBonus);
                     // Dispatch to food or resource depending on category
                     if (isFood) {
                       dispatch({
                         type: "GATHER_FOOD",
-                        payload: { foodId: resourceId as FoodId, amount: 1 },
+                        payload: { foodId: resourceId as FoodId, amount: gatherAmount },
                       });
                     } else {
                       dispatch({
                         type: "GATHER_RESOURCE",
-                        payload: { biomeId, resourceId, amount: 1 },
+                        payload: { biomeId, resourceId, amount: gatherAmount },
                       });
                     }
                   }}
