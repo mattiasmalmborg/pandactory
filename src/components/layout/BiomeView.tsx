@@ -14,7 +14,7 @@ import { calculateLevelUpCost, calculateProductionRate } from "../../utils/calcu
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
 import { getMasteryBonus } from "../../game/config/achievements";
 import { getResearchBonus } from "../../game/config/research";
-import { getArtifactBonus } from "../../game/config/artifacts";
+import { hasArtifactEffect } from "../../game/config/artifacts";
 import { calculateBiomeProductionRates } from "../../utils/allocation";
 import { AnimatedResourceRow } from "../ui/AnimatedResourceRow";
 
@@ -112,7 +112,6 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
       unlockedAchievements: state.achievements?.unlocked || [],
       allBiomes: state.biomes,
       researchLevels: state.research?.levels || {},
-      artifactInventory: state.artifacts?.inventory || [],
     };
     const { production, consumption } = calculateBiomeProductionRates(biome, context);
 
@@ -278,8 +277,9 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                   onClick={() => {
                     // Apply research gather bonus
                     const researchGatherBonus = getResearchBonus(state.research?.levels || {}, 'gather');
-                    const artifactGatherBonus = getArtifactBonus(state.artifacts?.inventory || [], 'gather');
-                    const gatherAmount = 1 * (1 + researchGatherBonus + artifactGatherBonus);
+                    // Lucky Harvest artifact: 20% chance to double gather
+                    const luckyHarvest = hasArtifactEffect(state.artifacts?.inventory || [], 'lucky_harvest') && Math.random() < 0.2;
+                    const gatherAmount = (1 + researchGatherBonus) * (luckyHarvest ? 2 : 1);
                     // Dispatch to food or resource depending on category
                     if (isFood) {
                       dispatch({

@@ -525,7 +525,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
-        research: state.research, // Research persists!
+        research: { ...INITIAL_RESEARCH_STATE }, // Research resets on prestige!
         artifacts: state.artifacts, // Artifacts persist!
         contracts: {
           ...INITIAL_CONTRACT_STATE,
@@ -914,11 +914,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { artifactInstanceId } = action.payload;
       const artifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
       if (!artifact) return state;
-      // Refund 50% of analysis cost if analyzed
+      // Refund analysis cost if analyzed (50% base, 100% with Idol's Favor)
       let refund = 0;
       if (artifact.status === 'analyzed') {
         const template = ARTIFACT_TEMPLATES[artifact.templateId];
-        refund = Math.floor(template.analysisCost * 0.5);
+        const hasIdolsFavor = state.artifacts.inventory.some(
+          a => a.equipped && a.status === 'analyzed' && ARTIFACT_TEMPLATES[a.templateId].effect === 'idols_favor'
+        );
+        refund = Math.floor(template.analysisCost * (hasIdolsFavor ? 1.0 : 0.5));
       }
       return {
         ...state,

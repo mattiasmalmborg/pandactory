@@ -1,33 +1,12 @@
 import { useGame } from '../../game/state/GameContext';
-import { ARTIFACT_TEMPLATES, RARITY_COLORS, getArtifactBonus } from '../../game/config/artifacts';
-import { ArtifactBonusType } from '../../types/game.types';
-
-const BONUS_LABELS: Record<ArtifactBonusType, { label: string; reduction: boolean }> = {
-  production: { label: 'Production', reduction: false },
-  gather: { label: 'Gather yield', reduction: false },
-  expedition_speed: { label: 'Expedition time', reduction: true },
-  expedition_rewards: { label: 'Expedition rewards', reduction: false },
-  build_cost: { label: 'Build costs', reduction: true },
-  upgrade_cost: { label: 'Upgrade costs', reduction: true },
-  research_speed: { label: 'Research time', reduction: true },
-  artifact_chance: { label: 'Artifact chance', reduction: false },
-};
+import { ARTIFACT_TEMPLATES, RARITY_COLORS, getEffectiveLoadoutSlots, getActiveSetBonuses, SET_BONUSES } from '../../game/config/artifacts';
 
 export function ArtifactLoadout() {
   const { state, dispatch } = useGame();
   const inventory = state.artifacts?.inventory || [];
-  const loadoutSlots = state.artifacts?.loadoutSlots || 3;
+  const loadoutSlots = getEffectiveLoadoutSlots(inventory);
   const equipped = inventory.filter(a => a.equipped);
-
-  // Aggregate bonuses from equipped artifacts
-  const activeBonuses: { label: string; value: string }[] = [];
-  for (const [type, info] of Object.entries(BONUS_LABELS)) {
-    const val = getArtifactBonus(inventory, type as ArtifactBonusType);
-    if (val > 0) {
-      const sign = info.reduction ? '-' : '+';
-      activeBonuses.push({ label: info.label, value: `${sign}${Math.round(val * 100)}%` });
-    }
-  }
+  const setBonuses = getActiveSetBonuses(inventory);
 
   return (
     <div className="bg-gray-900/60 backdrop-blur-sm border border-amber-700/30 rounded-lg p-3 space-y-2">
@@ -37,7 +16,7 @@ export function ArtifactLoadout() {
       </div>
 
       {/* Equipped slots */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className={`grid gap-2 ${loadoutSlots === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
         {Array.from({ length: loadoutSlots }).map((_, i) => {
           const artifact = equipped[i];
           if (!artifact) {
@@ -67,17 +46,37 @@ export function ArtifactLoadout() {
         })}
       </div>
 
-      {/* Active bonuses from equipped artifacts */}
-      {activeBonuses.length > 0 && (
-        <div className="border-t border-gray-700/40 pt-1.5">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-            {activeBonuses.map(b => (
-              <div key={b.label} className="flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 truncate">{b.label}</span>
-                <span className="text-[10px] text-amber-400 font-mono ml-1">{b.value}</span>
+      {/* Active effects from equipped artifacts */}
+      {equipped.length > 0 && (
+        <div className="border-t border-gray-700/40 pt-1.5 space-y-0.5">
+          {equipped.map(a => {
+            const template = ARTIFACT_TEMPLATES[a.templateId];
+            return (
+              <div key={a.instanceId} className="flex items-center gap-1.5">
+                <span className="text-[10px]">{template.icon}</span>
+                <span className="text-[10px] text-gray-300 truncate">{template.description}</span>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Active set bonuses */}
+      {setBonuses.size > 0 && (
+        <div className="border-t border-amber-700/30 pt-1.5 space-y-1">
+          {Array.from(setBonuses.entries()).map(([biome, count]) => {
+            const setBonus = SET_BONUSES[biome];
+            return (
+              <div key={biome} className="bg-amber-900/20 border border-amber-700/30 rounded-md px-2 py-1">
+                <p className="text-[10px] text-amber-400 font-semibold">
+                  {setBonus.name} ({count}/3)
+                </p>
+                <p className="text-[9px] text-amber-200/80">
+                  {count >= 3 ? setBonus.threeBonus : setBonus.twoBonus}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

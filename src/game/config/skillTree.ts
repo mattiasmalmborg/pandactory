@@ -127,6 +127,41 @@ export const SKILL_TREE: Record<SkillId, SkillNode> = {
     effect: { type: 'instant_first_biome', value: true },
   },
 
+  prod_5: {
+    id: 'prod_5',
+    name: 'Perpetual Motion',
+    description: "Your machines run themselves. You're not even sure you built some of them. +25% base production speed.",
+    cost: 4,
+    branch: 'production',
+    tier: 5,
+    requires: ['prod_4'],
+    effect: { type: 'production_speed', value: 0.25 },
+  },
+
+  // Economy Branch (continued)
+  econ_5: {
+    id: 'econ_5',
+    name: 'Cosmic Bargain',
+    description: 'At this point, the universe is paying YOU. -25% all costs.',
+    cost: 4,
+    branch: 'economy',
+    tier: 5,
+    requires: ['econ_4'],
+    effect: { type: 'all_cost_reduction', value: 0.25 },
+  },
+
+  // Expedition Branch (continued)
+  exp_5: {
+    id: 'exp_5',
+    name: 'Warp Navigation',
+    description: "You remember shortcuts that haven't been carved yet. -25% expedition duration.",
+    cost: 4,
+    branch: 'expedition',
+    tier: 5,
+    requires: ['exp_4'],
+    effect: { type: 'expedition_time_reduction', value: 0.25 },
+  },
+
   // Power Cells Branch
   cell_1: {
     id: 'cell_1',
@@ -167,6 +202,16 @@ export const SKILL_TREE: Record<SkillId, SkillNode> = {
     tier: 4,
     requires: ['cell_3'],
     effect: { type: 'power_cell_effectiveness', value: 0.25 },
+  },
+  cell_5: {
+    id: 'cell_5',
+    name: 'Singularity Core',
+    description: "The cells have achieved... something. The readings are off every chart. +35% power cell effectiveness, resonance doubled.",
+    cost: 4,
+    branch: 'power_cells',
+    tier: 5,
+    requires: ['cell_4'],
+    effect: { type: 'power_cell_effectiveness', value: 0.35 },
   },
 };
 
@@ -253,8 +298,11 @@ export function getEffectivePowerCellBonus(
   let effectiveBonus = basePowerCellBonus * (1 + effectivenessBonus);
 
   // Apply resonance: effective * (1 + (resonancePerCell * totalCells))
+  // Singularity Core (cell_5) doubles the resonance bonus
   if (resonancePerCell > 0 && totalInstalledCells > 0) {
-    const resonanceMultiplier = 1 + (resonancePerCell * totalInstalledCells);
+    const hasSingularity = unlockedSkills.includes('cell_5');
+    const effectiveResonance = hasSingularity ? resonancePerCell * 2 : resonancePerCell;
+    const resonanceMultiplier = 1 + (effectiveResonance * totalInstalledCells);
     effectiveBonus *= resonanceMultiplier;
   }
 

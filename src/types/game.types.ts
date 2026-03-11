@@ -61,10 +61,10 @@ export type ExpeditionTier = 'quick_dash' | 'quick_scout' | 'standard_expedition
 export type PandaStatus = 'home' | 'expedition';
 
 export type SkillId =
-  | 'prod_1' | 'prod_2' | 'prod_3' | 'prod_4'
-  | 'econ_1' | 'econ_2' | 'econ_3' | 'econ_4'
-  | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4'
-  | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4';
+  | 'prod_1' | 'prod_2' | 'prod_3' | 'prod_4' | 'prod_5'
+  | 'econ_1' | 'econ_2' | 'econ_3' | 'econ_4' | 'econ_5'
+  | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4' | 'exp_5'
+  | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4' | 'cell_5';
 
 export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'secret';
 
@@ -291,15 +291,25 @@ export type ArtifactTemplateId =
 
 export type ArtifactRarity = 'common' | 'uncommon' | 'rare' | 'legendary';
 
-export type ArtifactBonusType =
-  | 'production'
-  | 'gather'
-  | 'expedition_speed'
-  | 'expedition_rewards'
-  | 'build_cost'
-  | 'upgrade_cost'
-  | 'research_speed'
-  | 'artifact_chance';
+export type ArtifactEffectId =
+  | 'overgrowth'        // Auto-gather every 30s
+  | 'trailblazer'       // Double discovery chances
+  | 'lucky_harvest'     // 20% chance gather triggers twice
+  | 'drip_feed'         // +1 Research Data every 5 min passively
+  | 'safe_return'       // Recalled expeditions keep 75% rewards
+  | 'mirage'            // 25% chance expedition refunds food
+  | 'desert_cache'      // 30% chance expedition also gives Research Data
+  | 'oasis'             // Quick expeditions take half time
+  | 'solar_flare'       // Every 10 min, random automation 5x burst
+  | 'flash_freeze'      // Analysis time halved
+  | 'deep_focus'        // Research costs 3 less Research Data (min 1)
+  | 'meteor_strike'     // Epic Journeys always drop at least 1 artifact
+  | 'thermal_vent'      // Power cells give +1 effective level
+  | 'idols_favor'       // Scrapping returns 100% Research Data
+  | 'eternal_forge'     // +1 loadout slot
+  | 'guiding_light'     // Artifact drops skew toward higher rarities
+  | 'crystal_clarity'   // Unlock second research station
+  | 'heartbeat';        // Bonus production tick every 47s in all biomes
 
 export interface ArtifactTemplate {
   id: ArtifactTemplateId;
@@ -309,10 +319,7 @@ export interface ArtifactTemplate {
   icon: string;
   rarity: ArtifactRarity;
   originBiome: BiomeId;
-  bonus: {
-    type: ArtifactBonusType;
-    value: number;
-  };
+  effect: ArtifactEffectId;
   analysisCost: number;
   analysisDurationMs: number;
 }

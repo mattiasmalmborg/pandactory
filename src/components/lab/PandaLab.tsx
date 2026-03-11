@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useGame } from '../../game/state/GameContext';
-import { RESEARCH_NODES, getResearchCost, getResearchBonus, getResearchDuration } from '../../game/config/research';
-import { ARTIFACT_TEMPLATES, getEquippedCount } from '../../game/config/artifacts';
+import { RESEARCH_NODES, getResearchCost, getResearchDuration } from '../../game/config/research';
+import { ARTIFACT_TEMPLATES, getEquippedCount, getEffectiveLoadoutSlots, hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
 import { ResearchId, ResearchNode, ActiveResearch } from '../../types/game.types';
 import { formatNumber } from '../../utils/formatters';
 import { ArtifactCard } from '../artifacts/ArtifactCard';
@@ -15,7 +15,10 @@ function formatTimeRemaining(ms: number): string {
   if (totalSeconds < 60) return `${totalSeconds}s`;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  if (minutes < 60) return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  const hours = Math.floor(minutes / 60);
+  const remainMins = minutes % 60;
+  return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
 }
 
 function useTimer(
@@ -52,13 +55,79 @@ function useTimer(
   };
 }
 
+// === Research Station ===
+
+function ResearchStation({
+  label,
+  activeResearch,
+  activeAnalysis,
+  progress,
+  remaining,
+}: {
+  label: string;
+  activeResearch: ActiveResearch | null;
+  activeAnalysis: { artifactInstanceId: string; templateId: string } | null;
+  progress: number;
+  remaining: number;
+}) {
+  const isActive = activeResearch || activeAnalysis;
+
+  if (!isActive) {
+    return (
+      <div className="bg-gray-900/60 border border-gray-700/30 rounded-lg p-3 flex items-center gap-3">
+        <span className="text-lg text-gray-600">🔬</span>
+        <div className="flex-1">
+          <p className="text-[10px] text-gray-500 font-semibold">{label}</p>
+          <p className="text-[10px] text-gray-600 italic">Idle — select a research or artifact to analyze</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isResearch = !!activeResearch;
+  const node = isResearch ? RESEARCH_NODES[activeResearch!.researchId] : null;
+
+  return (
+    <div className={`border rounded-lg p-3 ${
+      isResearch
+        ? 'bg-purple-900/30 border-purple-500/40'
+        : 'bg-amber-900/20 border-amber-500/40'
+    }`}>
+      <div className="flex items-center gap-3">
+        <span className="text-lg animate-pulse">{isResearch ? node!.icon : '🏺'}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-gray-500 font-semibold">{label}</p>
+          <p className={`text-[11px] font-semibold truncate ${isResearch ? 'text-purple-300' : 'text-amber-300'}`}>
+            {isResearch ? node!.name : 'Analyzing artifact...'}
+          </p>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex-1 mr-2">
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-100 ${
+                    isResearch
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-400'
+                      : 'bg-gradient-to-r from-amber-600 to-amber-400'
+                  }`}
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+            </div>
+            <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatTimeRemaining(remaining)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // === Research Card ===
 
 function ResearchCard({
   node,
   currentLevel,
   researchData,
-  isResearching,
+  stationBusy,
   activeResearch,
   timerProgress,
   timerRemaining,
@@ -67,7 +136,7 @@ function ResearchCard({
   node: ResearchNode;
   currentLevel: number;
   researchData: number;
-  isResearching: boolean;
+  stationBusy: boolean;
   activeResearch: ActiveResearch | null;
   timerProgress: number;
   timerRemaining: number;
@@ -77,7 +146,7 @@ function ResearchCard({
   const cost = getResearchCost(node.id, currentLevel);
   const isMaxed = cost === null;
   const canAfford = cost !== null && researchData >= cost;
-  const canStart = canAfford && !isResearching;
+  const canStart = canAfford && !stationBusy;
   const currentBonus = node.bonusPerLevel * currentLevel;
   const duration = getResearchDuration(currentLevel);
 
@@ -159,44 +228,13 @@ function ResearchCard({
                         : 'bg-gray-800/50 text-gray-600 border border-gray-700/30 cursor-not-allowed'
                     }`}
                   >
-                    {isResearching ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
+                    {stationBusy ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
                   </button>
                 </>
               )}
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// === Analysis Timer Bar (inline on artifact card is handled by ArtifactCard, but we need a global bar) ===
-
-function AnalysisProgressBar({
-  progress,
-  remaining,
-}: {
-  progress: number;
-  remaining: number;
-}) {
-  return (
-    <div className="bg-gray-900/80 backdrop-blur-sm border border-amber-500/40 rounded-lg p-3">
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-lg animate-pulse">🏺</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-amber-300 font-semibold">Analyzing artifact...</p>
-          <p className="text-[10px] text-gray-400">{formatTimeRemaining(remaining)}</p>
-        </div>
-        {progress >= 1 && (
-          <span className="text-[10px] text-green-400 font-bold animate-pulse">READY!</span>
-        )}
-      </div>
-      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-100"
-          style={{ width: `${progress * 100}%` }}
-        />
       </div>
     </div>
   );
@@ -211,9 +249,19 @@ export function PandaLab() {
   const activeResearch = state.research.activeResearch;
   const activeAnalysis = state.artifacts?.activeAnalysis || null;
   const inventory = state.artifacts?.inventory || [];
-  const loadoutSlots = state.artifacts?.loadoutSlots || 3;
 
   const [labTab, setLabTab] = useState<LabTab>('research');
+
+  // Check for Crystal Resonator (second station)
+  const hasSecondStation = hasArtifactEffect(inventory, 'crystal_clarity');
+
+  // Determine station availability
+  // Station 1 is for research, Station 2 (if unlocked) is for analysis
+  // If only 1 station, it handles both sequentially
+  const station1Busy = activeResearch !== null;
+  const station2Busy = activeAnalysis !== null;
+  const researchStationAvailable = !station1Busy;
+  const analysisStationAvailable = hasSecondStation ? !station2Busy : !station1Busy && !station2Busy;
 
   // Unanalyzed count for badge
   const unanalyzedCount = inventory.filter(a => a.status === 'unanalyzed').length;
@@ -226,14 +274,18 @@ export function PandaLab() {
   }, [dispatch, activeResearch]);
 
   const handleResearchStart = useCallback((researchId: ResearchId, cost: number) => {
+    // Check deep focus artifact: -3 Research Data per level (min 1)
+    const hasDeepFocus = hasArtifactEffect(inventory, 'deep_focus');
+    const adjustedCost = hasDeepFocus ? Math.max(1, cost - 3) : cost;
+
     const currentLevel = levels[researchId] || 0;
     const duration = getResearchDuration(currentLevel);
     const now = Date.now();
     dispatch({
       type: 'START_RESEARCH',
-      payload: { researchId, cost, startTime: now, endTime: now + duration },
+      payload: { researchId, cost: adjustedCost, startTime: now, endTime: now + duration },
     });
-  }, [dispatch, levels]);
+  }, [dispatch, levels, inventory]);
 
   const { progress: researchProgress, remaining: researchRemaining } = useTimer(activeResearch, handleResearchComplete);
 
@@ -272,36 +324,25 @@ export function PandaLab() {
   const totalResearched = Object.values(levels).reduce((sum, lvl) => sum + (lvl || 0), 0);
   const totalMaxLevels = Object.values(RESEARCH_NODES).reduce((sum, n) => sum + n.maxLevel, 0);
 
-  // Research bonuses
-  const researchBonuses = useMemo(() => {
-    const bonuses: Array<{ label: string; value: string }> = [];
-    const check = (type: ResearchNode['bonusType'], label: string) => {
-      const val = getResearchBonus(levels, type);
-      if (val > 0) bonuses.push({ label, value: `+${Math.round(val * 100)}%` });
-    };
-    const checkReduction = (type: ResearchNode['bonusType'], label: string) => {
-      const val = getResearchBonus(levels, type);
-      if (val > 0) bonuses.push({ label, value: `-${Math.round(val * 100)}%` });
-    };
-    check('gather', 'Gather yield');
-    check('production', 'Production speed');
-    checkReduction('build_cost', 'Build costs');
-    checkReduction('upgrade_cost', 'Upgrade costs');
-    checkReduction('expedition_food', 'Expedition food');
-    checkReduction('expedition_time', 'Expedition time');
-    check('expedition_resource', 'Expedition rewards');
-    checkReduction('food_waste', 'Food waste');
-    check('power_cell', 'Power cells');
-    check('spaceship', 'Spaceship parts');
-    return bonuses;
-  }, [levels]);
-
   // --- Artifact handlers ---
   const handleStartAnalysis = useCallback((instanceId: string) => {
+    if (!analysisStationAvailable) return;
     const artifact = inventory.find(a => a.instanceId === instanceId);
-    if (!artifact || activeAnalysis) return;
+    if (!artifact) return;
     const template = ARTIFACT_TEMPLATES[artifact.templateId];
     if (researchData < template.analysisCost) return;
+
+    // Flash Freeze: halve analysis time
+    // Tundra set 2/3: instant analysis
+    const setBonuses = getActiveSetBonuses(inventory);
+    const tundraSetLevel = setBonuses.get('frozen_tundra') || 0;
+    let duration = template.analysisDurationMs;
+    if (tundraSetLevel >= 2) {
+      duration = 1000; // Instant (1 second for UI feedback)
+    } else if (hasArtifactEffect(inventory, 'flash_freeze')) {
+      duration = Math.floor(duration / 2);
+    }
+
     const now = Date.now();
     dispatch({
       type: 'START_ANALYSIS',
@@ -310,11 +351,12 @@ export function PandaLab() {
         templateId: artifact.templateId,
         cost: template.analysisCost,
         startTime: now,
-        endTime: now + template.analysisDurationMs,
+        endTime: now + duration,
       },
     });
-  }, [dispatch, inventory, activeAnalysis, researchData]);
+  }, [dispatch, inventory, analysisStationAvailable, researchData]);
 
+  const loadoutSlots = getEffectiveLoadoutSlots(inventory);
   const equippedCount = getEquippedCount(inventory);
 
   return (
@@ -327,8 +369,8 @@ export function PandaLab() {
         </p>
       </div>
 
-      {/* Combined: Research Data + Progress + Research Bonuses */}
-      <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3 space-y-2">
+      {/* Research Data + Progress */}
+      <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-purple-400">🔬</span>
@@ -344,16 +386,32 @@ export function PandaLab() {
             </p>
           </div>
         </div>
+      </div>
 
-        {researchBonuses.length > 0 && (
-          <div className="border-t border-gray-700/40 pt-2">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-              {researchBonuses.map(b => (
-                <div key={b.label} className="flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 truncate">{b.label}</span>
-                  <span className="text-[10px] text-green-400 font-mono ml-1">{b.value}</span>
-                </div>
-              ))}
+      {/* Research Stations */}
+      <div className="space-y-2">
+        <ResearchStation
+                    label="Research Station 1"
+          activeResearch={activeResearch}
+          activeAnalysis={!hasSecondStation ? activeAnalysis : null}
+          progress={activeResearch ? researchProgress : (!hasSecondStation && activeAnalysis ? analysisProgress : 0)}
+          remaining={activeResearch ? researchRemaining : (!hasSecondStation && activeAnalysis ? analysisRemaining : 0)}
+        />
+
+        {hasSecondStation ? (
+          <ResearchStation
+                        label="Research Station 2"
+            activeResearch={null}
+            activeAnalysis={activeAnalysis}
+            progress={activeAnalysis ? analysisProgress : 0}
+            remaining={activeAnalysis ? analysisRemaining : 0}
+          />
+        ) : (
+          <div className="bg-gray-900/30 border border-dashed border-gray-700/30 rounded-lg p-3 flex items-center gap-3">
+            <span className="text-lg text-gray-700">🔒</span>
+            <div>
+              <p className="text-[10px] text-gray-600 font-semibold">Research Station 2</p>
+              <p className="text-[10px] text-gray-700 italic">Equip Crystal Resonator to unlock</p>
             </div>
           </div>
         )}
@@ -403,7 +461,7 @@ export function PandaLab() {
                   node={node}
                   currentLevel={levels[node.id] || 0}
                   researchData={researchData}
-                  isResearching={activeResearch !== null}
+                  stationBusy={!researchStationAvailable}
                   activeResearch={activeResearch}
                   timerProgress={researchProgress}
                   timerRemaining={researchRemaining}
@@ -421,14 +479,6 @@ export function PandaLab() {
           {/* Loadout */}
           <ArtifactLoadout />
 
-          {/* Analysis progress */}
-          {activeAnalysis && (
-            <AnalysisProgressBar
-              progress={analysisProgress}
-              remaining={analysisRemaining}
-            />
-          )}
-
           {/* Inventory */}
           {inventory.length === 0 ? (
             <div className="bg-gray-900/60 border border-gray-700/30 rounded-lg p-6 text-center">
@@ -445,7 +495,6 @@ export function PandaLab() {
                 <span className="text-[10px] text-gray-500">{inventory.length} artifacts</span>
               </div>
               <div className="space-y-2">
-                {/* Show equipped first, then analyzed, then unanalyzed */}
                 {[...inventory]
                   .sort((a, b) => {
                     if (a.equipped !== b.equipped) return a.equipped ? -1 : 1;
@@ -459,7 +508,7 @@ export function PandaLab() {
                     <ArtifactCard
                       key={artifact.instanceId}
                       artifact={artifact}
-                      analysisActive={activeAnalysis !== null}
+                      analysisActive={!analysisStationAvailable}
                       canAffordAnalysis={researchData >= ARTIFACT_TEMPLATES[artifact.templateId].analysisCost}
                       loadoutFull={equippedCount >= loadoutSlots}
                       onAnalyze={() => handleStartAnalysis(artifact.instanceId)}

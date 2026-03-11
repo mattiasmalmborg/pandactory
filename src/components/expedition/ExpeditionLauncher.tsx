@@ -3,7 +3,7 @@ import { useGame } from '../../game/state/GameContext';
 import { EXPEDITION_TIERS, isExpeditionComplete, calculateExpeditionBonus, getScaledFoodCost } from '../../game/config/expeditions';
 import { FOOD_ITEMS, calculateTotalNutrition, optimizeFoodSelection, calculateWastedNutrition } from '../../game/config/food';
 import { createPowerCell } from '../../game/config/powerCells';
-import { createArtifact, getArtifactBonus } from '../../game/config/artifacts';
+import { createArtifact } from '../../game/config/artifacts';
 import { ExpeditionTier, FoodId } from '../../types/game.types';
 import { ExpeditionRewards } from './ExpeditionRewards';
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
@@ -109,9 +109,6 @@ export function ExpeditionLauncher() {
       .flatMap(b => b.discoveredResources || [])
       .filter((v, i, a) => a.indexOf(v) === i); // unique
 
-    // Calculate artifact chance bonus from equipped artifacts
-    const artifactChanceBonus = getArtifactBonus(state.artifacts?.inventory || [], 'artifact_chance');
-
     // Calculate rewards (pass pity counters for hidden bonuses)
     const rewards = calculateExpeditionRewards(
       state.panda.expedition.tier,
@@ -123,7 +120,7 @@ export function ExpeditionLauncher() {
       state.powerCellPityCounter || 0,
       true,
       1.0,
-      artifactChanceBonus,
+      state.artifacts?.inventory || [],
     );
 
     // Convert PowerCellTier[] to PowerCell[] using createPowerCell to ensure bonus is set

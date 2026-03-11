@@ -58,10 +58,9 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
 
   // Helper to get costs with mastery + research + artifact reduction applied
   const researchLevels = state.research?.levels;
-  const artifactInventory = state.artifacts?.inventory;
   const getAdjustedCosts = useMemo(() => (baseCost: ResourceCost[]) => {
-    return applyCostReduction(baseCost, unlockedAchievements, researchLevels, 'build', artifactInventory);
-  }, [unlockedAchievements, researchLevels, artifactInventory]);
+    return applyCostReduction(baseCost, unlockedAchievements, researchLevels, 'build');
+  }, [unlockedAchievements, researchLevels]);
 
   const buildAutomation = (type: AutomationType) => {
     const config = AUTOMATIONS[type];

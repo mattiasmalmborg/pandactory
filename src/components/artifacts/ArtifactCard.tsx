@@ -1,4 +1,4 @@
-import { Artifact, ArtifactTemplate } from '../../types/game.types';
+import { Artifact } from '../../types/game.types';
 import { ARTIFACT_TEMPLATES, RARITY_COLORS } from '../../game/config/artifacts';
 import { formatNumber } from '../../utils/formatters';
 
@@ -13,32 +13,14 @@ interface ArtifactCardProps {
   loadoutFull?: boolean;
 }
 
-function formatBonusValue(template: ArtifactTemplate): string {
-  const v = Math.round(template.bonus.value * 100);
-  const costTypes = ['build_cost', 'upgrade_cost', 'expedition_speed', 'research_speed'];
-  return costTypes.includes(template.bonus.type) ? `-${v}%` : `+${v}%`;
-}
-
-function getBonusLabel(type: string): string {
-  const labels: Record<string, string> = {
-    production: 'Production',
-    gather: 'Gather yield',
-    expedition_speed: 'Expedition time',
-    expedition_rewards: 'Expedition rewards',
-    build_cost: 'Build costs',
-    upgrade_cost: 'Upgrade costs',
-    research_speed: 'Research time',
-    artifact_chance: 'Artifact chance',
-  };
-  return labels[type] || type;
-}
-
 function formatDuration(ms: number): string {
   const totalSeconds = Math.ceil(ms / 1000);
   if (totalSeconds < 60) return `${totalSeconds}s`;
   const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainMins = minutes % 60;
+  return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
 }
 
 export function ArtifactCard({
@@ -80,10 +62,7 @@ export function ArtifactCard({
           {/* Info */}
           {isAnalyzed ? (
             <>
-              <p className="text-[11px] text-gray-300 mt-0.5">{template.description}</p>
-              <p className="text-[10px] text-green-400 mt-1">
-                {getBonusLabel(template.bonus.type)}: {formatBonusValue(template)}
-              </p>
+              <p className="text-[11px] text-green-400 mt-0.5">{template.description}</p>
               <p className="text-[10px] text-gray-400 italic mt-1">{template.flavorText}</p>
             </>
           ) : isAnalyzing ? (
