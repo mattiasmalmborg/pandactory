@@ -6,6 +6,7 @@ import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { INITIAL_RESEARCH_STATE } from '../config/research';
+import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -106,6 +107,7 @@ export const INITIAL_GAME_STATE: GameState = {
   },
   contracts: { ...INITIAL_CONTRACT_STATE },
   research: { ...INITIAL_RESEARCH_STATE },
+  artifacts: { ...INITIAL_ARTIFACT_STATE },
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
@@ -305,7 +307,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'COLLECT_EXPEDITION': {
-      const { rewards, powerCells, newBiome, newResources } = action.payload;
+      const { rewards, powerCells, newBiome, newResources, artifacts: newArtifacts } = action.payload;
       const newState = { ...state };
 
       // Add rewards - check if food or resource
@@ -385,6 +387,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...state.lifetimeStats?.expeditionsByTier,
             [expeditionTier]: ((state.lifetimeStats?.expeditionsByTier?.[expeditionTier]) || 0) + 1,
           },
+        };
+      }
+
+      // Add artifacts to inventory
+      if (newArtifacts && newArtifacts.length > 0) {
+        newState.artifacts = {
+          ...(state.artifacts || INITIAL_ARTIFACT_STATE),
+          inventory: [...(state.artifacts?.inventory || []), ...newArtifacts],
+          totalFound: (state.artifacts?.totalFound || 0) + newArtifacts.length,
         };
       }
 
@@ -515,6 +526,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
         research: state.research, // Research persists!
+        artifacts: state.artifacts, // Artifacts persist!
         contracts: {
           ...INITIAL_CONTRACT_STATE,
           researchData: state.contracts.researchData, // Keep unspent Research Data
@@ -812,6 +824,111 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         research: {
           ...state.research,
           activeResearch: null,
+        },
+      };
+    }
+
+    case 'START_ANALYSIS': {
+      const { artifactInstanceId, templateId, cost, startTime, endTime } = action.payload;
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData - cost,
+        },
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId ? { ...a, status: 'analyzing' as const } : a
+          ),
+          activeAnalysis: { artifactInstanceId, templateId, startTime, endTime },
+        },
+      };
+    }
+
+    case 'COMPLETE_ANALYSIS': {
+      const { artifactInstanceId } = action.payload;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId
+              ? { ...a, status: 'analyzed' as const, analyzedAt: Date.now() }
+              : a
+          ),
+          activeAnalysis: null,
+          totalAnalyzed: state.artifacts.totalAnalyzed + 1,
+        },
+      };
+    }
+
+    case 'CANCEL_ANALYSIS': {
+      const activeAnalysis = state.artifacts.activeAnalysis;
+      if (!activeAnalysis) return state;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === activeAnalysis.artifactInstanceId
+              ? { ...a, status: 'unanalyzed' as const }
+              : a
+          ),
+          activeAnalysis: null,
+        },
+      };
+    }
+
+    case 'EQUIP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      const equippedCount = state.artifacts.inventory.filter(a => a.equipped).length;
+      if (equippedCount >= state.artifacts.loadoutSlots) return state;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId && a.status === 'analyzed'
+              ? { ...a, equipped: true }
+              : a
+          ),
+        },
+      };
+    }
+
+    case 'UNEQUIP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId ? { ...a, equipped: false } : a
+          ),
+        },
+      };
+    }
+
+    case 'SCRAP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      const artifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
+      if (!artifact) return state;
+      // Refund 50% of analysis cost if analyzed
+      let refund = 0;
+      if (artifact.status === 'analyzed') {
+        const template = ARTIFACT_TEMPLATES[artifact.templateId];
+        refund = Math.floor(template.analysisCost * 0.5);
+      }
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData + refund,
+        },
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.filter(a => a.instanceId !== artifactInstanceId),
         },
       };
     }

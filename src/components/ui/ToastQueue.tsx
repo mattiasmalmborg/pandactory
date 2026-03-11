@@ -77,7 +77,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       clearTimeout(hideTimer);
       clearTimeout(removeTimer);
     };
-  }, [queue, current]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queue]);
 
   const scheme = current ? COLOR_SCHEMES[current.colorScheme] : null;
 

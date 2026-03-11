@@ -50,6 +50,7 @@ export function ExpeditionTimer() {
         powerCells={calculatedRewards.powerCells}
         newBiome={calculatedRewards.newBiome}
         newResources={calculatedRewards.newResources}
+        artifactDrops={calculatedRewards.artifactDrops}
         onClose={() => {
           setShowRewards(false);
           setCalculatedRewards(null);

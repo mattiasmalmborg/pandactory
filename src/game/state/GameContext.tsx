@@ -5,6 +5,7 @@ import { applyOfflineProgress, OfflineProgressResult } from '../../utils/offline
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { INITIAL_RESEARCH_STATE } from '../config/research';
+import { INITIAL_ARTIFACT_STATE } from '../config/artifacts';
 import { STORAGE_KEYS } from '../../config/storage';
 
 // Store the offline progress result globally so it can be accessed by the app
@@ -257,6 +258,14 @@ function migrateGameState(state: GameState): GameState {
         ...migratedState.research,
         activeResearch: null,
       },
+    };
+  }
+
+  // Migrate artifacts (added in Fas 4)
+  if (!migratedState.artifacts) {
+    migratedState = {
+      ...migratedState,
+      artifacts: { ...INITIAL_ARTIFACT_STATE },
     };
   }
 

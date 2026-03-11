@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 
-export type MoreViewType = 'skills' | 'achievements' | 'statistics';
+export type MoreViewType = 'skills' | 'achievements' | 'statistics' | 'trophy_room';
 
 interface MoreMenuProps {
   isOpen: boolean;
@@ -86,6 +86,20 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
               {hasPendingAchievements && (
                 <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
               )}
+            </button>
+
+            {/* Trophy Room */}
+            <button
+              onClick={() => handleNavigate('trophy_room')}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors text-left"
+            >
+              <span className="text-xl">🏆</span>
+              <div className="flex-1">
+                <span className="text-white font-medium">Trophy Room</span>
+                <span className="ml-2 text-xs text-gray-400">
+                  {state.artifacts?.totalFound || 0} found
+                </span>
+              </div>
             </button>
 
             {/* Statistics */}

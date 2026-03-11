@@ -2,7 +2,7 @@ import { useGame } from '../../game/state/GameContext';
 import { isExpeditionComplete } from '../../game/config/expeditions';
 
 export type MainViewType = 'dashboard' | 'biome' | 'expedition' | 'lab' | 'more';
-export type SubViewType = 'skills' | 'achievements' | 'statistics';
+export type SubViewType = 'skills' | 'achievements' | 'statistics' | 'trophy_room';
 export type ViewType = MainViewType | SubViewType;
 
 interface NavigationProps {

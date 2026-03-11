@@ -1,12 +1,14 @@
-import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier } from '../types/game.types';
+import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier, ArtifactTemplateId } from '../types/game.types';
 import { EXPEDITION_TIERS } from '../game/config/expeditions';
 import { BIOMES } from '../game/config/biomes';
+import { rollArtifactDrop } from '../game/config/artifacts';
 
 export interface CalculatedRewards {
   resources: { resourceId: ResourceId; amount: number }[];
   powerCells: PowerCellTier[];
   newBiome: BiomeId | null;
   newResources: ResourceId[];
+  artifactDrops: ArtifactTemplateId[];
 }
 
 /**
@@ -34,7 +36,8 @@ export function calculateExpeditionRewards(
   biomePityCounter: number = 0,
   powerCellPityCounter: number = 0,
   isCompleted: boolean = true,
-  progressPercent: number = 1.0
+  progressPercent: number = 1.0,
+  artifactChanceBonus: number = 0,
 ): CalculatedRewards {
   const config = EXPEDITION_TIERS[tier];
   const baseMultiplier = config.resourceMultiplier;
@@ -149,10 +152,23 @@ export function calculateExpeditionRewards(
     }
   }
 
+  // Artifact drops - ONLY on completed expeditions
+  const artifactDrops: ArtifactTemplateId[] = [];
+  if (isCompleted) {
+    const drop = rollArtifactDrop(currentBiomeId, tier, artifactChanceBonus);
+    if (drop) artifactDrops.push(drop);
+    // Epic Journey has a small chance for a second artifact
+    if (tier === 'epic_journey' && Math.random() < 0.15) {
+      const secondDrop = rollArtifactDrop(currentBiomeId, tier, artifactChanceBonus);
+      if (secondDrop) artifactDrops.push(secondDrop);
+    }
+  }
+
   return {
     resources,
     powerCells,
     newBiome,
-    newResources
+    newResources,
+    artifactDrops,
   };
 }

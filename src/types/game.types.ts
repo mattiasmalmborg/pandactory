@@ -149,6 +149,7 @@ export interface GameState {
   lastSave: number;
   contracts: ContractState;
   research: ResearchState;
+  artifacts: ArtifactState;
   gameStartTime: number; // When the save file was first created
   version: string;
 }
@@ -272,6 +273,74 @@ export interface ResearchState {
   activeResearch: ActiveResearch | null;         // Currently researching
 }
 
+// === Artifacts ===
+
+export type ArtifactTemplateId =
+  // Forest-origin
+  | 'ancient_bamboo_scroll' | 'moss_covered_compass' | 'petrified_acorn'
+  // Lake-origin
+  | 'crystallized_dewdrop' | 'sunken_astrolabe' | 'mist_pearl'
+  // Desert-origin
+  | 'sand_etched_tablet' | 'solar_prism' | 'cactus_fossil'
+  // Tundra-origin
+  | 'frozen_star_fragment' | 'permafrost_lens' | 'ice_rune_stone'
+  // Volcanic-origin
+  | 'obsidian_idol' | 'magma_core_shard' | 'volcanic_geode'
+  // Cavern-origin
+  | 'crystal_resonator' | 'phosphor_lantern' | 'lithium_heart';
+
+export type ArtifactRarity = 'common' | 'uncommon' | 'rare' | 'legendary';
+
+export type ArtifactBonusType =
+  | 'production'
+  | 'gather'
+  | 'expedition_speed'
+  | 'expedition_rewards'
+  | 'build_cost'
+  | 'upgrade_cost'
+  | 'research_speed'
+  | 'artifact_chance';
+
+export interface ArtifactTemplate {
+  id: ArtifactTemplateId;
+  name: string;
+  description: string;
+  flavorText: string;
+  icon: string;
+  rarity: ArtifactRarity;
+  originBiome: BiomeId;
+  bonus: {
+    type: ArtifactBonusType;
+    value: number;
+  };
+  analysisCost: number;
+  analysisDurationMs: number;
+}
+
+export interface Artifact {
+  instanceId: string;
+  templateId: ArtifactTemplateId;
+  status: 'unanalyzed' | 'analyzing' | 'analyzed';
+  foundAt: number;
+  analyzedAt: number | null;
+  equipped: boolean;
+}
+
+export interface ActiveAnalysis {
+  artifactInstanceId: string;
+  templateId: ArtifactTemplateId;
+  startTime: number;
+  endTime: number;
+}
+
+export interface ArtifactState {
+  inventory: Artifact[];
+  activeAnalysis: ActiveAnalysis | null;
+  loadoutSlots: number;
+  totalFound: number;
+  totalAnalyzed: number;
+}
+
 // === Contracts (Daily/Weekly Quests) ===
 
 export type ContractCategory =
@@ -324,7 +393,7 @@ export type GameAction =
   | { type: 'INSTALL_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string; powerCell: PowerCell } }
   | { type: 'REMOVE_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string } }
   | { type: 'START_EXPEDITION'; payload: { tier: ExpeditionTier; foodConsumed: { id: FoodId; amount: number }[] } }
-  | { type: 'COLLECT_EXPEDITION'; payload: { rewards: Record<ResourceId, number>; powerCells: PowerCell[]; newBiome: BiomeId | null; newResources: ResourceId[] } }
+  | { type: 'COLLECT_EXPEDITION'; payload: { rewards: Record<ResourceId, number>; powerCells: PowerCell[]; newBiome: BiomeId | null; newResources: ResourceId[]; artifacts?: Artifact[] } }
   | { type: 'RECALL_EXPEDITION'; payload: { partialRewards: Partial<Record<ResourceId, number>> } }
   | { type: 'SWITCH_BIOME'; payload: { biomeId: BiomeId } }
   | { type: 'UNLOCK_BIOME'; payload: { biomeId: BiomeId } }
@@ -347,4 +416,10 @@ export type GameAction =
   | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } }
   | { type: 'START_RESEARCH'; payload: { researchId: ResearchId; cost: number; startTime: number; endTime: number } }
   | { type: 'COMPLETE_RESEARCH'; payload: { researchId: ResearchId } }
-  | { type: 'CANCEL_RESEARCH' };
+  | { type: 'CANCEL_RESEARCH' }
+  | { type: 'START_ANALYSIS'; payload: { artifactInstanceId: string; templateId: ArtifactTemplateId; cost: number; startTime: number; endTime: number } }
+  | { type: 'COMPLETE_ANALYSIS'; payload: { artifactInstanceId: string } }
+  | { type: 'CANCEL_ANALYSIS' }
+  | { type: 'EQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
+  | { type: 'UNEQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
+  | { type: 'SCRAP_ARTIFACT'; payload: { artifactInstanceId: string } };

@@ -14,6 +14,7 @@ import { calculateLevelUpCost, calculateProductionRate } from "../../utils/calcu
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
 import { getMasteryBonus } from "../../game/config/achievements";
 import { getResearchBonus } from "../../game/config/research";
+import { getArtifactBonus } from "../../game/config/artifacts";
 import { calculateBiomeProductionRates } from "../../utils/allocation";
 import { AnimatedResourceRow } from "../ui/AnimatedResourceRow";
 
@@ -111,6 +112,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
       unlockedAchievements: state.achievements?.unlocked || [],
       allBiomes: state.biomes,
       researchLevels: state.research?.levels || {},
+      artifactInventory: state.artifacts?.inventory || [],
     };
     const { production, consumption } = calculateBiomeProductionRates(biome, context);
 
@@ -275,8 +277,9 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                   key={resourceId}
                   onClick={() => {
                     // Apply research gather bonus
-                    const gatherBonus = getResearchBonus(state.research?.levels || {}, 'gather');
-                    const gatherAmount = 1 * (1 + gatherBonus);
+                    const researchGatherBonus = getResearchBonus(state.research?.levels || {}, 'gather');
+                    const artifactGatherBonus = getArtifactBonus(state.artifacts?.inventory || [], 'gather');
+                    const gatherAmount = 1 * (1 + researchGatherBonus + artifactGatherBonus);
                     // Dispatch to food or resource depending on category
                     if (isFood) {
                       dispatch({

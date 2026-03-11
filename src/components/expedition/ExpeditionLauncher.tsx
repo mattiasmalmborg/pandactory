@@ -3,6 +3,7 @@ import { useGame } from '../../game/state/GameContext';
 import { EXPEDITION_TIERS, isExpeditionComplete, calculateExpeditionBonus, getScaledFoodCost } from '../../game/config/expeditions';
 import { FOOD_ITEMS, calculateTotalNutrition, optimizeFoodSelection, calculateWastedNutrition } from '../../game/config/food';
 import { createPowerCell } from '../../game/config/powerCells';
+import { createArtifact, getArtifactBonus } from '../../game/config/artifacts';
 import { ExpeditionTier, FoodId } from '../../types/game.types';
 import { ExpeditionRewards } from './ExpeditionRewards';
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
@@ -108,6 +109,9 @@ export function ExpeditionLauncher() {
       .flatMap(b => b.discoveredResources || [])
       .filter((v, i, a) => a.indexOf(v) === i); // unique
 
+    // Calculate artifact chance bonus from equipped artifacts
+    const artifactChanceBonus = getArtifactBonus(state.artifacts?.inventory || [], 'artifact_chance');
+
     // Calculate rewards (pass pity counters for hidden bonuses)
     const rewards = calculateExpeditionRewards(
       state.panda.expedition.tier,
@@ -116,11 +120,17 @@ export function ExpeditionLauncher() {
       state.player.currentBiome,
       allDiscoveredResources,
       state.expeditionPityCounter || 0,
-      state.powerCellPityCounter || 0
+      state.powerCellPityCounter || 0,
+      true,
+      1.0,
+      artifactChanceBonus,
     );
 
     // Convert PowerCellTier[] to PowerCell[] using createPowerCell to ensure bonus is set
     const powerCellObjects = rewards.powerCells.map(tier => createPowerCell(tier));
+
+    // Create artifact instances from template drops
+    const artifactInstances = rewards.artifactDrops.map(templateId => createArtifact(templateId));
 
     // IMMEDIATELY dispatch COLLECT_EXPEDITION to clear expedition from state
     // This prevents the loop if user presses F5 during the rewards modal
@@ -134,6 +144,7 @@ export function ExpeditionLauncher() {
         powerCells: powerCellObjects,
         newBiome: rewards.newBiome || null,
         newResources: rewards.newResources,
+        artifacts: artifactInstances,
       },
     });
 
@@ -180,6 +191,7 @@ export function ExpeditionLauncher() {
         powerCells={calculatedRewards.powerCells}
         newBiome={calculatedRewards.newBiome}
         newResources={calculatedRewards.newResources}
+        artifactDrops={calculatedRewards.artifactDrops}
         onClose={handleRewardsClose}
       />
     );
