@@ -5,6 +5,7 @@ import { RESOURCES } from '../game/config/resources';
 import { BiomeId } from '../types/game.types';
 import { createProductionContext, getAutomationProductionRate } from '../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../utils/allocation';
+import { STORAGE_KEYS } from '../config/storage';
 
 const TICK_INTERVAL = 1000; // 1 second
 const SAVE_INTERVAL = 5000; // 5 seconds (reduced from 30s for better save reliability)
@@ -174,7 +175,7 @@ export function useGameLoop() {
       if (now - lastSaveRef.current >= SAVE_INTERVAL) {
         // Save to localStorage with quota handling
         try {
-          localStorage.setItem('pandactory-save', JSON.stringify(stateRef.current));
+          localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(stateRef.current));
         } catch (e: unknown) {
           const error = e as { name?: string };
           if (error.name === 'QuotaExceededError') {
@@ -184,14 +185,14 @@ export function useGameLoop() {
               const keysToRemove: string[] = [];
               for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && key !== 'pandactory-save' && key !== 'pandactory-current-view') {
+                if (key && key !== STORAGE_KEYS.save && key !== STORAGE_KEYS.currentView) {
                   keysToRemove.push(key);
                 }
               }
               keysToRemove.forEach(key => localStorage.removeItem(key));
 
               // Try saving again
-              localStorage.setItem('pandactory-save', JSON.stringify(stateRef.current));
+              localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(stateRef.current));
             } catch {
               alert('Warning: Unable to save game due to storage limits. Consider exporting your save file.');
             }
@@ -209,7 +210,7 @@ export function useGameLoop() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       try {
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(state));
       } catch {
         // Failed to save on unload - ignore
       }

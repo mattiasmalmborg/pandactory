@@ -22,13 +22,14 @@ import { useGame } from './game/state/GameContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { BiomeId } from './types/game.types';
 import { OfflineProgressResult } from './utils/offlineProgress';
+import { STORAGE_KEYS } from './config/storage';
 
 type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
 
 // Load saved view from localStorage, default to 'dashboard'
 function getInitialView(): ViewType {
   try {
-    const saved = localStorage.getItem('pandactory-current-view');
+    const saved = localStorage.getItem(STORAGE_KEYS.currentView);
     if (saved && ['dashboard', 'biome', 'expedition', 'statistics', 'skills', 'achievements'].includes(saved)) {
       return saved as ViewType;
     }
@@ -103,7 +104,7 @@ function GameContent() {
   // Save current view to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('pandactory-current-view', currentView);
+      localStorage.setItem(STORAGE_KEYS.currentView, currentView);
     } catch (e) {
       console.error('Failed to save current view:', e);
     }

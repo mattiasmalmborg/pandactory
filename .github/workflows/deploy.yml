@@ -1,26 +1,22 @@
 # Deploy Pandactory to GitHub Pages
+# Main site at: https://mattiasmalmborg.github.io/pandactory/
+# Preview at:   https://mattiasmalmborg.github.io/pandactory/preview/
 name: Deploy to GitHub Pages
 
 on:
-  # Runs on pushes to main branch
   push:
     branches: ['main']
-  # Allows manual trigger from Actions tab
   workflow_dispatch:
 
-# Sets permissions for GITHUB_TOKEN to deploy to Pages
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: 'pages'
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,21 +34,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Restore preview from gh-pages
+        run: |
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages --depth=1
+            git show origin/gh-pages:preview/index.html >/dev/null 2>&1 && \
+              git archive origin/gh-pages -- preview | tar -x -C dist || true
+          fi
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist

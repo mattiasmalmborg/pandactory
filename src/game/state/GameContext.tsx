@@ -3,6 +3,7 @@ import { GameState, GameAction, FoodId, BiomeId, ResourceId } from '../../types/
 import { gameReducer, INITIAL_GAME_STATE } from './GameState';
 import { applyOfflineProgress, OfflineProgressResult } from '../../utils/offlineProgress';
 import { BIOMES } from '../config/biomes';
+import { STORAGE_KEYS } from '../../config/storage';
 
 // Store the offline progress result globally so it can be accessed by the app
 let lastOfflineProgressResult: OfflineProgressResult | null = null;
@@ -237,18 +238,18 @@ function migrateGameState(state: GameState): GameState {
 function getInitialState(): GameState {
   try {
     // Check if we're coming back from a reset (check both localStorage and sessionStorage)
-    const shouldReset = localStorage.getItem('pandactory-reset-pending') ||
-                        sessionStorage.getItem('pandactory-reset-pending');
+    const shouldReset = localStorage.getItem(STORAGE_KEYS.resetPending) ||
+                        sessionStorage.getItem(STORAGE_KEYS.resetPending);
     if (shouldReset) {
       // Clear all flags and save data
-      localStorage.removeItem('pandactory-reset-pending');
-      sessionStorage.removeItem('pandactory-reset-pending');
-      localStorage.removeItem('pandactory-save');
-      localStorage.removeItem('pandactory-current-view');
+      localStorage.removeItem(STORAGE_KEYS.resetPending);
+      sessionStorage.removeItem(STORAGE_KEYS.resetPending);
+      localStorage.removeItem(STORAGE_KEYS.save);
+      localStorage.removeItem(STORAGE_KEYS.currentView);
       return INITIAL_GAME_STATE;
     }
 
-    const saved = localStorage.getItem('pandactory-save');
+    const saved = localStorage.getItem(STORAGE_KEYS.save);
     if (saved) {
       let loadedState = JSON.parse(saved);
 
@@ -291,7 +292,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         isResetting = true;
 
         // Set sessionStorage flag so getInitialState knows to reset on reload
-        sessionStorage.setItem('pandactory-reset-pending', 'true');
+        sessionStorage.setItem(STORAGE_KEYS.resetPending, 'true');
 
         // Reload - the reset will happen in getInitialState on next load
         window.location.reload();
@@ -341,7 +342,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      localStorage.setItem('pandactory-save', JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(state));
     } catch {
       // Failed to save - ignore
     }
@@ -350,7 +351,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Listen for localStorage changes from other tabs/windows (like dev-tools)
   React.useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'pandactory-save' && e.newValue) {
+      if (e.key === STORAGE_KEYS.save && e.newValue) {
         try {
           const newState = JSON.parse(e.newValue);
           dispatch({ type: 'LOAD_GAME', payload: { gameState: newState } });

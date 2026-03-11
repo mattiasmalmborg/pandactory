@@ -1,4 +1,5 @@
 import { Component, ReactNode, ErrorInfo } from 'react';
+import { STORAGE_KEYS } from '../config/storage';
 
 interface Props {
   children: ReactNode;
@@ -42,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleResetGame = () => {
     if (window.confirm('Are you sure you want to reset the game? This will delete all progress!')) {
-      localStorage.removeItem('pandactory-save');
+      localStorage.removeItem(STORAGE_KEYS.save);
       window.location.reload();
     }
   };

@@ -1,0 +1,57 @@
+# Deploy preview build for feature branches
+# Preview URL: https://mattiasmalmborg.github.io/pandactory/preview/
+#
+# Uses separate localStorage keys (pandactory-preview-*) to avoid
+# corrupting the main game save when testing.
+name: Deploy Preview
+
+on:
+  push:
+    branches: ['feature/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'pages-preview'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with preview config
+        run: npm run build
+        env:
+          VITE_PREVIEW: 'true'
+          VITE_BASE_PATH: '/pandactory/preview/'
+
+      - name: Restore main site from gh-pages
+        run: |
+          mkdir -p deploy
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages --depth=1
+            git archive origin/gh-pages | tar -x -C deploy
+          fi
+          # Replace preview subfolder with new build
+          rm -rf deploy/preview
+          cp -r dist deploy/preview
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy

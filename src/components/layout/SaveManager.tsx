@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { BIOMES } from '../../game/config/biomes';
 import { BiomeId } from '../../types/game.types';
+import { STORAGE_KEYS } from '../../config/storage';
 
 export function SaveManager() {
   const { state, dispatch } = useGame();
@@ -91,7 +92,7 @@ export function SaveManager() {
       dispatch({ type: 'LOAD_GAME', payload: { gameState: parsedData } });
 
       // Save to localStorage
-      localStorage.setItem('pandactory-save', JSON.stringify(parsedData));
+      localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(parsedData));
 
       alert('Save loaded successfully! Reloading page...');
       window.location.reload();
