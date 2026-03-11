@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GameProvider, getLastOfflineProgressResult, clearOfflineProgressResult } from './game/state/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSmartTooltips } from './hooks/useSmartTooltips';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAchievements } from './hooks/useAchievements';
-import { Dashboard } from './components/layout/Dashboard';
+import { CommandCenter } from './components/layout/CommandCenter';
 import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
 import { SkillTree } from './components/prestige/SkillTree';
 import { Achievements } from './components/achievements/Achievements';
 import { AchievementToast } from './components/achievements/AchievementToast';
 import { Navigation } from './components/layout/Navigation';
+import type { ViewType, MainViewType } from './components/layout/Navigation';
+import { MoreMenu } from './components/layout/MoreMenu';
+import type { MoreViewType } from './components/layout/MoreMenu';
+import { PandaLab } from './components/lab/PandaLab';
 import { ExpeditionLauncher } from './components/expedition/ExpeditionLauncher';
 import { ExpeditionTimer } from './components/expedition/ExpeditionTimer';
 import { OfflineProgressModal } from './components/layout/OfflineProgressModal';
@@ -24,19 +28,19 @@ import { BiomeId } from './types/game.types';
 import { OfflineProgressResult } from './utils/offlineProgress';
 import { STORAGE_KEYS } from './config/storage';
 
-type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
+const ALL_VIEWS: ViewType[] = ['dashboard', 'biome', 'expedition', 'lab', 'more', 'skills', 'achievements', 'statistics'];
 
 // Load saved view from localStorage, default to 'dashboard'
 function getInitialView(): ViewType {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.currentView);
-    if (saved && ['dashboard', 'biome', 'expedition', 'statistics', 'skills', 'achievements'].includes(saved)) {
+    if (saved && ALL_VIEWS.includes(saved as ViewType)) {
       return saved as ViewType;
     }
   } catch {
     // Failed to load - use default
   }
-  return 'dashboard'; // Default to dashboard (home page)
+  return 'dashboard';
 }
 
 function GameContent() {
@@ -44,6 +48,7 @@ function GameContent() {
   const [currentView, setCurrentView] = useState<ViewType>(getInitialView);
   const [isLoading, setIsLoading] = useState(true);
   const [offlineProgress, setOfflineProgress] = useState<OfflineProgressResult | null>(null);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   // Initialize game loop
   useGameLoop();
@@ -62,7 +67,7 @@ function GameContent() {
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
     currentView,
-    onViewChange: setCurrentView,
+    onViewChange: setCurrentView as (view: string) => void,
     unlockedBiomes: state.unlockedBiomes,
     onBiomeChange: handleBiomeChange,
   });
@@ -83,9 +88,7 @@ function GameContent() {
 
   // Show loading spinner for initial render and check for offline progress
   useEffect(() => {
-    // Small delay to ensure all state is loaded
     const timer = setTimeout(() => {
-      // Check for offline progress result
       const result = getLastOfflineProgressResult();
       if (result && result.offlineSeconds > 60) {
         setOfflineProgress(result);
@@ -105,16 +108,41 @@ function GameContent() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.currentView, currentView);
-    } catch (e) {
-      console.error('Failed to save current view:', e);
+    } catch {
+      // Failed to save - ignore
     }
   }, [currentView]);
+
+  // Handle main nav tab clicks
+  const handleMainNavChange = useCallback((view: MainViewType) => {
+    if (view === 'more') {
+      setMoreMenuOpen(true);
+    } else {
+      setCurrentView(view);
+      setMoreMenuOpen(false);
+    }
+  }, []);
+
+  // Handle More menu sub-navigation
+  const handleMoreNavigate = useCallback((view: MoreViewType) => {
+    setCurrentView(view);
+    setMoreMenuOpen(false);
+  }, []);
+
+  // Handle Command Center navigation (next steps, lab link, etc.)
+  const handleCommandCenterNavigate = useCallback((view: string) => {
+    if (ALL_VIEWS.includes(view as ViewType)) {
+      setCurrentView(view as ViewType);
+    }
+  }, []);
 
   // Determine which background to show
   const backgroundId = currentView === 'dashboard' ? 'dashboard' :
                        currentView === 'statistics' ? 'skills_stats' :
                        currentView === 'skills' ? 'skills_stats' :
+                       currentView === 'lab' ? 'skills_stats' :
                        currentView === 'expedition' ? state.player.currentBiome :
+                       currentView === 'achievements' ? 'skills_stats' :
                        state.player.currentBiome;
 
   // Show loading spinner
@@ -162,9 +190,10 @@ function GameContent() {
 
             {/* Main Content - scrollable */}
             <div className="h-full">
-              {currentView === 'dashboard' && <Dashboard onNavigateToBiome={() => setCurrentView('biome')} />}
+              {currentView === 'dashboard' && <CommandCenter onNavigate={handleCommandCenterNavigate} />}
               {currentView === 'biome' && <BiomeView biomeId={state.player.currentBiome} />}
               {currentView === 'expedition' && <ExpeditionLauncher />}
+              {currentView === 'lab' && <PandaLab />}
               {currentView === 'statistics' && <Statistics />}
               {currentView === 'skills' && <SkillTree />}
               {currentView === 'achievements' && <Achievements />}
@@ -173,8 +202,15 @@ function GameContent() {
         </div>
       </BiomeBackground>
 
+      {/* More Menu Overlay */}
+      <MoreMenu
+        isOpen={moreMenuOpen}
+        onClose={() => setMoreMenuOpen(false)}
+        onNavigate={handleMoreNavigate}
+      />
+
       {/* Bottom Navigation - fixed at bottom */}
-      <Navigation currentView={currentView} onViewChange={setCurrentView} />
+      <Navigation currentView={currentView} onViewChange={handleMainNavChange} />
 
       {/* Achievement Toast Notifications */}
       <AchievementToast />
