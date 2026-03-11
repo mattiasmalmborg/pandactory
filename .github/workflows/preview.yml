@@ -1,8 +1,9 @@
 # Deploy preview build for feature branches
 # Preview URL: https://mattiasmalmborg.github.io/pandactory/preview/
 #
-# Uses separate localStorage keys (pandactory-preview-*) to avoid
-# corrupting the main game save when testing.
+# This workflow builds the feature branch and deploys it alongside the
+# main site by rebuilding main + adding preview as a subfolder.
+# Uses separate localStorage keys (pandactory-preview-*) to protect saves.
 name: Deploy Preview
 
 on:
@@ -11,47 +12,66 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: 'pages-preview'
-  cancel-in-progress: true
+  group: 'pages'
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy-preview:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}preview/
     steps:
-      - name: Checkout feature branch
+      - name: Build main site
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-src
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: main-src/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Build main
+        run: |
+          cd main-src
+          npm ci
+          npm run build
 
-      - name: Build with preview config
-        run: npm run build
+      - name: Build preview site
+        uses: actions/checkout@v4
+        with:
+          path: preview-src
+
+      - name: Build preview
+        run: |
+          cd preview-src
+          npm ci
+          npm run build
         env:
           VITE_PREVIEW: 'true'
           VITE_BASE_PATH: '/pandactory/preview/'
 
-      - name: Restore main site from gh-pages
+      - name: Combine main + preview
         run: |
-          mkdir -p deploy
-          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
-            git fetch origin gh-pages --depth=1
-            git archive origin/gh-pages | tar -x -C deploy
-          fi
-          # Replace preview subfolder with new build
-          rm -rf deploy/preview
-          cp -r dist deploy/preview
+          cp -r preview-src/dist main-src/dist/preview
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: main-src/dist
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
