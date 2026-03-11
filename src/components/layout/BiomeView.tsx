@@ -191,18 +191,46 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     return [...allResources, ...foodItems];
   }, [biome.resources, state.food, production, consumption, foodProduction, biomeConfig.primaryResources]);
 
+  // Biome progress stats
+  const biomeStats = useMemo(() => {
+    // Resources: primary + discoverable = total possible
+    const totalResources = (biomeConfig.primaryResources?.length || 0) + (biomeConfig.discoverableResources?.length || 0);
+    const discoveredCount = biome.discoveredResources?.length || 0;
+
+    // Automations: count built vs total available (that are currently visible)
+    const totalAutomations = biomeConfig.availableAutomations.length;
+    const builtAutomationTypes = new Set(biome.automations.map(a => a.type));
+    const builtCount = builtAutomationTypes.size;
+
+    return { discoveredCount, totalResources, builtCount, totalAutomations };
+  }, [biome.discoveredResources, biome.automations, biomeConfig]);
+
   return (
     <div ref={swipeRef} className="pb-24">
       {/* Biome Quick-Switch Navigation */}
       <BiomeNav />
 
       <div className="p-4 space-y-4">
-        {/* Header with description */}
+        {/* Header with description and progress */}
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
           <h2 className="text-xl font-bold text-white mb-2">{biomeConfig.name}</h2>
-          <p className="text-sm text-gray-300 leading-relaxed italic">
+          <p className="text-sm text-gray-300 leading-relaxed italic mb-3">
             "{biomeConfig.description}"
           </p>
+          <div className="flex gap-3">
+            <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Resources</p>
+              <p className={`text-sm font-bold ${biomeStats.discoveredCount >= biomeStats.totalResources ? 'text-green-400' : 'text-white'}`}>
+                {biomeStats.discoveredCount}/{biomeStats.totalResources}
+              </p>
+            </div>
+            <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Automations</p>
+              <p className={`text-sm font-bold ${biomeStats.builtCount >= biomeStats.totalAutomations ? 'text-green-400' : 'text-white'}`}>
+                {biomeStats.builtCount}/{biomeStats.totalAutomations}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Resources & Food */}

@@ -2,28 +2,7 @@ import { useMemo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { SpaceshipGoal } from './SpaceshipGoal';
 import { ASSET_CONFIG } from '../../config/assets';
-import { RESOURCES } from '../../game/config/resources';
-import { AUTOMATIONS } from '../../game/config/automations';
-import { ResourceId, AutomationType } from '../../types/game.types';
-import { getAllBiomeResources } from '../../utils/calculations';
-import { formatNumber } from '../../utils/formatters';
-
-const SPACESHIP_PARTS: ResourceId[] = [
-  'microchips', 'rocket_fuel', 'thrusters', 'oxygen_tanks',
-  'batteries', 'solar_arrays', 'titanium_hull',
-];
-const REQUIRED_AMOUNT = 100;
-
-// Map spaceship parts to their producing automation types
-const PART_PRODUCERS: Record<string, string> = {
-  microchips: 'lithography_lab',
-  rocket_fuel: 'fuel_depot',
-  thrusters: 'thruster_plant',
-  oxygen_tanks: 'tank_filling_station',
-  titanium_hull: 'hull_assembly',
-  solar_arrays: 'solar_array_assembly',
-  batteries: 'battery_assembly',
-};
+import { getSmartBottleneck } from '../../utils/smart-recommendations';
 
 interface CommandCenterProps {
   onNavigate: (view: string) => void;
@@ -86,28 +65,8 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
     ? CRASH_DESCRIPTIONS[crashNumber]
     : CRASH_DESCRIPTIONS[CRASH_DESCRIPTIONS.length - 1];
 
-  // Calculate spaceship progress and bottleneck
-  const shipData = useMemo(() => {
-    const allResources = getAllBiomeResources(state.biomes);
-    const parts = SPACESHIP_PARTS.map(partId => {
-      const current = Math.floor(allResources[partId] || 0);
-      const percent = Math.min(100, Math.round((current / REQUIRED_AMOUNT) * 100));
-      const resource = RESOURCES[partId];
-      return { id: partId, name: resource?.name || partId, current, percent, icon: resource?.icon || '?' };
-    });
-
-    const completedCount = parts.filter(p => p.percent >= 100).length;
-    const overallPercent = Math.round((completedCount / parts.length) * 100);
-    const isComplete = completedCount === parts.length;
-
-    // Find bottleneck (lowest non-complete part)
-    const incompleteParts = parts.filter(p => p.percent < 100);
-    const bottleneck = incompleteParts.length > 0
-      ? incompleteParts.reduce((min, p) => p.percent < min.percent ? p : min)
-      : null;
-
-    return { parts, completedCount, overallPercent, isComplete, bottleneck };
-  }, [state.biomes]);
+  // Smart bottleneck — traces production chains to find what's actionable NOW
+  const smartBottleneck = useMemo(() => getSmartBottleneck(state), [state]);
 
   // Calculate next steps
   const nextSteps = useMemo(() => {
@@ -120,34 +79,6 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
         action: 'Spend in Skill Tree',
         view: 'skills',
       });
-    }
-
-    // Bottleneck suggestion
-    if (shipData.bottleneck) {
-      const producerType = PART_PRODUCERS[shipData.bottleneck.id] as AutomationType | undefined;
-      const producer = producerType ? AUTOMATIONS[producerType] : undefined;
-      if (producer && producerType) {
-        // Check if any biome has this automation built
-        let hasProducer = false;
-        for (const biomeId of state.unlockedBiomes) {
-          const biome = state.biomes[biomeId];
-          if (biome.automations.some(a => a.type === producerType)) {
-            hasProducer = true;
-            break;
-          }
-        }
-        if (!hasProducer) {
-          steps.push({
-            text: `Build ${producer.name} to produce ${shipData.bottleneck.name}`,
-            view: 'biome',
-          });
-        } else {
-          steps.push({
-            text: `Upgrade ${producer.name} for more ${shipData.bottleneck.name}`,
-            view: 'biome',
-          });
-        }
-      }
     }
 
     // Check if enough food for an expedition (rough check: 500 is cheapest tier)
@@ -170,7 +101,7 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
     }
 
     return steps.slice(0, 3); // Max 3 steps
-  }, [state, shipData.bottleneck]);
+  }, [state]);
 
   // Lab status
   const labUnlocked = state.prestige.totalPrestiges > 0;
@@ -205,18 +136,27 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
       {/* Spaceship Progress — always visible, compact */}
       <SpaceshipGoal />
 
-      {/* Bottleneck indicator */}
-      {shipData.bottleneck && !shipData.isComplete && (
+      {/* Smart bottleneck indicator — adapts to game phase */}
+      {smartBottleneck && (
         <div className="bg-gray-900/70 backdrop-blur-sm border border-amber-700/40 rounded-lg p-3">
           <div className="flex items-center gap-2">
-            <span className="text-amber-400 text-sm">⚠️</span>
+            <span className="text-lg">{smartBottleneck.icon}</span>
             <div className="flex-1">
-              <p className="text-xs text-amber-300 font-medium">Bottleneck</p>
-              <p className="text-xs text-gray-300">
-                {shipData.bottleneck.icon} {shipData.bottleneck.name}: {formatNumber(shipData.bottleneck.current)}/{REQUIRED_AMOUNT} ({shipData.bottleneck.percent}%)
-              </p>
+              <p className="text-xs text-amber-300 font-medium">{smartBottleneck.label}</p>
+              <p className="text-xs text-gray-300">{smartBottleneck.text}</p>
             </div>
+            {smartBottleneck.percent !== undefined && (
+              <span className="text-xs text-amber-400 font-mono">{smartBottleneck.percent}%</span>
+            )}
           </div>
+          {smartBottleneck.percent !== undefined && (
+            <div className="mt-2 h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-amber-500/70 rounded-full transition-all duration-500"
+                style={{ width: `${smartBottleneck.percent}%` }}
+              />
+            </div>
+          )}
         </div>
       )}
 

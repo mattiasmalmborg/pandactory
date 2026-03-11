@@ -8,10 +8,12 @@ import { ExpeditionRewards } from './ExpeditionRewards';
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
 import { formatNumber } from '../../utils/formatters';
 import { BiomeNav, BIOME_ORDER } from '../navigation/BiomeNav';
+import { BIOMES } from '../../game/config/biomes';
 import { useSwipe } from '../../hooks/useSwipe';
 
 export function ExpeditionLauncher() {
   const { state, dispatch } = useGame();
+  const currentBiomeName = BIOMES[state.player.currentBiome]?.name || 'Unknown';
   const [selectedTier, setSelectedTier] = useState<ExpeditionTier>('quick_scout');
   const [foodSelection, setFoodSelection] = useState<{ id: FoodId; amount: number }[]>([]);
   const [autoFill, setAutoFill] = useState(true);
@@ -226,9 +228,9 @@ export function ExpeditionLauncher() {
       <div className="p-4 space-y-4">
       {/* Header Card - same style as biome menu */}
       <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
-        <h2 className="text-xl font-bold text-white mb-2">Start Expedition</h2>
+        <h2 className="text-xl font-bold text-white mb-2">{currentBiomeName} Expedition</h2>
         <p className="text-sm text-gray-300">
-          Send Dr. Redd Pawston III exploring to discover new biomes, hidden resources in the current biome, power cells, and gather materials. Longer expeditions have better discovery chances. Building and upgrading is locked while away.
+          Send Dr. Redd Pawston III exploring from {currentBiomeName} to discover new biomes, hidden resources, power cells, and gather materials. Longer expeditions have better discovery chances.
         </p>
       </div>
 
@@ -419,7 +421,7 @@ export function ExpeditionLauncher() {
           ? 'Need more food!'
           : !canAffordFood
           ? 'Not enough food in inventory!'
-          : 'Start Expedition'}
+          : `Explore ${currentBiomeName}`}
       </button>
       </div>
     </div>
