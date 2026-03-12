@@ -54,7 +54,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
   });
 
   // Get achievement-based cost reduction
-  const unlockedAchievements = state.achievements?.unlocked || [];
+  const unlockedAchievements = useMemo(() => state.achievements?.unlocked || [], [state.achievements?.unlocked]);
 
   // Helper to get costs with mastery + research + artifact reduction applied
   const researchLevels = state.research?.levels;

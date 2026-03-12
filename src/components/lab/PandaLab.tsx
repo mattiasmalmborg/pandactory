@@ -248,7 +248,7 @@ export function PandaLab() {
   const levels = state.research.levels;
   const activeResearch = state.research.activeResearch;
   const activeAnalysis = state.artifacts?.activeAnalysis || null;
-  const inventory = state.artifacts?.inventory || [];
+  const inventory = useMemo(() => state.artifacts?.inventory || [], [state.artifacts?.inventory]);
 
   const [labTab, setLabTab] = useState<LabTab>('research');
 
