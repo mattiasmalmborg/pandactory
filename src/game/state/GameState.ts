@@ -652,6 +652,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    case 'CLEAR_VETERAN_BONUS': {
+      const { pendingVeteranBonus: _, ...rest } = state;
+      return rest as GameState;
+    }
+
     case 'SAVE_GAME': {
       const now = Date.now();
       return {

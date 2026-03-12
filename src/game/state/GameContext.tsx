@@ -270,6 +270,43 @@ function migrateGameState(state: GameState): GameState {
     };
   }
 
+  // Veteran welcome bonus: give returning players Research Data based on progression
+  // Triggers once when a pre-contracts save first loads the new version
+  if (
+    migratedState.contracts?.researchData === 0 &&
+    migratedState.contracts?.totalResearchDataEarned === 0 &&
+    !migratedState.pendingVeteranBonus &&
+    migratedState.lifetimeStats
+  ) {
+    const stats = migratedState.lifetimeStats;
+    const hasProgression = stats.totalAutomationsBuilt > 0 || stats.totalExpeditionsCompleted > 0;
+
+    if (hasProgression) {
+      const autoBonus = Math.min(25, stats.totalAutomationsBuilt);
+      const expBonus = Math.min(30, stats.totalExpeditionsCompleted * 2);
+      const upgradeBonus = Math.min(20, Math.floor(stats.totalUpgradesPurchased / 5));
+      const totalBonus = 25 + autoBonus + expBonus + upgradeBonus;
+
+      const reasons: string[] = [];
+      if (stats.totalAutomationsBuilt > 0) reasons.push(`${stats.totalAutomationsBuilt} automations built`);
+      if (stats.totalExpeditionsCompleted > 0) reasons.push(`${stats.totalExpeditionsCompleted} expeditions completed`);
+      if (stats.totalUpgradesPurchased > 0) reasons.push(`${stats.totalUpgradesPurchased} upgrades purchased`);
+
+      migratedState = {
+        ...migratedState,
+        contracts: {
+          ...migratedState.contracts,
+          researchData: totalBonus,
+          totalResearchDataEarned: totalBonus,
+        },
+        pendingVeteranBonus: {
+          amount: totalBonus,
+          reason: reasons.join(', '),
+        },
+      };
+    }
+  }
+
   return migratedState;
 }
 
