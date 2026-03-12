@@ -27,7 +27,7 @@ export function Navigation({ currentView, onViewChange }: NavigationProps) {
   const labUnlocked = state.prestige.totalPrestiges > 0;
 
   const navItems = [
-    { id: 'dashboard' as const, label: 'HQ', icon: '🏠', showNotification: false, locked: false },
+    { id: 'dashboard' as const, label: 'Home', icon: '🏠', showNotification: false, locked: false },
     { id: 'biome' as const, label: 'Biome', icon: '🌲', showNotification: false, locked: false },
     { id: 'expedition' as const, label: 'Explore', icon: '🗺️', showNotification: expeditionComplete, locked: false },
     { id: 'lab' as const, label: 'Lab', icon: '🔬', showNotification: false, locked: !labUnlocked },
