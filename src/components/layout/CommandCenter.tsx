@@ -35,7 +35,7 @@ const CRASH_DESCRIPTIONS = [
   },
   {
     title: "Lucky number seven! (It's not lucky)",
-    subtitle: "Seven times stranded. The universe is just mocking you at this point."
+    subtitle: "You know what, this planet deserves a name by now. It's green, it's got trees, and I'm stuck here... Verdania. Named it myself. Very scientific."
   },
   {
     title: "Professional Crash Landing Expert",
