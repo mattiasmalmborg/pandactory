@@ -4,8 +4,9 @@ export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
+        const base = import.meta.env.BASE_URL;
+        const registration = await navigator.serviceWorker.register(`${base}sw.js`, {
+          scope: base,
         });
 
         // Check for updates periodically

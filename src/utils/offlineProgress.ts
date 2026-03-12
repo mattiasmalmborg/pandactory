@@ -1,6 +1,7 @@
 import { GameState, ResourceId, FoodId, BiomeId, AutomationType } from '../types/game.types';
 import { AutomationConfig } from '../types/automation.types';
 import { AUTOMATIONS } from '../game/config/automations';
+import { RESOURCES } from '../game/config/resources';
 import { createProductionContext, getAutomationProductionRate } from './calculations';
 import { getAutomationEfficiency } from './allocation';
 import { calculateBiomeProductionRates } from './allocation';
@@ -91,8 +92,8 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
       // Skip paused automations
       if (automation.paused) return;
 
-      // Calculate production rate with all bonuses
-      const productionRate = getAutomationProductionRate(automation, productionContext);
+      // Calculate production rate with all bonuses (pass artifacts for thermal_vent)
+      const productionRate = getAutomationProductionRate(automation, productionContext, loadedState.artifacts?.inventory);
 
       // Calculate efficiency based on resource availability
       const efficiency = getAutomationEfficiency(automation, globalProduction, productionContext);
@@ -127,6 +128,20 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
 
         // Track production
         resourcesProduced[produce.resourceId] = (resourcesProduced[produce.resourceId] || 0) + amountToProduce;
+
+        // Update discovery state for intermediate resources produced offline
+        const resourceConfig = RESOURCES[produce.resourceId];
+        if (
+          resourceConfig?.category === 'intermediate' &&
+          current < 1 &&
+          current + amountToProduce >= 1 &&
+          !newState.discoveredProducedResources?.includes(produce.resourceId)
+        ) {
+          newState.discoveredProducedResources = [
+            ...(newState.discoveredProducedResources || []),
+            produce.resourceId,
+          ];
+        }
       });
 
       // Produce food
@@ -138,6 +153,20 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
 
           // Track food production
           foodProduced[foodProduce.foodId] = (foodProduced[foodProduce.foodId] || 0) + amountToProduce;
+
+          // Update discovery state for non-primary foods produced offline
+          const isPrimaryFood = foodProduce.foodId === 'berries';
+          if (
+            !isPrimaryFood &&
+            current < 1 &&
+            current + amountToProduce >= 1 &&
+            !newState.discoveredProducedFoods?.includes(foodProduce.foodId)
+          ) {
+            newState.discoveredProducedFoods = [
+              ...(newState.discoveredProducedFoods || []),
+              foodProduce.foodId,
+            ];
+          }
         });
       }
     });

@@ -6,7 +6,7 @@ import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { INITIAL_RESEARCH_STATE } from '../config/research';
-import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES } from '../config/artifacts';
+import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -283,6 +283,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { tier, foodConsumed } = action.payload;
       const config = EXPEDITION_TIERS[tier];
 
+      // Oasis artifact: Swift Forage and Local Expedition take half the time
+      let durationMs = config.durationMinutes * 60 * 1000;
+      if (
+        (tier === 'quick_dash' || tier === 'quick_scout') &&
+        hasArtifactEffect(state.artifacts?.inventory || [], 'oasis')
+      ) {
+        durationMs = Math.floor(durationMs / 2);
+      }
+
       // Deduct food
       const newFood = { ...state.food };
       foodConsumed.forEach(({ id, amount }) => {
@@ -296,7 +305,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           expedition: {
             tier,
             startTime: Date.now(),
-            durationMs: config.durationMinutes * 60 * 1000,
+            durationMs,
             foodConsumed,
             completed: false,
             collectedAt: null,
@@ -397,6 +406,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...(state.artifacts || INITIAL_ARTIFACT_STATE),
           inventory: [...(state.artifacts?.inventory || []), ...newArtifacts],
           totalFound: (state.artifacts?.totalFound || 0) + newArtifacts.length,
+        };
+      }
+
+      // Mirage artifact: 25% chance completed expeditions refund all food cost
+      const artifactInv = newState.artifacts?.inventory || state.artifacts?.inventory || [];
+      if (
+        hasArtifactEffect(artifactInv, 'mirage') &&
+        state.panda.expedition?.foodConsumed &&
+        Math.random() < 0.25
+      ) {
+        const refundFood = { ...newState.food };
+        state.panda.expedition.foodConsumed.forEach(({ id, amount }) => {
+          refundFood[id] = (refundFood[id] || 0) + amount;
+        });
+        newState.food = refundFood;
+      }
+
+      // Desert Cache artifact: 30% chance to award 3-8 Research Data
+      if (hasArtifactEffect(artifactInv, 'desert_cache') && Math.random() < 0.30) {
+        const bonusRD = Math.floor(Math.random() * 6) + 3;
+        newState.contracts = {
+          ...newState.contracts,
+          researchData: (newState.contracts?.researchData || 0) + bonusRD,
+          totalResearchDataEarned: (newState.contracts?.totalResearchDataEarned || 0) + bonusRD,
         };
       }
 

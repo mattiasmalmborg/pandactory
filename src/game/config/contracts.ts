@@ -596,6 +596,12 @@ export function updateContractProgress(
         if (action.type === 'UNLOCK_BIOME' || action.type === 'ACKNOWLEDGE_RESOURCE_DISCOVERY') {
           newProgress += 1;
         }
+        // Expedition discoveries: count new biome + new resources found
+        if (action.type === 'COLLECT_EXPEDITION') {
+          const payload = action.payload as { newBiome?: string | null; newResources?: string[] } | undefined;
+          if (payload?.newBiome) newProgress += 1;
+          if (payload?.newResources) newProgress += payload.newResources.length;
+        }
         break;
       }
     }

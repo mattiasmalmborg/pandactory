@@ -10,7 +10,7 @@ import { BiomeNav, BIOME_ORDER } from "../navigation/BiomeNav";
 import { BiomeIntroPopup } from "./BiomeIntroPopup";
 import { useSwipe } from "../../hooks/useSwipe";
 import { BiomeId, ResourceId, FoodId } from "../../types/game.types";
-import { calculateLevelUpCost, calculateProductionRate } from "../../utils/calculations";
+import { calculateLevelUpCost, calculateProductionRate, applyCostReduction } from "../../utils/calculations";
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
 import { getMasteryBonus } from "../../game/config/achievements";
 import { getResearchBonus } from "../../game/config/research";
@@ -84,27 +84,8 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     }
   };
 
-  if (!biome.discovered) {
-    return (
-      <div className="p-4 space-y-4">
-        <h2 className="text-xl font-bold">{biomeConfig.name}</h2>
-        <div className="bg-gray-800/80 backdrop-blur-sm p-6 rounded-lg border border-gray-700/50 text-center">
-          <p className="text-gray-400 mb-4">
-            This biome has not been discovered yet.
-          </p>
-          <p className="text-sm text-gray-500">
-            Send Dr. Redd Pawston III on an expedition to discover new biomes!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // If biome is discovered but not activated, show the intro popup
-  // The popup will activate the biome when closed (handled by handleCloseIntro)
-  // We still render the main view behind it so there's no intermediate screen
-
   // Calculate production and consumption rates (memoized)
+  // NOTE: All hooks must be above any early returns to satisfy React rules of hooks
   const { production, consumption, foodProduction } = useMemo(() => {
     // Pass context for accurate calculations including skill bonuses and power cells
     const context = {
@@ -239,6 +220,23 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     return { discoveredCount, totalResources, builtCount, totalAutomations };
   }, [biome.resources, biome.automations, biomeConfig, state.food]);
 
+  // Undiscovered biome — show placeholder (guard placed after all hooks)
+  if (!biome.discovered) {
+    return (
+      <div className="p-4 space-y-4">
+        <h2 className="text-xl font-bold">{biomeConfig.name}</h2>
+        <div className="bg-gray-800/80 backdrop-blur-sm p-6 rounded-lg border border-gray-700/50 text-center">
+          <p className="text-gray-400 mb-4">
+            This biome has not been discovered yet.
+          </p>
+          <p className="text-sm text-gray-500">
+            Send Dr. Redd Pawston III on an expedition to discover new biomes!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={swipeRef} className="pb-24">
       {/* Biome Quick-Switch Navigation */}
@@ -347,11 +345,14 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
               {biome.automations.map((automation) => {
                 const config = AUTOMATIONS[automation.type];
                 if (!config) return null;
-                const upgradeCost = calculateLevelUpCost(
+                const baseUpgradeCost = calculateLevelUpCost(
                   config.baseCost,
                   automation.level,
                   config.levelUpCostMultiplier,
                 );
+                // Apply same cost reduction as UI display (mastery + research)
+                const unlockedAchievements = state.achievements?.unlocked || [];
+                const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade');
 
                 return (
                   <AutomationCard

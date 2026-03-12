@@ -32,8 +32,6 @@ export function AutomationCard({
   const config = AUTOMATIONS[automation.type];
   const isOnExpedition = state.panda.status === 'expedition';
 
-  if (!config) return null;
-
   // Gather all resources from ALL biomes for cross-biome upgrades (memoized)
   const allResources = useMemo(() => {
     const resources: Record<string, number> = {};
@@ -114,7 +112,7 @@ export function AutomationCard({
   const efficiencyPercent = Math.round(efficiency * 100);
 
   // Calculate production rates with new formula (+25% per level)
-  const baseRate = calculateProductionRate(config.baseProductionRate, automation.level);
+  const baseRate = config ? calculateProductionRate(config.baseProductionRate, automation.level) : 0;
   const actualRate = effectivePowerCellBonus > 0
     ? baseRate * (1 + effectivePowerCellBonus)
     : baseRate;
@@ -122,7 +120,7 @@ export function AutomationCard({
 
   // Identify which specific resources are bottlenecking this automation
   const bottleneckResources = useMemo(() => {
-    if (!config.consumes || efficiency >= 0.99) return [];
+    if (!config?.consumes || efficiency >= 0.99) return [];
 
     const bottlenecks: ResourceId[] = [];
     config.consumes.forEach(consume => {
@@ -136,7 +134,10 @@ export function AutomationCard({
     });
 
     return bottlenecks;
-  }, [config.consumes, actualRate, netProduction, efficiency]);
+  }, [config?.consumes, actualRate, netProduction, efficiency]);
+
+  // Guard: all hooks above, safe to return early now
+  if (!config) return null;
 
   // Calculate next level production
   const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, automation.level + 1);
