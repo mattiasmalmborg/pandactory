@@ -147,6 +147,10 @@ const TEMPLATES: ContractTemplate[] = [
         `${target.toLocaleString()} ${resource.name}, please. The spaceship won't build itself. Well, actually...`,
         `Collect ${target.toLocaleString()} ${resource.name}. Your paws were made for this.`,
         `Fetch ${target.toLocaleString()} ${resource.name}. Good panda.`,
+        `Gather ${target.toLocaleString()} ${resource.name}. Dr. Redd wrote a thesis on why this matters. Nobody read it.`,
+        `Stockpile ${target.toLocaleString()} ${resource.name}. Future-you will be grateful. Present-you, less so.`,
+        `Amass ${target.toLocaleString()} ${resource.name}. "More is more" — Dr. Redd's economic theory.`,
+        `Round up ${target.toLocaleString()} ${resource.name}. The supply closet has feelings too.`,
       ];
 
       return {
@@ -163,7 +167,7 @@ const TEMPLATES: ContractTemplate[] = [
   // ── BUILD ───────────────────────────────────────────────
   {
     category: 'build',
-    generate: (state, period) => {
+    generate: (state, period, rng) => {
       // Check if there are visible-but-unbuilt automations
       const builtTypes = new Set<AutomationType>();
       for (const biomeId of state.unlockedBiomes) {
@@ -198,9 +202,25 @@ const TEMPLATES: ContractTemplate[] = [
       const target = period === 'weekly' ? Math.min(3, unbuildable) : Math.min(2, unbuildable);
       const reward = Math.round((period === 'weekly' ? BASE_WEEKLY_REWARD : BASE_DAILY_REWARD) * 1.5);
 
+      const singleFlavors = [
+        'Build something new. Alien tech won\'t assemble itself!',
+        'Construct a new automation. Progress waits for no panda.',
+        'Assemble a new machine. Dr. Redd drew the blueprints upside down, but it should still work.',
+        'Build something shiny and new. The planet isn\'t going to industrialize itself.',
+        'Deploy a new automation. Dr. Redd promises it won\'t explode. Probably.',
+        'Erect a new contraption. Yes, "erect" is the technical term.',
+      ];
+      const multiFlavors = [
+        `Build ${target} new contraptions. Dr. Redd loves the smell of fresh automation.`,
+        `Construct ${target} new machines. Assembly required. Patience optional.`,
+        `Deploy ${target} new automations. The factory floor is looking a bit empty.`,
+        `Build ${target} contraptions. Dr. Redd has blueprints and zero patience.`,
+        `Assemble ${target} machines. More gears, more glory.`,
+        `Set up ${target} new automations. Efficiency is a lifestyle, not a goal.`,
+      ];
       const desc = target === 1
-        ? 'Build something new. Alien tech won\'t assemble itself!'
-        : `Build ${target} new contraptions. Dr. Redd loves the smell of fresh automation.`;
+        ? singleFlavors[Math.floor(rng() * singleFlavors.length)]
+        : multiFlavors[Math.floor(rng() * multiFlavors.length)];
 
       return {
         category: 'build',
@@ -228,9 +248,25 @@ const TEMPLATES: ContractTemplate[] = [
       const base = Math.max(1, Math.min(totalAutos, 3 + Math.floor(rng() * 3)));
       const target = niceRound(base * multiplier);
 
+      const singleUpgradeFlavors = [
+        'Give an automation the ol\' upgrade treatment.',
+        'Upgrade something. Anything. Dr. Redd can\'t stand stagnation.',
+        'Level up a machine. It\'s been giving you that look.',
+        'Boost an automation. A little investment goes a long way.',
+        'Upgrade one automation. Think of it as a spa day for machines.',
+        'Pump some resources into an upgrade. Your machines deserve better.',
+      ];
+      const multiUpgradeFlavors = [
+        `Upgrade automations ${target} times. More power! MORE!`,
+        `Perform ${target} upgrades. Progress is addictive, isn't it?`,
+        `Upgrade ${target} times. Dr. Redd insists on "continuous improvement."`,
+        `Level up machines ${target} times. Numbers go up, dopamine follows.`,
+        `Apply ${target} upgrades. The machines aren't going to improve themselves. Yet.`,
+        `Boost automations ${target} times. Because "good enough" isn't a thing here.`,
+      ];
       const desc = target === 1
-        ? 'Give an automation the ol\' upgrade treatment.'
-        : `Upgrade automations ${target} times. More power! MORE!`;
+        ? singleUpgradeFlavors[Math.floor(rng() * singleUpgradeFlavors.length)]
+        : multiUpgradeFlavors[Math.floor(rng() * multiUpgradeFlavors.length)];
 
       return {
         category: 'upgrade',
@@ -245,7 +281,7 @@ const TEMPLATES: ContractTemplate[] = [
   // ── EXPEDITION ──────────────────────────────────────────
   {
     category: 'expedition',
-    generate: (state, period) => {
+    generate: (state, period, rng) => {
       // Check if player can realistically do an expedition
       const totalFood = Object.values(state.food).reduce((s, a) => s + a, 0);
       const hasFoodProduction = state.unlockedBiomes.some(biomeId =>
@@ -260,9 +296,25 @@ const TEMPLATES: ContractTemplate[] = [
 
       const target = period === 'weekly' ? 3 : 1;
 
+      const singleExpFlavors = [
+        'Take a stroll through the wilderness. Pack snacks.',
+        'Complete one expedition. Adventure calls! So does lunch, but adventure first.',
+        'Head out on an expedition. Dr. Redd has marked the map with a crayon.',
+        'Go exploring. The unknown awaits. So do the known dangers, but let\'s be optimistic.',
+        'Finish an expedition. Even pandas need fresh air sometimes.',
+        'Complete a field mission. Dr. Redd packed you a motivational note.',
+      ];
+      const multiExpFlavors = [
+        `Complete ${target} expeditions. Dr. Redd is getting restless.`,
+        `Finish ${target} expeditions. There's so much planet left to catalog.`,
+        `Wrap up ${target} field missions. The wilderness isn't going to explore itself.`,
+        `Go on ${target} adventures. Dr. Redd wants postcards from each one.`,
+        `Complete ${target} expeditions. Your hiking boots are gathering dust.`,
+        `Knock out ${target} expeditions. The data practically collects itself. (It doesn't.)`,
+      ];
       const desc = target === 1
-        ? 'Take a stroll through the wilderness. Pack snacks.'
-        : `Complete ${target} expeditions. Dr. Redd is getting restless.`;
+        ? singleExpFlavors[Math.floor(rng() * singleExpFlavors.length)]
+        : multiExpFlavors[Math.floor(rng() * multiExpFlavors.length)];
 
       return {
         category: 'expedition',
@@ -301,6 +353,11 @@ const TEMPLATES: ContractTemplate[] = [
         `Crank out ${target.toLocaleString()} ${resource.name}. The machines are hungry.`,
         `Manufacture ${target.toLocaleString()} ${resource.name}. Let the automations do the heavy lifting.`,
         `Produce ${target.toLocaleString()} ${resource.name}. Quality control is optional. (It's not.)`,
+        `Generate ${target.toLocaleString()} ${resource.name}. The factory never sleeps and neither should you. Just kidding. Sleep.`,
+        `Output ${target.toLocaleString()} ${resource.name}. Dr. Redd calls this "vertical integration." Nobody corrects him.`,
+        `Churn out ${target.toLocaleString()} ${resource.name}. Your automations were born for this moment.`,
+        `Fabricate ${target.toLocaleString()} ${resource.name}. Science waits for no panda.`,
+        `Refine ${target.toLocaleString()} ${resource.name}. Raw materials are so last century.`,
       ];
 
       return {
@@ -343,9 +400,18 @@ const TEMPLATES: ContractTemplate[] = [
 
       const pick = candidates[Math.floor(rng() * candidates.length)];
 
+      const levelUpFlavors = [
+        `Get ${pick.name} to level ${pick.targetLevel}. It believes in you!`,
+        `Push ${pick.name} to level ${pick.targetLevel}. Dr. Redd is placing bets on this one.`,
+        `Level ${pick.name} to ${pick.targetLevel}. Every upgrade brings you closer to escape velocity.`,
+        `Reach level ${pick.targetLevel} on ${pick.name}. Overclocking is just enthusiasm with extra steps.`,
+        `Boost ${pick.name} to level ${pick.targetLevel}. It's been whispering "upgrade me" in its sleep.`,
+        `Get ${pick.name} to ${pick.targetLevel}. That machine has untapped potential. Dr. Redd can feel it.`,
+      ];
+
       return {
         category: 'level_up',
-        description: `Get ${pick.name} to level ${pick.targetLevel}. It believes in you!`,
+        description: levelUpFlavors[Math.floor(rng() * levelUpFlavors.length)],
         icon: '🎯',
         target: pick.targetLevel,
         researchDataReward: Math.round((period === 'weekly' ? BASE_WEEKLY_REWARD : BASE_DAILY_REWARD) * 1.3),
@@ -377,6 +443,11 @@ const TEMPLATES: ContractTemplate[] = [
         `Stockpile ${target.toLocaleString()} food. A hungry panda is an unproductive panda.`,
         `Hoard ${target.toLocaleString()} food. Expedition snacks don't grow on trees. Well, some do.`,
         `Accumulate ${target.toLocaleString()} food. Dr. Redd's tummy demands it.`,
+        `Store ${target.toLocaleString()} food. You can never be too prepared. Or too full.`,
+        `Gather ${target.toLocaleString()} food supplies. The pantry is looking awfully empty.`,
+        `Reach ${target.toLocaleString()} food. Dr. Redd measures morale in snacks per capita.`,
+        `Fill the larder to ${target.toLocaleString()}. Hungry expeditions are short expeditions.`,
+        `Bank ${target.toLocaleString()} food. Surplus today, survival tomorrow.`,
       ];
 
       return {
@@ -392,7 +463,7 @@ const TEMPLATES: ContractTemplate[] = [
   // ── DISCOVER ────────────────────────────────────────────
   {
     category: 'discover',
-    generate: (state, period) => {
+    generate: (state, period, rng) => {
       // Check for undiscovered resources across unlocked biomes
       let undiscoveredCount = 0;
       for (const biomeId of state.unlockedBiomes) {
@@ -412,9 +483,25 @@ const TEMPLATES: ContractTemplate[] = [
       // Weekly: discover 2, daily: discover 1
       const target = period === 'weekly' ? Math.min(2, totalUndiscovered) : 1;
 
+      const singleDiscoverFlavors = [
+        'Find something new out there. The universe is full of surprises. Mostly rocks.',
+        'Make a discovery. Dr. Redd is running out of things to put in his journal.',
+        'Uncover something unknown. The planet still has secrets. Probably.',
+        'Discover something new. Exploration is 90% walking and 10% gasping.',
+        'Find an undiscovered resource or biome. Dr. Redd will name it after himself.',
+        'Make a new finding. Science doesn\'t do itself. Well, sometimes it does. But not today.',
+      ];
+      const multiDiscoverFlavors = [
+        `Make ${target} discoveries. Dr. Redd's curiosity is insatiable.`,
+        `Uncover ${target} new things. The planet's secrets won't reveal themselves.`,
+        `Find ${target} discoveries. Every expedition is a chance to expand the encyclopedia.`,
+        `Discover ${target} unknowns. Dr. Redd's journal has empty pages that haunt him.`,
+        `Make ${target} findings. Knowledge is power. Also Research Data. Mostly Research Data.`,
+        `Chart ${target} new discoveries. The map has blank spots and Dr. Redd has opinions about it.`,
+      ];
       const desc = target === 1
-        ? 'Find something new out there. The universe is full of surprises. Mostly rocks.'
-        : `Make ${target} discoveries. Dr. Redd's curiosity is insatiable.`;
+        ? singleDiscoverFlavors[Math.floor(rng() * singleDiscoverFlavors.length)]
+        : multiDiscoverFlavors[Math.floor(rng() * multiDiscoverFlavors.length)];
 
       return {
         category: 'discover',
