@@ -20,7 +20,14 @@ function ChoreCard({ contract, onClaim }: { contract: Contract; onClaim: () => v
           <p className={`text-xs leading-relaxed ${
             contract.claimed ? 'text-gray-500 line-through' : 'text-gray-200'
           }`}>
-            {contract.description}
+            {(() => {
+              // Split description into task + flavor at first ". " boundary
+              const dotIdx = contract.description.indexOf('. ');
+              if (dotIdx === -1) return contract.description;
+              const task = contract.description.slice(0, dotIdx + 1);
+              const flavor = contract.description.slice(dotIdx + 2);
+              return <>{task} <span className="italic text-gray-400">{flavor}</span></>;
+            })()}
           </p>
 
           {/* Progress bar */}

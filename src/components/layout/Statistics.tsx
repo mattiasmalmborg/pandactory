@@ -47,7 +47,7 @@ export function Statistics() {
       biome.automations.forEach((automation) => {
         const config = AUTOMATIONS[automation.type];
         if (!config || !config.producesFood || automation.paused) return;
-        const rate = getAutomationProductionRate(automation, productionContext);
+        const rate = getAutomationProductionRate(automation, productionContext, state.artifacts?.inventory);
         config.producesFood.forEach((foodProduce) => {
           const fid = foodProduce.foodId as ResourceId;
           if (!allResources[fid]) {
