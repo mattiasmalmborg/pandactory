@@ -622,10 +622,6 @@
           <p><strong>Cosmic Bamboo Shards:</strong> ${prestige.cosmicBambooShards}</p>
           <p><strong>Unlocked Skills:</strong> ${prestige.unlockedSkills.length}/${ALL_SKILLS.length}</p>
         `;
-
-        // Update input fields
-        document.getElementById('prestige-count').value = prestige.totalPrestiges;
-        document.getElementById('cosmic-shards').value = prestige.cosmicBambooShards;
       } catch (e) {
         document.getElementById('prestige-status').innerHTML =
           '<p class="error">Error reading game state: ' + e.message + '</p>';

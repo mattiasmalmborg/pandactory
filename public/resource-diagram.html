@@ -223,6 +223,15 @@
     .resource-sources span, .resource-uses span {
       color: #4a90a4;
     }
+    .resource-section-title {
+      grid-column: 1 / -1;
+      margin: 10px 0 2px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #ffb27a;
+    }
 
     /* Production Chain */
     .chain-section {
@@ -373,7 +382,7 @@
 </head>
 <body>
   <h1>Pandactory Resource & Automation Diagram</h1>
-  <p class="subtitle">Complete guide to all resources, automations, and production chains</p>
+  <p class="subtitle">Complete guide to all resources, foods, automations, and production chains</p>
 
   <div class="tabs">
     <div class="tab active" onclick="showTab('biomes')">By Biome</div>
@@ -1357,8 +1366,8 @@
             </div>
           </div>
         </div>
-        <div class="automation-card final" data-search="lithography lab microchips doped silicon precision quartz copper wire">
-          <div class="automation-name">Lithography Lab <span class="automation-type final">Final</span></div>
+        <div class="automation-card processor" data-search="lithography lab microchips doped silicon precision quartz copper wire">
+          <div class="automation-name">Lithography Lab <span class="automation-type processor">Processor</span></div>
           <div class="resource-flow">
             <div class="resource-list">
               <span class="resource-item input">💠 Doped Silicon x2</span>
@@ -1443,233 +1452,324 @@
   <!-- RESOURCE INDEX TAB -->
   <div id="resources" class="content">
     <div class="resource-index">
-      <!-- Raw Resources -->
-      <div class="resource-entry" data-search="wood">
+      <div class="resource-section-title">Raw Materials</div>
+      <div class="resource-entry" data-search="wood logger (lush forest) sawmill charcoal kiln">
         <div class="resource-entry-header"><span class="resource-entry-icon">🪵</span> Wood</div>
         <div class="resource-sources">Source: <span>Logger (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Sawmill, Charcoal Kiln</span></div>
       </div>
-      <div class="resource-entry" data-search="stone">
+      <div class="resource-entry" data-search="stone quarry (lush forest) stone cutter">
         <div class="resource-entry-header"><span class="resource-entry-icon">🪨</span> Stone</div>
         <div class="resource-sources">Source: <span>Quarry (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Stone Cutter</span></div>
       </div>
-      <div class="resource-entry" data-search="rubber sap">
+      <div class="resource-entry" data-search="rubber sap rubber tapper (lush forest) rubber processor">
         <div class="resource-entry-header"><span class="resource-entry-icon">🍯</span> Rubber Sap</div>
         <div class="resource-sources">Source: <span>Rubber Tapper (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Rubber Processor</span></div>
       </div>
-      <div class="resource-entry" data-search="nitrogen nodules">
+      <div class="resource-entry" data-search="nitrogen nodules nitrogen collector (lush forest) chemical plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">🟤</span> Nitrogen Nodules</div>
         <div class="resource-sources">Source: <span>Nitrogen Collector (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Chemical Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="fresh water">
+      <div class="resource-entry" data-search="fresh water water collector (misty lake) water purifier">
         <div class="resource-entry-header"><span class="resource-entry-icon">💧</span> Fresh Water</div>
         <div class="resource-sources">Source: <span>Water Collector (Misty Lake)</span></div>
         <div class="resource-uses">Used by: <span>Water Purifier</span></div>
       </div>
-      <div class="resource-entry" data-search="fish">
+      <div class="resource-entry" data-search="fish fish trap (misty lake) smokehouse">
         <div class="resource-entry-header"><span class="resource-entry-icon">🐟</span> Fish</div>
         <div class="resource-sources">Source: <span>Fish Trap (Misty Lake)</span></div>
         <div class="resource-uses">Used by: <span>Smokehouse</span></div>
       </div>
-      <div class="resource-entry" data-search="clay">
+      <div class="resource-entry" data-search="clay clay digger (misty lake) kiln aluminum smelter">
         <div class="resource-entry-header"><span class="resource-entry-icon">🟫</span> Clay</div>
         <div class="resource-sources">Source: <span>Clay Digger (Misty Lake)</span></div>
         <div class="resource-uses">Used by: <span>Kiln, Aluminum Smelter</span></div>
       </div>
-      <div class="resource-entry" data-search="quartz sand">
+      <div class="resource-entry" data-search="quartz sand sand collector (arid desert) glass furnace silicon processor">
         <div class="resource-entry-header"><span class="resource-entry-icon">🏜️</span> Quartz Sand</div>
         <div class="resource-sources">Source: <span>Sand Collector (Arid Desert)</span></div>
         <div class="resource-uses">Used by: <span>Glass Furnace, Silicon Processor</span></div>
       </div>
-      <div class="resource-entry" data-search="crude oil">
+      <div class="resource-entry" data-search="crude oil oil pump (arid desert) distillation unit">
         <div class="resource-entry-header"><span class="resource-entry-icon">🛢️</span> Crude Oil</div>
         <div class="resource-sources">Source: <span>Oil Pump (Arid Desert)</span></div>
         <div class="resource-uses">Used by: <span>Distillation Unit</span></div>
       </div>
-      <div class="resource-entry" data-search="cactus">
+      <div class="resource-entry" data-search="cactus cactus farm (arid desert) cactus press">
         <div class="resource-entry-header"><span class="resource-entry-icon">🌵</span> Cactus</div>
         <div class="resource-sources">Source: <span>Cactus Farm (Arid Desert)</span></div>
         <div class="resource-uses">Used by: <span>Cactus Press</span></div>
       </div>
-      <div class="resource-entry" data-search="sulfur">
+      <div class="resource-entry" data-search="sulfur sulfur collector (volcanic isle) vulcanizer">
         <div class="resource-entry-header"><span class="resource-entry-icon">💛</span> Sulfur</div>
         <div class="resource-sources">Source: <span>Sulfur Collector (Volcanic Isle)</span></div>
         <div class="resource-uses">Used by: <span>Vulcanizer</span></div>
       </div>
-      <div class="resource-entry" data-search="ice">
+      <div class="resource-entry" data-search="ice ice harvester (frozen tundra) lox plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">🧊</span> Ice</div>
         <div class="resource-sources">Source: <span>Ice Harvester (Frozen Tundra)</span></div>
         <div class="resource-uses">Used by: <span>LOX Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="iron ore">
+      <div class="resource-entry" data-search="rutile ore rutile miner (frozen tundra)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">⛏️</span> Rutile Ore</div>
+        <div class="resource-sources">Source: <span>Rutile Miner (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="iron ore iron miner (frozen tundra) smelter">
         <div class="resource-entry-header"><span class="resource-entry-icon">⛏️</span> Iron Ore</div>
         <div class="resource-sources">Source: <span>Iron Miner (Frozen Tundra)</span></div>
         <div class="resource-uses">Used by: <span>Smelter</span></div>
       </div>
-      <div class="resource-entry" data-search="rutile ore titanium">
-        <div class="resource-entry-header"><span class="resource-entry-icon">⛏️</span> Rutile Ore</div>
-        <div class="resource-sources">Source: <span>Rutile Miner (Frozen Tundra)</span></div>
-        <div class="resource-uses">Used by: <span>(Titanium processing)</span></div>
-      </div>
-      <div class="resource-entry" data-search="arctic moss">
+      <div class="resource-entry" data-search="arctic moss moss collector (frozen tundra) greenhouse insulation plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">🌿</span> Arctic Moss</div>
         <div class="resource-sources">Source: <span>Moss Collector (Frozen Tundra)</span></div>
         <div class="resource-uses">Used by: <span>Greenhouse, Insulation Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="geothermal energy">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🔥</span> Geothermal Energy</div>
-        <div class="resource-sources">Source: <span>Geothermal Tap (Volcanic Isle)</span></div>
-        <div class="resource-uses">Used by: <span>Graphitizer, Electrolyzer, Refinery, Obsidian Forge</span></div>
-      </div>
-      <div class="resource-entry" data-search="obsidian">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🖤</span> Obsidian</div>
-        <div class="resource-sources">Source: <span>Obsidian Collector (Volcanic Isle)</span></div>
-        <div class="resource-uses">Used by: <span>Obsidian Forge</span></div>
-      </div>
-      <div class="resource-entry" data-search="nickel cobalt ore">
+      <div class="resource-entry" data-search="nickel-cobalt ore nickel-cobalt miner (volcanic isle) refinery">
         <div class="resource-entry-header"><span class="resource-entry-icon">🔶</span> Nickel-Cobalt Ore</div>
         <div class="resource-sources">Source: <span>Nickel-Cobalt Miner (Volcanic Isle)</span></div>
         <div class="resource-uses">Used by: <span>Refinery</span></div>
       </div>
-      <div class="resource-entry" data-search="lithium crystals">
+      <div class="resource-entry" data-search="obsidian obsidian collector (volcanic isle) obsidian forge">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🖤</span> Obsidian</div>
+        <div class="resource-sources">Source: <span>Obsidian Collector (Volcanic Isle)</span></div>
+        <div class="resource-uses">Used by: <span>Obsidian Forge</span></div>
+      </div>
+      <div class="resource-entry" data-search="geothermal energy geothermal tap (volcanic isle) refinery obsidian forge electrolyzer graphitizer">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🔥</span> Geothermal Energy</div>
+        <div class="resource-sources">Source: <span>Geothermal Tap (Volcanic Isle)</span></div>
+        <div class="resource-uses">Used by: <span>Refinery, Obsidian Forge, Electrolyzer, Graphitizer</span></div>
+      </div>
+      <div class="resource-entry" data-search="lithium crystals lithium miner (crystal caverns) battery factory">
         <div class="resource-entry-header"><span class="resource-entry-icon">💎</span> Lithium Crystals</div>
         <div class="resource-sources">Source: <span>Lithium Miner (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Battery Factory</span></div>
       </div>
-      <div class="resource-entry" data-search="copper ore">
+      <div class="resource-entry" data-search="copper ore copper miner (crystal caverns) wire mill">
         <div class="resource-entry-header"><span class="resource-entry-icon">🟠</span> Copper Ore</div>
         <div class="resource-sources">Source: <span>Copper Miner (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Wire Mill</span></div>
       </div>
-      <div class="resource-entry" data-search="phosphorus">
+      <div class="resource-entry" data-search="phosphorus phosphorus collector (crystal caverns) doping plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">✨</span> Phosphorus</div>
         <div class="resource-sources">Source: <span>Phosphorus Collector (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Doping Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="quartz crystals">
+      <div class="resource-entry" data-search="quartz crystals quartz miner (crystal caverns) precision cutter">
         <div class="resource-entry-header"><span class="resource-entry-icon">💠</span> Quartz Crystals</div>
         <div class="resource-sources">Source: <span>Quartz Miner (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Precision Cutter</span></div>
       </div>
-
-      <!-- Intermediate Resources -->
-      <div class="resource-entry" data-search="charcoal">
+      <div class="resource-section-title">Processed Materials</div>
+      <div class="resource-entry" data-search="planks sawmill (lush forest)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">📏</span> Planks</div>
+        <div class="resource-sources">Source: <span>Sawmill (Lush Forest)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="stone bricks stone cutter (lush forest)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧱</span> Stone Bricks</div>
+        <div class="resource-sources">Source: <span>Stone Cutter (Lush Forest)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="charcoal charcoal kiln (lush forest) kiln smokehouse glass furnace smelter vulcanizer graphitizer">
         <div class="resource-entry-header"><span class="resource-entry-icon">⚫</span> Charcoal</div>
-        <div class="resource-sources">Source: <span>Charcoal Kiln (Wood)</span></div>
+        <div class="resource-sources">Source: <span>Charcoal Kiln (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Kiln, Smokehouse, Glass Furnace, Smelter, Vulcanizer, Graphitizer</span></div>
       </div>
-      <div class="resource-entry" data-search="rubber">
+      <div class="resource-entry" data-search="clean water water purifier (misty lake) greenhouse electrolyzer">
+        <div class="resource-entry-header"><span class="resource-entry-icon">💦</span> Clean Water</div>
+        <div class="resource-sources">Source: <span>Water Purifier (Misty Lake)</span></div>
+        <div class="resource-uses">Used by: <span>Greenhouse, Electrolyzer</span></div>
+      </div>
+      <div class="resource-entry" data-search="rubber rubber processor (lush forest) vulcanizer">
         <div class="resource-entry-header"><span class="resource-entry-icon">⚫</span> Rubber</div>
-        <div class="resource-sources">Source: <span>Rubber Processor (Rubber Sap)</span></div>
+        <div class="resource-sources">Source: <span>Rubber Processor (Lush Forest)</span></div>
         <div class="resource-uses">Used by: <span>Vulcanizer</span></div>
       </div>
-      <div class="resource-entry" data-search="clean water">
-        <div class="resource-entry-header"><span class="resource-entry-icon">💦</span> Clean Water</div>
-        <div class="resource-sources">Source: <span>Water Purifier (Fresh Water)</span></div>
-        <div class="resource-uses">Used by: <span>Electrolyzer, Greenhouse</span></div>
+      <div class="resource-entry" data-search="ceramics kiln (misty lake)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🏺</span> Ceramics</div>
+        <div class="resource-sources">Source: <span>Kiln (Misty Lake)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
       </div>
-      <div class="resource-entry" data-search="hydrogen">
-        <div class="resource-entry-header"><span class="resource-entry-icon">💨</span> Hydrogen</div>
-        <div class="resource-sources">Source: <span>Electrolyzer (Clean Water + Geothermal)</span></div>
-        <div class="resource-uses">Used by: <span>Chemical Plant, Hydrazine Plant</span></div>
-      </div>
-      <div class="resource-entry" data-search="oxygen">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🫧</span> Oxygen</div>
-        <div class="resource-sources">Source: <span>Electrolyzer (Clean Water + Geothermal)</span></div>
-        <div class="resource-uses">Used by: <span>LOX Plant</span></div>
-      </div>
-      <div class="resource-entry" data-search="glass">
+      <div class="resource-entry" data-search="glass glass furnace (arid desert) pv plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">🪟</span> Glass</div>
-        <div class="resource-sources">Source: <span>Glass Furnace (Quartz Sand + Charcoal)</span></div>
+        <div class="resource-sources">Source: <span>Glass Furnace (Arid Desert)</span></div>
         <div class="resource-uses">Used by: <span>PV Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="kerosene">
-        <div class="resource-entry-header"><span class="resource-entry-icon">⛽</span> Kerosene</div>
-        <div class="resource-sources">Source: <span>Distillation Unit (Crude Oil)</span></div>
-        <div class="resource-uses">Used by: <span>Fuel Depot</span></div>
-      </div>
-      <div class="resource-entry" data-search="silicon ingot">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🔲</span> Silicon Ingot</div>
-        <div class="resource-sources">Source: <span>Silicon Processor (Quartz Sand)</span></div>
-        <div class="resource-uses">Used by: <span>Doping Plant</span></div>
-      </div>
-      <div class="resource-entry" data-search="ammonia">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🧪</span> Ammonia</div>
-        <div class="resource-sources">Source: <span>Chemical Plant (Nitrogen + Hydrogen)</span></div>
-        <div class="resource-uses">Used by: <span>Hydrazine Plant</span></div>
-      </div>
-      <div class="resource-entry" data-search="iron ingots">
+      <div class="resource-entry" data-search="iron ingots smelter (frozen tundra) thruster plant tank filling station hull assembly">
         <div class="resource-entry-header"><span class="resource-entry-icon">⬛</span> Iron Ingots</div>
-        <div class="resource-sources">Source: <span>Smelter (Iron Ore + Charcoal)</span></div>
-        <div class="resource-uses">Used by: <span>Hull Assembly, Thruster Plant, Tank Filling Station</span></div>
+        <div class="resource-sources">Source: <span>Smelter (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>Thruster Plant, Tank Filling Station, Hull Assembly</span></div>
       </div>
-      <div class="resource-entry" data-search="aluminum ingots">
+      <div class="resource-entry" data-search="aluminum ingots aluminum smelter (misty lake) frame mill">
         <div class="resource-entry-header"><span class="resource-entry-icon">🪙</span> Aluminum Ingots</div>
-        <div class="resource-sources">Source: <span>Aluminum Smelter (Clay)</span></div>
+        <div class="resource-sources">Source: <span>Aluminum Smelter (Misty Lake)</span></div>
         <div class="resource-uses">Used by: <span>Frame Mill</span></div>
       </div>
-      <div class="resource-entry" data-search="aluminum frame">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🔲</span> Aluminum Frame</div>
-        <div class="resource-sources">Source: <span>Frame Mill (Aluminum Ingots)</span></div>
-        <div class="resource-uses">Used by: <span>Solar Array Assembly</span></div>
-      </div>
-      <div class="resource-entry" data-search="liquid oxygen lox">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🧊</span> Liquid Oxygen</div>
-        <div class="resource-sources">Source: <span>LOX Plant (Oxygen + Ice)</span></div>
-        <div class="resource-uses">Used by: <span>Fuel Depot, Tank Filling Station</span></div>
-      </div>
-      <div class="resource-entry" data-search="refined alloy">
-        <div class="resource-entry-header"><span class="resource-entry-icon">🔷</span> Refined Alloy</div>
-        <div class="resource-sources">Source: <span>Refinery (Nickel-Cobalt + Geothermal)</span></div>
-        <div class="resource-uses">Used by: <span>Hull Assembly, Thruster Plant</span></div>
-      </div>
-      <div class="resource-entry" data-search="obsidian tools">
+      <div class="resource-entry" data-search="obsidian tools obsidian forge (volcanic isle) precision cutter">
         <div class="resource-entry-header"><span class="resource-entry-icon">🔪</span> Obsidian Tools</div>
-        <div class="resource-sources">Source: <span>Obsidian Forge (Obsidian + Geothermal)</span></div>
+        <div class="resource-sources">Source: <span>Obsidian Forge (Volcanic Isle)</span></div>
         <div class="resource-uses">Used by: <span>Precision Cutter</span></div>
       </div>
-      <div class="resource-entry" data-search="vulcanized rubber">
+      <div class="resource-entry" data-search="vulcanized rubber vulcanizer (volcanic isle) thruster plant tank filling station hull assembly insulation plant">
         <div class="resource-entry-header"><span class="resource-entry-icon">🛞</span> Vulcanized Rubber</div>
-        <div class="resource-sources">Source: <span>Vulcanizer (Rubber + Sulfur + Charcoal)</span></div>
-        <div class="resource-uses">Used by: <span>Hull Assembly, Thruster Plant, Insulation Plant, Tank Filling Station</span></div>
+        <div class="resource-sources">Source: <span>Vulcanizer (Volcanic Isle)</span></div>
+        <div class="resource-uses">Used by: <span>Thruster Plant, Tank Filling Station, Hull Assembly, Insulation Plant</span></div>
       </div>
-      <div class="resource-entry" data-search="graphite">
-        <div class="resource-entry-header"><span class="resource-entry-icon">✏️</span> Graphite</div>
-        <div class="resource-sources">Source: <span>Graphitizer (Charcoal + Geothermal)</span></div>
-        <div class="resource-uses">Used by: <span>Battery Factory</span></div>
-      </div>
-      <div class="resource-entry" data-search="copper wire">
+      <div class="resource-entry" data-search="copper wire wire mill (crystal caverns) lithography lab battery factory pv plant solar array assembly battery assembly">
         <div class="resource-entry-header"><span class="resource-entry-icon">🔌</span> Copper Wire</div>
-        <div class="resource-sources">Source: <span>Wire Mill (Copper Ore)</span></div>
-        <div class="resource-uses">Used by: <span>Lithography Lab, Battery Factory, PV Plant, Solar Array Assembly</span></div>
+        <div class="resource-sources">Source: <span>Wire Mill (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Lithography Lab, Battery Factory, PV Plant, Solar Array Assembly, Battery Assembly</span></div>
       </div>
-      <div class="resource-entry" data-search="precision quartz">
+      <div class="resource-entry" data-search="hydrogen electrolyzer (misty lake) chemical plant hydrazine plant">
+        <div class="resource-entry-header"><span class="resource-entry-icon">💨</span> Hydrogen</div>
+        <div class="resource-sources">Source: <span>Electrolyzer (Misty Lake)</span></div>
+        <div class="resource-uses">Used by: <span>Chemical Plant, Hydrazine Plant</span></div>
+      </div>
+      <div class="resource-entry" data-search="oxygen electrolyzer (misty lake) lox plant">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🫧</span> Oxygen</div>
+        <div class="resource-sources">Source: <span>Electrolyzer (Misty Lake)</span></div>
+        <div class="resource-uses">Used by: <span>LOX Plant</span></div>
+      </div>
+      <div class="resource-entry" data-search="kerosene (rp-1) distillation unit (arid desert) fuel depot">
+        <div class="resource-entry-header"><span class="resource-entry-icon">⛽</span> Kerosene (RP-1)</div>
+        <div class="resource-sources">Source: <span>Distillation Unit (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>Fuel Depot</span></div>
+      </div>
+      <div class="resource-entry" data-search="ammonia chemical plant (arid desert) hydrazine plant">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧪</span> Ammonia</div>
+        <div class="resource-sources">Source: <span>Chemical Plant (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>Hydrazine Plant</span></div>
+      </div>
+      <div class="resource-entry" data-search="silicon ingot silicon processor (arid desert) doping plant">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🔲</span> Silicon Ingot</div>
+        <div class="resource-sources">Source: <span>Silicon Processor (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>Doping Plant</span></div>
+      </div>
+      <div class="resource-entry" data-search="precision quartz precision cutter (crystal caverns) lithography lab">
         <div class="resource-entry-header"><span class="resource-entry-icon">💎</span> Precision Quartz</div>
-        <div class="resource-sources">Source: <span>Precision Cutter (Quartz Crystals + Obsidian Tools)</span></div>
+        <div class="resource-sources">Source: <span>Precision Cutter (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Lithography Lab</span></div>
       </div>
-      <div class="resource-entry" data-search="doped silicon">
-        <div class="resource-entry-header"><span class="resource-entry-icon">💠</span> Doped Silicon</div>
-        <div class="resource-sources">Source: <span>Doping Plant (Silicon Ingot + Phosphorus)</span></div>
-        <div class="resource-uses">Used by: <span>Lithography Lab, PV Plant</span></div>
+      <div class="resource-entry" data-search="hull plates">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🛡️</span> Hull Plates</div>
+        <div class="resource-sources">Source: <span>No active production source (defined in config only)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
       </div>
-      <div class="resource-entry" data-search="solar cells">
-        <div class="resource-entry-header"><span class="resource-entry-icon">☀️</span> Solar Cells</div>
-        <div class="resource-sources">Source: <span>PV Plant (Doped Silicon + Copper Wire + Glass)</span></div>
+      <div class="resource-entry" data-search="tank shell">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🛢️</span> Tank Shell</div>
+        <div class="resource-sources">Source: <span>No active production source (defined in config only)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="aluminum frame frame mill (frozen tundra) solar array assembly">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🔲</span> Aluminum Frame</div>
+        <div class="resource-sources">Source: <span>Frame Mill (Frozen Tundra)</span></div>
         <div class="resource-uses">Used by: <span>Solar Array Assembly</span></div>
       </div>
-      <div class="resource-entry" data-search="battery cells">
+      <div class="resource-entry" data-search="cathode powder">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧂</span> Cathode Powder</div>
+        <div class="resource-sources">Source: <span>No active production source (defined in config only)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="refined alloy refinery (volcanic isle) thruster plant hull assembly">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🔷</span> Refined Alloy</div>
+        <div class="resource-sources">Source: <span>Refinery (Volcanic Isle)</span></div>
+        <div class="resource-uses">Used by: <span>Thruster Plant, Hull Assembly</span></div>
+      </div>
+      <div class="resource-entry" data-search="liquid oxygen lox plant (frozen tundra) fuel depot tank filling station">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧊</span> Liquid Oxygen</div>
+        <div class="resource-sources">Source: <span>LOX Plant (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>Fuel Depot, Tank Filling Station</span></div>
+      </div>
+      <div class="resource-entry" data-search="doped silicon doping plant (crystal caverns) lithography lab pv plant">
+        <div class="resource-entry-header"><span class="resource-entry-icon">💠</span> Doped Silicon</div>
+        <div class="resource-sources">Source: <span>Doping Plant (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Lithography Lab, PV Plant</span></div>
+      </div>
+      <div class="resource-entry" data-search="graphite graphitizer (lush forest) battery factory">
+        <div class="resource-entry-header"><span class="resource-entry-icon">✏️</span> Graphite</div>
+        <div class="resource-sources">Source: <span>Graphitizer (Lush Forest)</span></div>
+        <div class="resource-uses">Used by: <span>Battery Factory</span></div>
+      </div>
+      <div class="resource-entry" data-search="hydrazine hydrazine plant (arid desert)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">☠️</span> Hydrazine</div>
+        <div class="resource-sources">Source: <span>Hydrazine Plant (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="insulation insulation plant (frozen tundra)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧶</span> Insulation</div>
+        <div class="resource-sources">Source: <span>Insulation Plant (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>No active automation consumer</span></div>
+      </div>
+      <div class="resource-entry" data-search="battery cells battery factory (crystal caverns) battery assembly">
         <div class="resource-entry-header"><span class="resource-entry-icon">🔋</span> Battery Cells</div>
-        <div class="resource-sources">Source: <span>Battery Factory (Lithium + Graphite + Copper Wire)</span></div>
+        <div class="resource-sources">Source: <span>Battery Factory (Crystal Caverns)</span></div>
         <div class="resource-uses">Used by: <span>Battery Assembly</span></div>
       </div>
-      <div class="resource-entry" data-search="batteries">
+      <div class="resource-entry" data-search="solar cells pv plant (crystal caverns) solar array assembly">
+        <div class="resource-entry-header"><span class="resource-entry-icon">☀️</span> Solar Cells</div>
+        <div class="resource-sources">Source: <span>PV Plant (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Solar Array Assembly</span></div>
+      </div>
+      <div class="resource-section-title">Food</div>
+      <div class="resource-entry" data-search="berries berry picker (lush forest)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🫐</span> Berries</div>
+        <div class="resource-sources">Source: <span>Berry Picker (Lush Forest)</span></div>
+        <div class="resource-uses">Used by: <span>Consumed for nutrition</span></div>
+      </div>
+      <div class="resource-entry" data-search="cactus juice cactus press (arid desert)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🧃</span> Cactus Juice</div>
+        <div class="resource-sources">Source: <span>Cactus Press (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>Consumed for nutrition</span></div>
+      </div>
+      <div class="resource-entry" data-search="smoked fish smokehouse (misty lake)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🐟</span> Smoked Fish</div>
+        <div class="resource-sources">Source: <span>Smokehouse (Misty Lake)</span></div>
+        <div class="resource-uses">Used by: <span>Consumed for nutrition</span></div>
+      </div>
+      <div class="resource-entry" data-search="greenhouse veggies greenhouse (frozen tundra)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🥗</span> Greenhouse Veggies</div>
+        <div class="resource-sources">Source: <span>Greenhouse (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>Consumed for nutrition</span></div>
+      </div>
+      <div class="resource-section-title">Final Components</div>
+      <div class="resource-entry" data-search="microchips lithography lab (crystal caverns)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🖥️</span> Microchips</div>
+        <div class="resource-sources">Source: <span>Lithography Lab (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="rocket fuel fuel depot (arid desert)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🚀</span> Rocket Fuel</div>
+        <div class="resource-sources">Source: <span>Fuel Depot (Arid Desert)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="thrusters thruster plant (volcanic isle)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🔥</span> Thrusters</div>
+        <div class="resource-sources">Source: <span>Thruster Plant (Volcanic Isle)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="oxygen tanks tank filling station (crystal caverns)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🫁</span> Oxygen Tanks</div>
+        <div class="resource-sources">Source: <span>Tank Filling Station (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="batteries battery assembly (crystal caverns)">
         <div class="resource-entry-header"><span class="resource-entry-icon">🔋</span> Batteries</div>
-        <div class="resource-sources">Source: <span>Battery Assembly (Battery Cells + Copper Wire)</span></div>
-        <div class="resource-uses">Used by: <span>(Spaceship component)</span></div>
+        <div class="resource-sources">Source: <span>Battery Assembly (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="solar arrays solar array assembly (crystal caverns)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🌞</span> Solar Arrays</div>
+        <div class="resource-sources">Source: <span>Solar Array Assembly (Crystal Caverns)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
+      </div>
+      <div class="resource-entry" data-search="titanium hull hull assembly (frozen tundra)">
+        <div class="resource-entry-header"><span class="resource-entry-icon">🛸</span> Titanium Hull</div>
+        <div class="resource-sources">Source: <span>Hull Assembly (Frozen Tundra)</span></div>
+        <div class="resource-uses">Used by: <span>Spaceship construction goal</span></div>
       </div>
     </div>
   </div>
@@ -1760,7 +1860,7 @@
         <div class="chain-node intermediate"><span class="icon">🔲</span><span class="name">Aluminum Frame</span></div>
       </div>
       <div class="chain-flow">
-        <div class="chain-node raw"><span class="icon">🔶</span><span class="name">Nickel-Cobalt</span></div>
+        <div class="chain-node raw"><span class="icon">🔶</span><span class="name">Nickel-Cobalt Ore</span></div>
         <span class="chain-arrow">→</span>
         <span class="chain-automation">Refinery (+🔥)</span>
         <span class="chain-arrow">→</span>
@@ -1775,14 +1875,14 @@
         <span class="chain-arrow">→</span>
         <span class="chain-automation">Distillation Unit</span>
         <span class="chain-arrow">→</span>
-        <div class="chain-node intermediate"><span class="icon">⛽</span><span class="name">Kerosene</span></div>
+        <div class="chain-node intermediate"><span class="icon">⛽</span><span class="name">Kerosene (RP-1)</span></div>
         <span class="chain-arrow">→</span>
         <span class="chain-automation">Fuel Depot (+🧊LOX)</span>
         <span class="chain-arrow">→</span>
         <div class="chain-node final"><span class="icon">🚀</span><span class="name">Rocket Fuel</span></div>
       </div>
       <div class="chain-flow">
-        <div class="chain-node raw"><span class="icon">🟤</span><span class="name">Nitrogen</span></div>
+        <div class="chain-node raw"><span class="icon">🟤</span><span class="name">Nitrogen Nodules</span></div>
         <span class="chain-arrow">→</span>
         <span class="chain-automation">Chemical Plant (+💨)</span>
         <span class="chain-arrow">→</span>
