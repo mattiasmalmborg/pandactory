@@ -123,7 +123,28 @@ export function useContracts() {
   }, [state.lifetimeStats, state.contracts, dispatch, state]);
 
   // Track production, food, level_up, and gather contracts via resource snapshots (every 5s)
+  // Uses refs to avoid recreating interval on every state change (same pattern as game loop)
+  const dispatchRef = useRef(dispatch);
+  useEffect(() => { dispatchRef.current = dispatch; }, [dispatch]);
+
   useEffect(() => {
+    // Initialize baselines from current state
+    const initBaselines = () => {
+      const current = stateRef.current;
+      const allResources = getAllBiomeResources(current.biomes);
+      const allContracts = [...(current.contracts?.daily || []), ...(current.contracts?.weekly || [])];
+      for (const contract of allContracts) {
+        if ((contract.category === 'produce' || contract.category === 'gather') && contract.trackingParams?.resourceId) {
+          const key = `${contract.category}-${contract.trackingParams.resourceId}`;
+          if (lastResourcesRef.current[key] === undefined) {
+            lastResourcesRef.current[key] = Math.floor(allResources[contract.trackingParams.resourceId] || 0);
+          }
+        }
+      }
+    };
+
+    initBaselines();
+
     const interval = setInterval(() => {
       const current = stateRef.current;
       if (!current.contracts) return;
@@ -153,7 +174,7 @@ export function useContracts() {
             if (lastAmount !== undefined && currentAmount > lastAmount) {
               newProgress += (currentAmount - lastAmount);
             }
-            // Update baseline
+            // Update baseline (or initialize for newly generated contracts)
             lastResourcesRef.current[key] = currentAmount;
           }
 
@@ -187,7 +208,7 @@ export function useContracts() {
       const updatedWeekly = updateList(current.contracts.weekly);
 
       if (changed) {
-        dispatch({
+        dispatchRef.current({
           type: 'UPDATE_CONTRACTS',
           payload: {
             contracts: { ...current.contracts, daily: updatedDaily, weekly: updatedWeekly },
@@ -196,16 +217,6 @@ export function useContracts() {
       }
     }, 5000);
 
-    // Initialize resource baselines
-    const allResources = getAllBiomeResources(state.biomes);
-    const allContracts = [...(state.contracts?.daily || []), ...(state.contracts?.weekly || [])];
-    for (const contract of allContracts) {
-      if ((contract.category === 'produce' || contract.category === 'gather') && contract.trackingParams?.resourceId) {
-        const key = `${contract.category}-${contract.trackingParams.resourceId}`;
-        lastResourcesRef.current[key] = Math.floor(allResources[contract.trackingParams.resourceId] || 0);
-      }
-    }
-
     return () => clearInterval(interval);
-  }, [dispatch, state.biomes, state.contracts, state.food, state.unlockedBiomes]);
+  }, []); // Empty deps — uses refs for latest state, interval never recreates
 }
