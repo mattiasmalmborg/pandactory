@@ -1,9 +1,10 @@
-import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId, ResearchId } from '../types/game.types';
+import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId, ResearchId, Artifact } from '../types/game.types';
 import { AUTOMATIONS } from '../game/config/automations';
 import { calculateProductionRate } from './calculations';
 import { getEffectivePowerCellBonus, countInstalledPowerCells, getSkillTreeBonus } from '../game/config/skillTree';
 import { getMasteryBonus } from '../game/config/achievements';
 import { getResearchBonus } from '../game/config/research';
+import { hasArtifactEffect, getActiveSetBonuses } from '../game/config/artifacts';
 import { AchievementId } from '../types/game.types';
 
 export interface BiomeProductionContext {
@@ -11,6 +12,7 @@ export interface BiomeProductionContext {
   unlockedAchievements?: AchievementId[];
   allBiomes?: Record<BiomeId, BiomeState>;
   researchLevels?: Partial<Record<ResearchId, number>>;
+  artifactInventory?: Artifact[];
 }
 
 /**
@@ -54,10 +56,19 @@ export function calculateBiomeProductionRates(
       unlockedSkills
     );
 
+    // Thermal Vent artifact: power cells give bonus effective levels
+    let effectiveLevel = automation.level;
+    if (automation.powerCell && context?.artifactInventory) {
+      if (hasArtifactEffect(context.artifactInventory, 'thermal_vent')) {
+        const volcanicSet = getActiveSetBonuses(context.artifactInventory).get('volcanic_isle') || 0;
+        effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+      }
+    }
+
     // Calculate effective production rate with level scaling, skills, mastery, research, and power cell
     const effectiveRate = calculateProductionRate(
       config.baseProductionRate,
-      automation.level,
+      effectiveLevel,
       productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
       effectivePowerCellBonus
     );
@@ -117,9 +128,18 @@ export function getAutomationEfficiency(
     unlockedSkills
   );
 
+  // Thermal Vent artifact: power cells give bonus effective levels
+  let effectiveLevel = automation.level;
+  if (automation.powerCell && context?.artifactInventory) {
+    if (hasArtifactEffect(context.artifactInventory, 'thermal_vent')) {
+      const volcanicSet = getActiveSetBonuses(context.artifactInventory).get('volcanic_isle') || 0;
+      effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+    }
+  }
+
   const effectiveRate = calculateProductionRate(
     config.baseProductionRate,
-    automation.level,
+    effectiveLevel,
     productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
     effectivePowerCellBonus
   );

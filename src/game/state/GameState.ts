@@ -1,12 +1,12 @@
-import { GameState, GameAction, ResourceId, FoodId, BiomeId } from '../../types/game.types';
+import { GameState, GameAction, ResourceId, FoodId, BiomeId, ResearchId } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
 import { EXPEDITION_TIERS } from '../config/expeditions';
 import { SKILL_TREE } from '../config/skillTree';
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
-import { INITIAL_RESEARCH_STATE } from '../config/research';
-import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect } from '../config/artifacts';
+import { INITIAL_RESEARCH_STATE, RESEARCH_NODES } from '../config/research';
+import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -423,9 +423,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newState.food = refundFood;
       }
 
-      // Desert Cache artifact: 30% chance to award 3-8 Research Data
-      if (hasArtifactEffect(artifactInv, 'desert_cache') && Math.random() < 0.30) {
-        const bonusRD = Math.floor(Math.random() * 6) + 3;
+      // Desert Cache artifact: 30% chance to award 3-8 Research Data (60% with Desert Set 2/3)
+      const desertSet = getActiveSetBonuses(artifactInv).get('arid_desert') || 0;
+      const desertCacheChance = desertSet >= 2 ? 0.60 : 0.30;
+      if (hasArtifactEffect(artifactInv, 'desert_cache') && Math.random() < desertCacheChance) {
+        // Lake Set 2/3: +50% Research Data from all sources
+        const lakeSet = getActiveSetBonuses(artifactInv).get('misty_lake') || 0;
+        let bonusRD = Math.floor(Math.random() * 6) + 3;
+        if (lakeSet >= 2) bonusRD = Math.ceil(bonusRD * 1.5);
         newState.contracts = {
           ...newState.contracts,
           researchData: (newState.contracts?.researchData || 0) + bonusRD,
@@ -559,7 +564,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
-        research: { ...INITIAL_RESEARCH_STATE }, // Research resets on prestige!
+        // Tundra Set 3/3: all research starts at lvl 1 after prestige
+        research: (() => {
+          const tundraSet = getActiveSetBonuses(state.artifacts?.inventory || []).get('frozen_tundra') || 0;
+          if (tundraSet >= 3) {
+            const levels: Partial<Record<ResearchId, number>> = {};
+            for (const id of Object.keys(RESEARCH_NODES)) {
+              levels[id as ResearchId] = 1;
+            }
+            return { ...INITIAL_RESEARCH_STATE, levels };
+          }
+          return { ...INITIAL_RESEARCH_STATE };
+        })(), // Research resets on prestige!
         artifacts: state.artifacts, // Artifacts persist!
         contracts: {
           ...INITIAL_CONTRACT_STATE,
@@ -805,7 +821,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const idx = contractList.findIndex(c => c.id === contractId);
       if (idx === -1 || !contractList[idx].completed || contractList[idx].claimed) return state;
 
-      const reward = contractList[idx].researchDataReward;
+      let reward = contractList[idx].researchDataReward;
+      // Lake Set 2/3: +50% Research Data from all sources
+      const lakeSet = getActiveSetBonuses(state.artifacts?.inventory || []).get('misty_lake') || 0;
+      if (lakeSet >= 2) {
+        reward = Math.ceil(reward * 1.5);
+      }
       contractList[idx] = { ...contractList[idx], claimed: true };
 
       return {

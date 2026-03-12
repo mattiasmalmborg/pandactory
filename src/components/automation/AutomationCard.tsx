@@ -7,6 +7,7 @@ import { FOOD_ITEMS } from '../../game/config/food';
 import { calculateLevelUpCost, calculateProductionRate, canAfford, applyCostReduction } from '../../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../../utils/allocation';
 import { countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
+import { hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
 import { useGame } from '../../game/state/GameContext';
 import { formatNumber } from '../../utils/formatters';
 import { getResourceSourceDescription } from '../../utils/resourceTracking';
@@ -49,7 +50,8 @@ export function AutomationCard({
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
     researchLevels: state.research?.levels || {},
-  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels]);
+    artifactInventory: state.artifacts?.inventory,
+  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels, state.artifacts?.inventory]);
 
   // Calculate GLOBAL production AND consumption rates from ALL biomes for efficiency calculation (memoized)
   const { globalProduction, globalConsumption } = useMemo(() => {
@@ -111,8 +113,18 @@ export function AutomationCard({
   const efficiency = getAutomationEfficiency(automation, netProduction, productionContext);
   const efficiencyPercent = Math.round(efficiency * 100);
 
-  // Calculate production rates with new formula (+25% per level)
-  const baseRate = config ? calculateProductionRate(config.baseProductionRate, automation.level) : 0;
+  // Thermal Vent artifact: power cells give bonus effective levels
+  const artifactInventory = state.artifacts?.inventory;
+  let effectiveLevel = automation.level;
+  if (automation.powerCell && artifactInventory) {
+    if (hasArtifactEffect(artifactInventory, 'thermal_vent')) {
+      const volcanicSet = getActiveSetBonuses(artifactInventory).get('volcanic_isle') || 0;
+      effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+    }
+  }
+
+  // Calculate production rates with effective level (includes thermal_vent)
+  const baseRate = config ? calculateProductionRate(config.baseProductionRate, effectiveLevel) : 0;
   const actualRate = effectivePowerCellBonus > 0
     ? baseRate * (1 + effectivePowerCellBonus)
     : baseRate;
@@ -139,8 +151,8 @@ export function AutomationCard({
   // Guard: all hooks above, safe to return early now
   if (!config) return null;
 
-  // Calculate next level production
-  const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, automation.level + 1);
+  // Calculate next level production (with thermal_vent effective level)
+  const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, effectiveLevel + 1);
   const boostPercent = Math.round(((nextLevelBaseRate - baseRate) / baseRate) * 100);
 
   // Get achievement-based cost reduction

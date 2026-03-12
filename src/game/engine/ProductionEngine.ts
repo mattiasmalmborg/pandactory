@@ -1,10 +1,7 @@
 import { GameState, BiomeId, ResourceId } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
-import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../config/skillTree';
-import { calculateProductionRate } from '../../utils/calculations';
+import { getAutomationProductionRate, createProductionContext } from '../../utils/calculations';
 import { RESOURCES } from '../config/resources';
-import { getMasteryBonus } from '../config/achievements';
-import { getResearchBonus } from '../config/research';
 
 export interface ProductionResult {
   state: GameState;
@@ -16,14 +13,7 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
   const deltaTimeMinutes = deltaTimeSeconds / 60;
   const newlyProducedResources: ResourceId[] = [];
 
-  // Get skill tree bonuses
-  const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
-  const researchProductionBonus = getResearchBonus(state.research?.levels || {}, 'production');
-  // Get mastery bonus (200% production when all achievements unlocked)
-  const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
-
-  // Count total installed power cells for resonance calculation
-  const totalInstalledCells = countInstalledPowerCells(state.biomes);
+  const productionContext = createProductionContext(state);
 
   // Process each biome's automations
   Object.keys(newState.biomes).forEach((biomeId) => {
@@ -37,20 +27,8 @@ export function calculateProduction(state: GameState, deltaTimeSeconds: number):
       // Skip paused automations
       if (automation.paused) return;
 
-      // Calculate production rate with level, skill bonuses, and power cell
-      // Use || 0 to handle undefined bonus values from legacy power cells
-      const basePowerCellBonus = automation.powerCell?.bonus || 0;
-      const effectivePowerCellBonus = getEffectivePowerCellBonus(
-        basePowerCellBonus,
-        totalInstalledCells,
-        state.prestige.unlockedSkills
-      );
-      const productionRate = calculateProductionRate(
-        config.baseProductionRate,
-        automation.level,
-        productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
-        effectivePowerCellBonus
-      );
+      // Calculate production rate with all bonuses (including thermal_vent)
+      const productionRate = getAutomationProductionRate(automation, productionContext, state.artifacts?.inventory);
 
       // Check if we have enough resources to consume
       let canProduce = true;

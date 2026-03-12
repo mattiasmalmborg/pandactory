@@ -10,9 +10,7 @@ import { BiomeNav, BIOME_ORDER } from "../navigation/BiomeNav";
 import { BiomeIntroPopup } from "./BiomeIntroPopup";
 import { useSwipe } from "../../hooks/useSwipe";
 import { BiomeId, ResourceId, FoodId } from "../../types/game.types";
-import { calculateLevelUpCost, calculateProductionRate, applyCostReduction } from "../../utils/calculations";
-import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from "../../game/config/skillTree";
-import { getMasteryBonus } from "../../game/config/achievements";
+import { calculateLevelUpCost, applyCostReduction, getAutomationProductionRate, createProductionContext } from "../../utils/calculations";
 import { getResearchBonus } from "../../game/config/research";
 import { hasArtifactEffect } from "../../game/config/artifacts";
 import { calculateBiomeProductionRates } from "../../utils/allocation";
@@ -87,44 +85,16 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
   // Calculate production and consumption rates (memoized)
   // NOTE: All hooks must be above any early returns to satisfy React rules of hooks
   const { production, consumption, foodProduction } = useMemo(() => {
-    // Pass context for accurate calculations including skill bonuses and power cells
-    const context = {
-      unlockedSkills: state.prestige.unlockedSkills,
-      unlockedAchievements: state.achievements?.unlocked || [],
-      allBiomes: state.biomes,
-      researchLevels: state.research?.levels || {},
-    };
-    const { production, consumption } = calculateBiomeProductionRates(biome, context);
-
-    // Get skill and mastery bonuses for food production
-    const productionSpeedBonus = getSkillTreeBonus(state.prestige.unlockedSkills, 'production_speed');
-    const masteryBonus = getMasteryBonus(state.achievements?.unlocked || []);
-    const totalInstalledCells = countInstalledPowerCells(state.biomes);
-
-    // Calculate food production rates using same logic as resource production
+    // Pass context for accurate calculations including skill bonuses, power cells, and artifacts
+    const prodContext = createProductionContext(state);
+    const { production, consumption } = calculateBiomeProductionRates(biome, prodContext);
     const foodProd: Record<string, number> = {};
     biome.automations.forEach(automation => {
       const config = AUTOMATIONS[automation.type];
       if (!config || !config.producesFood) return;
-
-      // Skip paused automations
       if (automation.paused) return;
 
-      // Calculate effective power cell bonus with skill bonuses
-      const basePowerCellBonus = automation.powerCell?.bonus || 0;
-      const effectivePowerCellBonus = getEffectivePowerCellBonus(
-        basePowerCellBonus,
-        totalInstalledCells,
-        state.prestige.unlockedSkills
-      );
-
-      // Use same production rate calculation as for resources (with all bonuses)
-      const effectiveRate = calculateProductionRate(
-        config.baseProductionRate,
-        automation.level,
-        productionSpeedBonus + masteryBonus.productionBonus,
-        effectivePowerCellBonus
-      );
+      const effectiveRate = getAutomationProductionRate(automation, prodContext, state.artifacts?.inventory);
 
       config.producesFood.forEach(foodProduce => {
         const amount = foodProduce.amount * effectiveRate;
@@ -133,7 +103,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     });
 
     return { production, consumption, foodProduction: foodProd };
-  }, [biome, state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels]);
+  }, [biome, state]);
 
   // Collect biome resources and food (memoized)
   const allResourcesAndFood = useMemo(() => {

@@ -2,7 +2,7 @@ import { useGame } from '../../game/state/GameContext';
 import { BiomeId } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
-import { calculateProductionRate } from '../../utils/calculations';
+import { getAutomationProductionRate, createProductionContext } from '../../utils/calculations';
 import { formatNumber } from '../../utils/formatters';
 
 interface ProductionSummaryProps {
@@ -15,6 +15,8 @@ export function ProductionSummary({ biomeId }: ProductionSummaryProps) {
 
   if (!biome || biome.automations.length === 0) return null;
 
+  const productionContext = createProductionContext(state);
+
   // Calculate total production per resource
   const productionRates: Record<string, number> = {};
 
@@ -22,11 +24,7 @@ export function ProductionSummary({ biomeId }: ProductionSummaryProps) {
     const config = AUTOMATIONS[automation.type];
     if (!config) return;
 
-    // Calculate production rate with level scaling (+50% per level)
-    let rate = calculateProductionRate(config.baseProductionRate, automation.level);
-    if (automation.powerCell?.bonus) {
-      rate *= (1 + automation.powerCell.bonus);
-    }
+    const rate = getAutomationProductionRate(automation, productionContext, state.artifacts?.inventory);
 
     config.produces.forEach((produce) => {
       const amount = produce.amount * rate;

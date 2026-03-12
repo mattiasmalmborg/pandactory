@@ -3,6 +3,7 @@ import { useGame } from '../game/state/GameContext';
 import { AUTOMATIONS } from '../game/config/automations';
 import { RESOURCES } from '../game/config/resources';
 import { BIOMES } from '../game/config/biomes';
+import { FOOD_ITEMS } from '../game/config/food';
 import { BiomeId } from '../types/game.types';
 import { createProductionContext, getAutomationProductionRate } from '../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../utils/allocation';
@@ -189,11 +190,12 @@ export function useGameLoop() {
       const inventory = currentState.artifacts?.inventory || [];
       const setBonuses = getActiveSetBonuses(inventory);
 
-      // Overgrowth: auto-gather in current biome every 30s
-      if (hasArtifactEffect(inventory, 'overgrowth') && now - lastOvergrowthRef.current >= OVERGROWTH_INTERVAL) {
+      // Overgrowth: auto-gather in current biome every 30s (20s with Forest Set 2/3)
+      const forestSet = setBonuses.get('lush_forest') || 0;
+      const overgrowthInterval = forestSet >= 2 ? OVERGROWTH_INTERVAL * 2 / 3 : OVERGROWTH_INTERVAL;
+      if (hasArtifactEffect(inventory, 'overgrowth') && now - lastOvergrowthRef.current >= overgrowthInterval) {
         lastOvergrowthRef.current = now;
         // Gather from current biome's primary resources (or ALL biomes with Forest Set 3/3)
-        const forestSet = setBonuses.get('lush_forest') || 0;
         const targetBiomes = forestSet >= 3
           ? currentState.unlockedBiomes
           : [currentState.player.currentBiome];
@@ -202,10 +204,18 @@ export function useGameLoop() {
           const biomeConfig = BIOMES[bId];
           if (!biomeConfig) continue;
           for (const resourceId of biomeConfig.primaryResources) {
-            dispatchRef.current({
-              type: 'GATHER_RESOURCE',
-              payload: { biomeId: bId, resourceId, amount: 1 },
-            });
+            // Food items (e.g. berries) go to state.food, not biome resources
+            if (resourceId in FOOD_ITEMS) {
+              dispatchRef.current({
+                type: 'GATHER_FOOD',
+                payload: { foodId: resourceId as string as import('../types/game.types').FoodId, amount: 1 },
+              });
+            } else {
+              dispatchRef.current({
+                type: 'GATHER_RESOURCE',
+                payload: { biomeId: bId, resourceId, amount: 1 },
+              });
+            }
           }
         }
       }

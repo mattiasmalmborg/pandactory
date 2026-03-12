@@ -29,12 +29,14 @@ export function createProductionContext(state: {
   achievements?: { unlocked: AchievementId[] };
   biomes: Record<BiomeId, BiomeState>;
   research?: ResearchState;
+  artifacts?: { inventory: Artifact[] };
 }): BiomeProductionContext {
   return {
     unlockedSkills: state.prestige.unlockedSkills,
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
     researchLevels: state.research?.levels || {},
+    artifactInventory: state.artifacts?.inventory,
   };
 }
 
