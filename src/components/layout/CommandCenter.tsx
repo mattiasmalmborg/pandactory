@@ -95,8 +95,8 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
       {/* Spaceship Progress — always visible, compact */}
       <SpaceshipGoal />
 
-      {/* Dr. Redd's Chore List */}
-      <ChoresList />
+      {/* Dr. Redd's Chore List — only after first prestige (when Research Lab is unlocked) */}
+      {(state.prestige?.totalPrestiges ?? 0) > 0 && <ChoresList />}
 
 
       {/* Active Timers */}

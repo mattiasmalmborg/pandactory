@@ -15,6 +15,7 @@ export function useContracts() {
   const stateRef = useRef(state);
   const lastResourcesRef = useRef<Record<string, number>>({});
   const lastCheckDateRef = useRef('');
+  const hasPrestiged = (state.prestige?.totalPrestiges ?? 0) > 0;
 
   // Track previous lifetimeStats for action detection
   const prevStatsRef = useRef({
@@ -29,7 +30,9 @@ export function useContracts() {
   }, [state]);
 
   // Initialize/refresh contracts on mount and periodically check for date rollover
+  // Skip entirely before first prestige — Research Lab (reward sink) isn't unlocked yet
   useEffect(() => {
+    if (!hasPrestiged) return;
     const check = () => {
       const today = getTodayString();
       if (lastCheckDateRef.current === today) return;
@@ -51,11 +54,11 @@ export function useContracts() {
     check();
     const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
-  }, [dispatch]);
+  }, [dispatch, hasPrestiged]);
 
   // Detect discrete game actions via lifetimeStats changes
   useEffect(() => {
-    if (!state.contracts) return;
+    if (!hasPrestiged || !state.contracts) return;
 
     const stats = state.lifetimeStats;
     const prev = prevStatsRef.current;
@@ -128,6 +131,7 @@ export function useContracts() {
   useEffect(() => { dispatchRef.current = dispatch; }, [dispatch]);
 
   useEffect(() => {
+    if (!hasPrestiged) return;
     // Initialize baselines from current state
     const initBaselines = () => {
       const current = stateRef.current;
@@ -218,5 +222,5 @@ export function useContracts() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []); // Empty deps — uses refs for latest state, interval never recreates
+  }, [hasPrestiged]); // Uses refs for latest state; restarts when prestige status changes
 }
