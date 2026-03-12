@@ -305,9 +305,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
 
     window.addResource = (resourceId: string, amount: number) => {
+      // Find the biome that owns this resource
+      let targetBiome: BiomeId = currentBiomeId;
+      for (const [bId, config] of Object.entries(BIOMES)) {
+        const allResources = [...(config.primaryResources || []), ...(config.discoverableResources || [])];
+        if (allResources.includes(resourceId as ResourceId)) {
+          targetBiome = bId as BiomeId;
+          break;
+        }
+      }
       currentDispatch({
         type: 'GATHER_RESOURCE',
-        payload: { biomeId: currentBiomeId, resourceId: resourceId as ResourceId, amount },
+        payload: { biomeId: targetBiome, resourceId: resourceId as ResourceId, amount },
       });
     };
 

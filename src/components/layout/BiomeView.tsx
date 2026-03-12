@@ -82,27 +82,8 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     }
   };
 
-  if (!biome.discovered) {
-    return (
-      <div className="p-4 space-y-4">
-        <h2 className="text-xl font-bold">{biomeConfig.name}</h2>
-        <div className="bg-gray-800/80 backdrop-blur-sm p-6 rounded-lg border border-gray-700/50 text-center">
-          <p className="text-gray-400 mb-4">
-            This biome has not been discovered yet.
-          </p>
-          <p className="text-sm text-gray-500">
-            Send Dr. Redd Pawston III on an expedition to discover new biomes!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // If biome is discovered but not activated, show the intro popup
-  // The popup will activate the biome when closed (handled by handleCloseIntro)
-  // We still render the main view behind it so there's no intermediate screen
-
   // Calculate production and consumption rates (memoized)
+  // NOTE: All hooks must be above any early returns to satisfy React rules of hooks
   const { production, consumption, foodProduction } = useMemo(() => {
     // Pass context for accurate calculations including skill bonuses and power cells
     const context = {
@@ -191,18 +172,90 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
     return [...allResources, ...foodItems];
   }, [biome.resources, state.food, production, consumption, foodProduction, biomeConfig.primaryResources]);
 
+  // Biome progress stats
+  const biomeStats = useMemo(() => {
+    const allResourceIds = new Set<string>([
+      ...(biomeConfig.primaryResources || []),
+      ...(biomeConfig.discoverableResources || []),
+    ]);
+    const foodIds = new Set<string>();
+    for (const autoType of biomeConfig.availableAutomations) {
+      const autoConfig = AUTOMATIONS[autoType];
+      if (!autoConfig) continue;
+      for (const p of autoConfig.produces) {
+        allResourceIds.add(p.resourceId);
+      }
+      if (autoConfig.producesFood) {
+        for (const f of autoConfig.producesFood) {
+          allResourceIds.add(f.foodId);
+          foodIds.add(f.foodId);
+        }
+      }
+    }
+    for (const resId of biomeConfig.primaryResources) {
+      if (resId in state.food) foodIds.add(resId);
+    }
+    const totalResources = allResourceIds.size;
+
+    let discoveredCount = 0;
+    for (const resId of allResourceIds) {
+      if (foodIds.has(resId)) {
+        if ((state.food[resId as FoodId] || 0) >= 1) discoveredCount++;
+      } else {
+        if ((biome.resources[resId as ResourceId] || 0) >= 1) discoveredCount++;
+      }
+    }
+
+    const totalAutomations = biomeConfig.availableAutomations.length;
+    const builtAutomationTypes = new Set(biome.automations.map(a => a.type));
+    const builtCount = builtAutomationTypes.size;
+
+    return { discoveredCount, totalResources, builtCount, totalAutomations };
+  }, [biome.resources, biome.automations, biomeConfig, state.food]);
+
+  // Undiscovered biome — show placeholder (guard placed after all hooks)
+  if (!biome.discovered) {
+    return (
+      <div className="p-4 space-y-4">
+        <h2 className="text-xl font-bold">{biomeConfig.name}</h2>
+        <div className="bg-gray-800/80 backdrop-blur-sm p-6 rounded-lg border border-gray-700/50 text-center">
+          <p className="text-gray-400 mb-4">
+            This biome has not been discovered yet.
+          </p>
+          <p className="text-sm text-gray-500">
+            Send Dr. Redd Pawston III on an expedition to discover new biomes!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={swipeRef} className="pb-24">
       {/* Biome Quick-Switch Navigation */}
       <BiomeNav />
 
       <div className="p-4 space-y-4">
-        {/* Header with description */}
+        {/* Header with description and progress */}
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
           <h2 className="text-xl font-bold text-white mb-2">{biomeConfig.name}</h2>
-          <p className="text-sm text-gray-300 leading-relaxed italic">
+          <p className="text-sm text-gray-300 leading-relaxed italic mb-3">
             "{biomeConfig.description}"
           </p>
+          <div className="flex gap-3">
+            <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Resources</p>
+              <p className={`text-sm font-bold ${biomeStats.discoveredCount >= biomeStats.totalResources ? 'text-green-400' : 'text-white'}`}>
+                {biomeStats.discoveredCount}/{biomeStats.totalResources}
+              </p>
+            </div>
+            <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Automations</p>
+              <p className={`text-sm font-bold ${biomeStats.builtCount >= biomeStats.totalAutomations ? 'text-green-400' : 'text-white'}`}>
+                {biomeStats.builtCount}/{biomeStats.totalAutomations}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Resources & Food */}
