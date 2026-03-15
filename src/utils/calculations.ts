@@ -63,10 +63,13 @@ export function getAutomationProductionRate(
     : 0;
 
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  // Research: power_cell boosts effectiveness additively
+  const researchPowerCellBonus = getResearchBonus(context.researchLevels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    unlockedSkills
+    unlockedSkills,
+    researchPowerCellBonus
   );
 
   // Thermal Vent artifact: power cells give bonus as if +1 level higher
@@ -79,20 +82,27 @@ export function getAutomationProductionRate(
     }
   }
 
+  // Research: spaceship bonus applies to final_assembler automations (ship parts)
+  let spaceshipBonus = 0;
+  if (config.category === 'final_assembler') {
+    spaceshipBonus = getResearchBonus(context.researchLevels || {}, 'spaceship');
+  }
+
   return calculateProductionRate(
     config.baseProductionRate,
     effectiveLevel,
-    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus,
     effectivePowerCellBonus
   );
 }
 
-// Apply cost reduction from mastery bonus and research
+// Apply cost reduction from mastery bonus, research, and skill tree
 export function applyCostReduction(
   costs: ResourceCost[],
   unlockedAchievements: AchievementId[],
   researchLevels?: Partial<Record<ResearchId, number>>,
   costType?: 'build' | 'upgrade',
+  unlockedSkills?: SkillId[],
 ): ResourceCost[] {
   const masteryBonus = getMasteryBonus(unlockedAchievements);
 
@@ -104,7 +114,20 @@ export function applyCostReduction(
     researchReduction = getResearchBonus(researchLevels, 'upgrade_cost');
   }
 
-  const totalReduction = masteryBonus.costReduction + researchReduction;
+  // Skill tree cost reduction
+  let skillReduction = 0;
+  if (unlockedSkills) {
+    // all_cost_reduction applies to both build and upgrade
+    skillReduction = getSkillTreeBonus(unlockedSkills, 'all_cost_reduction');
+    // Specific build/upgrade reduction stacks
+    if (costType === 'build') {
+      skillReduction += getSkillTreeBonus(unlockedSkills, 'build_cost_reduction');
+    } else if (costType === 'upgrade') {
+      skillReduction += getSkillTreeBonus(unlockedSkills, 'upgrade_cost_reduction');
+    }
+  }
+
+  const totalReduction = masteryBonus.costReduction + researchReduction + skillReduction;
   if (totalReduction === 0) {
     return costs;
   }

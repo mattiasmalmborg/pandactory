@@ -7,6 +7,7 @@ import { FOOD_ITEMS } from '../../game/config/food';
 import { calculateLevelUpCost, calculateProductionRate, canAfford, applyCostReduction } from '../../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../../utils/allocation';
 import { countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
+import { getResearchBonus } from '../../game/config/research';
 import { hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
 import { useGame } from '../../game/state/GameContext';
 import { formatNumber } from '../../utils/formatters';
@@ -72,12 +73,14 @@ export function AutomationCard({
   // Count total installed power cells for resonance calculation
   const totalInstalledCells = countInstalledPowerCells(state.biomes);
 
-  // Calculate effective power cell bonus with resonance
+  // Calculate effective power cell bonus with resonance + research
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const researchPowerCellBonus = getResearchBonus(state.research?.levels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    state.prestige.unlockedSkills
+    state.prestige.unlockedSkills,
+    researchPowerCellBonus
   );
 
   // Calculate efficiency based on NET production (production minus OTHER automations' consumption)
@@ -160,7 +163,7 @@ export function AutomationCard({
 
   // Calculate upgrade cost (using resources from ALL biomes, with mastery + research discount)
   const baseUpgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
-  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade');
+  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade', state.prestige.unlockedSkills);
   const canAffordUpgrade = canAfford(allResources, upgradeCost);
 
   const powerCellInfo = automation.powerCell

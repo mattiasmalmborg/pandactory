@@ -1,11 +1,11 @@
 import { GameState, GameAction, ResourceId, FoodId, BiomeId, ResearchId } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
 import { EXPEDITION_TIERS } from '../config/expeditions';
-import { SKILL_TREE } from '../config/skillTree';
+import { SKILL_TREE, getSkillTreeBonus, hasSkillEffect } from '../config/skillTree';
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
-import { INITIAL_RESEARCH_STATE, RESEARCH_NODES } from '../config/research';
+import { INITIAL_RESEARCH_STATE, RESEARCH_NODES, getResearchBonus } from '../config/research';
 import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -283,8 +283,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { tier, foodConsumed } = action.payload;
       const config = EXPEDITION_TIERS[tier];
 
-      // Oasis artifact: Swift Forage and Local Expedition take half the time
+      // Apply expedition time reductions
       let durationMs = config.durationMinutes * 60 * 1000;
+
+      // Skill tree: expedition_time_reduction
+      const skillTimeReduction = getSkillTreeBonus(state.prestige.unlockedSkills, 'expedition_time_reduction');
+      // Research: expedition_time
+      const researchTimeReduction = getResearchBonus(state.research?.levels || {}, 'expedition_time');
+      const totalTimeReduction = Math.min(skillTimeReduction + researchTimeReduction, 0.8); // Cap at 80%
+      durationMs = Math.floor(durationMs * (1 - totalTimeReduction));
+
+      // Oasis artifact: Swift Forage and Local Expedition take half the time
       if (
         (tier === 'quick_dash' || tier === 'quick_scout') &&
         hasArtifactEffect(state.artifacts?.inventory || [], 'oasis')
@@ -555,12 +564,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { shardsEarned } = action.payload;
 
       // Reset everything except prestige data, achievements, lifetime stats, research, and gameStartTime
+      const newUnlockedSkills = state.prestige.unlockedSkills;
+
+      // Déjà Vu Explorer: instantly discover first new biome (Misty Lake)
+      const instantBiome = hasSkillEffect(newUnlockedSkills, 'instant_first_biome');
+
       return {
         ...INITIAL_GAME_STATE,
+        ...(instantBiome ? {
+          unlockedBiomes: ['lush_forest', 'misty_lake'] as BiomeId[],
+          biomes: {
+            ...INITIAL_GAME_STATE.biomes,
+            misty_lake: { ...INITIAL_GAME_STATE.biomes.misty_lake, discovered: true },
+          },
+        } : {}),
         prestige: {
           cosmicBambooShards: state.prestige.cosmicBambooShards + shardsEarned,
           totalPrestiges: state.prestige.totalPrestiges + 1,
-          unlockedSkills: state.prestige.unlockedSkills, // Skills persist!
+          unlockedSkills: newUnlockedSkills, // Skills persist!
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!

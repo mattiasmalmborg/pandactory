@@ -1,7 +1,9 @@
-import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier, ArtifactTemplateId, Artifact } from '../types/game.types';
+import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier, ArtifactTemplateId, Artifact, SkillId, ResearchId } from '../types/game.types';
 import { EXPEDITION_TIERS } from '../game/config/expeditions';
 import { BIOMES } from '../game/config/biomes';
 import { rollArtifactDrop, hasArtifactEffect, getActiveSetBonuses } from '../game/config/artifacts';
+import { getSkillTreeBonus } from '../game/config/skillTree';
+import { getResearchBonus } from '../game/config/research';
 
 export interface CalculatedRewards {
   resources: { resourceId: ResourceId; amount: number }[];
@@ -38,6 +40,8 @@ export function calculateExpeditionRewards(
   isCompleted: boolean = true,
   progressPercent: number = 1.0,
   artifactInventory: Artifact[] = [],
+  unlockedSkills: SkillId[] = [],
+  researchLevels: Partial<Record<ResearchId, number>> = {},
 ): CalculatedRewards {
   const config = EXPEDITION_TIERS[tier];
   const baseMultiplier = config.resourceMultiplier;
@@ -48,10 +52,14 @@ export function calculateExpeditionRewards(
   // Completion bonus: +20% if expedition completed fully
   const completionBonus = isCompleted ? 0.20 : 0;
 
+  // Skill tree + research expedition resource bonus
+  const skillResourceBonus = getSkillTreeBonus(unlockedSkills, 'expedition_resource_bonus');
+  const researchResourceBonus = getResearchBonus(researchLevels, 'expedition_resource');
+
   // Progress scaling: partial rewards if recalled early
   const progressMultiplier = isCompleted ? 1.0 : progressPercent;
 
-  const totalMultiplier = baseMultiplier * (1 + bonus + completionBonus) * progressionScale * progressMultiplier;
+  const totalMultiplier = baseMultiplier * (1 + bonus + completionBonus + skillResourceBonus + researchResourceBonus) * progressionScale * progressMultiplier;
 
   // Calculate resource rewards based on current biome's primary resources
   // Base amount: 20-50 per resource, then scaled
@@ -66,7 +74,9 @@ export function calculateExpeditionRewards(
   const powerCells: PowerCellTier[] = [];
   if (isCompleted) {
     const pityBonus = Math.min(powerCellPityCounter * 0.05, 0.40);
-    const effectivePowerCellChance = config.powerCellChance + pityBonus;
+    // Skill tree: power_cell_drop_bonus increases drop chance
+    const skillDropBonus = getSkillTreeBonus(unlockedSkills, 'power_cell_drop_bonus');
+    const effectivePowerCellChance = config.powerCellChance * (1 + skillDropBonus) + pityBonus;
 
     if (Math.random() < effectivePowerCellChance) {
       // Random power cell tier (weighted towards lower tiers)

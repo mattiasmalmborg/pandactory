@@ -1,4 +1,6 @@
-import { ExpeditionTier, ExpeditionTierConfig } from '../../types/game.types';
+import { ExpeditionTier, ExpeditionTierConfig, SkillId, ResearchId } from '../../types/game.types';
+import { getSkillTreeBonus } from './skillTree';
+import { getResearchBonus } from './research';
 
 export const EXPEDITION_TIERS: Record<ExpeditionTier, ExpeditionTierConfig> = {
   quick_dash: {
@@ -139,8 +141,29 @@ export function isExpeditionComplete(expedition: {
  * - +Volcanic Isle: 384,000
  * - +Crystal Caverns: 1,536,000
  */
-export function getScaledFoodCost(baseCost: number, unlockedBiomes: number): number {
+export function getScaledFoodCost(
+  baseCost: number,
+  unlockedBiomes: number,
+  unlockedSkills?: SkillId[],
+  researchLevels?: Partial<Record<ResearchId, number>>,
+): number {
   // Scale by 4× per additional biome unlocked
   const multiplier = Math.pow(4, Math.max(0, unlockedBiomes - 1));
-  return Math.floor(baseCost * multiplier);
+  let cost = Math.floor(baseCost * multiplier);
+
+  // Apply food cost reductions from skills and research
+  let foodReduction = 0;
+  if (unlockedSkills) {
+    foodReduction += getSkillTreeBonus(unlockedSkills, 'expedition_food_reduction');
+  }
+  if (researchLevels) {
+    foodReduction += getResearchBonus(researchLevels, 'expedition_food');
+    foodReduction += getResearchBonus(researchLevels, 'food_waste');
+  }
+  if (foodReduction > 0) {
+    const clampedReduction = Math.min(foodReduction, 0.8); // Cap at 80%
+    cost = Math.floor(cost * (1 - clampedReduction));
+  }
+
+  return cost;
 }

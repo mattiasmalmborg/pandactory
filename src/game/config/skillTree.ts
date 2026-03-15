@@ -284,12 +284,13 @@ export function countInstalledPowerCells(biomes: Record<string, { automations: A
 export function getEffectivePowerCellBonus(
   basePowerCellBonus: number,
   totalInstalledCells: number,
-  unlockedSkills: SkillId[]
+  unlockedSkills: SkillId[],
+  researchPowerCellBonus: number = 0
 ): number {
   if (basePowerCellBonus <= 0) return 0;
 
-  // Get base effectiveness bonus (+10% from Gentle Touch, +25% from Overcharge)
-  const effectivenessBonus = getSkillTreeBonus(unlockedSkills, 'power_cell_effectiveness');
+  // Get base effectiveness bonus (+10% from Gentle Touch, +25% from Overcharge) + research
+  const effectivenessBonus = getSkillTreeBonus(unlockedSkills, 'power_cell_effectiveness') + researchPowerCellBonus;
 
   // Get resonance bonus per cell
   const resonancePerCell = getSkillTreeBonus(unlockedSkills, 'power_cell_resonance');

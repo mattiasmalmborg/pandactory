@@ -48,12 +48,14 @@ export function calculateBiomeProductionRates(
     // Skip paused automations
     if (automation.paused) return;
 
-    // Calculate effective power cell bonus (handles null/undefined and skill bonuses)
+    // Calculate effective power cell bonus (handles null/undefined and skill/research bonuses)
     const basePowerCellBonus = automation.powerCell?.bonus || 0;
+    const researchPowerCellBonus = getResearchBonus(context?.researchLevels || {}, 'power_cell');
     const effectivePowerCellBonus = getEffectivePowerCellBonus(
       basePowerCellBonus,
       totalInstalledCells,
-      unlockedSkills
+      unlockedSkills,
+      researchPowerCellBonus
     );
 
     // Thermal Vent artifact: power cells give bonus effective levels
@@ -65,11 +67,16 @@ export function calculateBiomeProductionRates(
       }
     }
 
+    // Spaceship research bonus for final_assembler automations
+    const spaceshipBonus = config.category === 'final_assembler'
+      ? getResearchBonus(context?.researchLevels || {}, 'spaceship')
+      : 0;
+
     // Calculate effective production rate with level scaling, skills, mastery, research, and power cell
     const effectiveRate = calculateProductionRate(
       config.baseProductionRate,
       effectiveLevel,
-      productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
+      productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus,
       effectivePowerCellBonus
     );
 
@@ -120,12 +127,14 @@ export function getAutomationEfficiency(
     ? countInstalledPowerCells(context.allBiomes)
     : 0;
 
-  // Calculate effective power cell bonus
+  // Calculate effective power cell bonus (including research)
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const researchPCBonus = getResearchBonus(context?.researchLevels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    unlockedSkills
+    unlockedSkills,
+    researchPCBonus
   );
 
   // Thermal Vent artifact: power cells give bonus effective levels
@@ -137,10 +146,15 @@ export function getAutomationEfficiency(
     }
   }
 
+  // Spaceship research bonus for final_assembler automations
+  const spaceshipBonus2 = config.category === 'final_assembler'
+    ? getResearchBonus(context?.researchLevels || {}, 'spaceship')
+    : 0;
+
   const effectiveRate = calculateProductionRate(
     config.baseProductionRate,
     effectiveLevel,
-    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus2,
     effectivePowerCellBonus
   );
 

@@ -322,7 +322,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                 );
                 // Apply same cost reduction as UI display (mastery + research)
                 const unlockedAchievements = state.achievements?.unlocked || [];
-                const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade');
+                const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade', state.prestige.unlockedSkills);
 
                 return (
                   <AutomationCard

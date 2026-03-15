@@ -23,7 +23,7 @@ export function ExpeditionLauncher() {
 
   const tierConfig = EXPEDITION_TIERS[selectedTier];
   const unlockedBiomeCount = state.unlockedBiomes.length;
-  const scaledFoodCost = getScaledFoodCost(tierConfig.foodCost, unlockedBiomeCount);
+  const scaledFoodCost = getScaledFoodCost(tierConfig.foodCost, unlockedBiomeCount, state.prestige.unlockedSkills, state.research?.levels);
   const totalNutrition = calculateTotalNutrition(foodSelection);
   const hasEnoughFood = totalNutrition >= scaledFoodCost;
   const wastedNutrition = calculateWastedNutrition(foodSelection, scaledFoodCost);
@@ -121,6 +121,8 @@ export function ExpeditionLauncher() {
       true,
       1.0,
       state.artifacts?.inventory || [],
+      state.prestige.unlockedSkills,
+      state.research?.levels || {},
     );
 
     // Convert PowerCellTier[] to PowerCell[] using createPowerCell to ensure bonus is set
@@ -248,7 +250,7 @@ export function ExpeditionLauncher() {
         <h3 className="text-md font-semibold text-white">Expedition Tier</h3>
         {(Object.keys(EXPEDITION_TIERS) as ExpeditionTier[]).map((tier) => {
           const config = EXPEDITION_TIERS[tier];
-          const tierScaledCost = getScaledFoodCost(config.foodCost, unlockedBiomeCount);
+          const tierScaledCost = getScaledFoodCost(config.foodCost, unlockedBiomeCount, state.prestige.unlockedSkills, state.research?.levels);
           return (
             <div
               key={tier}
