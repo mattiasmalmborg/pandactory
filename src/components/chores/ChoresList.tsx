@@ -157,23 +157,23 @@ export function ChoresList() {
       {!collapsed && (
         <>
           {/* Tabs */}
-          <div className="flex border-b border-gray-700/50">
+          <div className="flex gap-1 bg-gray-800/90 backdrop-blur-sm rounded-lg p-1 mx-3 mt-1">
             <button
               onClick={() => setActiveTab('daily')}
-              className={`flex-1 text-xs py-2 font-medium transition-colors ${
+              className={`flex-1 text-xs font-semibold py-2 rounded-md transition-colors ${
                 activeTab === 'daily'
-                  ? 'text-amber-400 border-b-2 border-amber-400'
-                  : 'text-gray-500 hover:text-gray-300'
+                  ? 'bg-amber-600/60 text-amber-200'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               Daily ({dailyCompleted}/{daily.length})
             </button>
             <button
               onClick={() => setActiveTab('weekly')}
-              className={`flex-1 text-xs py-2 font-medium transition-colors ${
+              className={`flex-1 text-xs font-semibold py-2 rounded-md transition-colors ${
                 activeTab === 'weekly'
-                  ? 'text-blue-400 border-b-2 border-blue-400'
-                  : 'text-gray-500 hover:text-gray-300'
+                  ? 'bg-blue-600/60 text-blue-200'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
             >
               Weekly ({weeklyCompleted}/{weekly.length})
