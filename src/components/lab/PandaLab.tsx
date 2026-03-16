@@ -327,10 +327,10 @@ export function PandaLab() {
   const categories = useMemo(() => {
     const nodes = Object.values(RESEARCH_NODES);
     return [
-      { title: 'Production', subtitle: 'Make more, faster', nodes: nodes.filter(n => ['production', 'gather', 'spaceship'].includes(n.bonusType)) },
-      { title: 'Economy', subtitle: 'Spend less, build more', nodes: nodes.filter(n => ['build_cost', 'upgrade_cost'].includes(n.bonusType)) },
-      { title: 'Expeditions', subtitle: 'Go further, find more', nodes: nodes.filter(n => ['expedition_food', 'expedition_time', 'expedition_resource', 'food_waste'].includes(n.bonusType)) },
-      { title: 'Power', subtitle: 'Supercharge your machines', nodes: nodes.filter(n => n.bonusType === 'power_cell') },
+      { icon: '⚙️', title: 'Production', subtitle: 'Make more, faster', nodes: nodes.filter(n => ['production', 'gather', 'spaceship'].includes(n.bonusType)) },
+      { icon: '💰', title: 'Economy', subtitle: 'Spend less, build more', nodes: nodes.filter(n => ['build_cost', 'upgrade_cost'].includes(n.bonusType)) },
+      { icon: '🗺️', title: 'Expeditions', subtitle: 'Go further, find more', nodes: nodes.filter(n => ['expedition_food', 'expedition_time', 'expedition_resource', 'food_waste'].includes(n.bonusType)) },
+      { icon: '⚡', title: 'Power', subtitle: 'Supercharge your machines', nodes: nodes.filter(n => n.bonusType === 'power_cell') },
     ];
   }, []);
 
@@ -463,8 +463,9 @@ export function PandaLab() {
         <>
           {categories.map(cat => (
             <div key={cat.title} className="space-y-2">
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-xs font-bold text-white">{cat.title}</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-base">{cat.icon}</span>
+                <h3 className="text-sm font-bold text-white">{cat.title}</h3>
                 <span className="text-[10px] text-gray-500">{cat.subtitle}</span>
               </div>
               {cat.nodes.map(node => (
