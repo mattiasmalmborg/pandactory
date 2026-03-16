@@ -26,40 +26,25 @@ export function TrophyRoom() {
 
   return (
     <div className="space-y-3">
-      {/* Header Card */}
-      <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
-        <h2 className="text-xl font-bold text-white mb-2">Trophy Room</h2>
-        <p className="text-sm text-gray-300">
-          A catalog of every artifact discovered on your expeditions. Collect them all to prove Dr. Redd's superiority.
-        </p>
-      </div>
-
-      {/* Progress */}
-      <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-amber-400">🏺</span>
-            <div>
-              <p className="text-[10px] text-gray-500">Collection</p>
-              <p className="text-lg font-bold text-amber-300">
-                {discoveredCount}<span className="text-gray-500 font-normal text-sm">/{totalTemplates}</span>
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] text-gray-500">Completion</p>
-            <p className="text-sm font-bold text-gray-300">
-              {totalTemplates > 0 ? Math.round((discoveredCount / totalTemplates) * 100) : 0}%
-            </p>
-          </div>
+      {/* Header + Progress */}
+      <div className="bg-gradient-to-br from-yellow-900/50 to-amber-900/50 backdrop-blur-sm rounded-lg border border-yellow-500/50 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-xl font-bold text-yellow-200 flex items-center gap-2">
+            🏺 Trophy Room
+          </h1>
+          <span className="text-yellow-300 font-bold">
+            {discoveredCount}/{totalTemplates}
+          </span>
         </div>
-        {/* Progress bar */}
-        <div className="mt-2 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        <div className="relative h-3 bg-gray-700/50 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-500"
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-500"
             style={{ width: `${totalTemplates > 0 ? (discoveredCount / totalTemplates) * 100 : 0}%` }}
           />
         </div>
+        <p className="text-center text-yellow-200/80 text-sm mt-2">
+          {totalTemplates > 0 ? Math.round((discoveredCount / totalTemplates) * 100) : 0}% Complete
+        </p>
       </div>
 
       {/* Biome groups */}
