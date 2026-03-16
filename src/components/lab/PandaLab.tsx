@@ -382,25 +382,18 @@ export function PandaLab() {
       {/* Header Card */}
       <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
         <h2 className="text-xl font-bold text-white mb-2">Dr. Redd's Lab</h2>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-gray-300 mb-3">
           Spend Research Data on permanent upgrades, analyze expedition artifacts, and equip powerful loadouts.
         </p>
-      </div>
-
-      {/* Research Data + Progress */}
-      <div className="bg-gray-800/90 backdrop-blur-sm border border-purple-700/40 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-purple-400">🔬</span>
-            <div>
-              <p className="text-[10px] text-gray-500">Research Data</p>
-              <p className="text-lg font-bold text-purple-300">{formatNumber(researchData)}</p>
-            </div>
+        <div className="flex gap-3">
+          <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Research Data</p>
+            <p className="text-sm font-bold text-purple-300">{formatNumber(researchData)}</p>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] text-gray-500">Progress</p>
-            <p className="text-sm font-bold text-gray-300">
-              {totalResearched}<span className="text-gray-500 font-normal">/{totalMaxLevels}</span>
+          <div className="flex-1 bg-gray-900/60 rounded-md px-3 py-1.5 text-center">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Progress</p>
+            <p className={`text-sm font-bold ${totalResearched >= totalMaxLevels ? 'text-green-400' : 'text-white'}`}>
+              {totalResearched}/{totalMaxLevels}
             </p>
           </div>
         </div>
