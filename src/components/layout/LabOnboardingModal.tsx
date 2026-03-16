@@ -25,52 +25,52 @@ export function LabOnboardingModal({ veteranBonus, onClose }: LabOnboardingModal
           <div className="p-4 space-y-4">
             {/* Veteran bonus */}
             {veteranBonus && (
-              <div className="bg-purple-900/50 border border-purple-500 rounded-lg p-3">
+              <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">🎁</span>
-                  <p className="text-purple-200 font-semibold">Welcome Back Bonus!</p>
+                  <p className="text-purple-300 font-semibold text-sm">Welcome Back Bonus!</p>
                 </div>
-                <p className="text-purple-300 text-sm">
+                <p className="text-gray-300 text-xs">
                   +{veteranBonus.amount} Research Data based on your progress: {veteranBonus.reason}
                 </p>
               </div>
             )}
 
             {/* Research Lab */}
-            <div className="bg-gray-800/50 rounded-lg p-3 space-y-2">
+            <div className="bg-gray-800/50 rounded-lg p-3 space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="text-lg">⚗️</span>
                 <h3 className="text-white font-semibold text-sm">Research Lab</h3>
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs">
                 Spend <span className="text-purple-400 font-semibold">Research Data</span> to unlock permanent upgrades — faster gathering, cheaper builds, better expeditions, and more.
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-[10px] text-gray-500 italic">
                 Research progress persists through crashes!
               </p>
             </div>
 
             {/* Chores */}
-            <div className="bg-gray-800/50 rounded-lg p-3 space-y-2">
+            <div className="bg-gray-800/50 rounded-lg p-3 space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="text-lg">📋</span>
                 <h3 className="text-white font-semibold text-sm">Daily & Weekly Chores</h3>
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs">
                 Complete chores to earn Research Data. New daily chores every day, weekly chores every Monday.
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-[10px] text-gray-500 italic">
                 Check the Home screen to see your active chores!
               </p>
             </div>
 
             {/* Artifacts */}
-            <div className="bg-gray-800/50 rounded-lg p-3 space-y-2">
+            <div className="bg-gray-800/50 rounded-lg p-3 space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🏺</span>
                 <h3 className="text-white font-semibold text-sm">Artifacts & Loadout</h3>
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs">
                 Find artifacts on expeditions! Analyze them in the lab, then equip up to 3 for passive bonuses. Collect full sets for extra power.
               </p>
             </div>

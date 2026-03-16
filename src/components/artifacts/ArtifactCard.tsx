@@ -86,7 +86,7 @@ export function ArtifactCard({
                 disabled={loadoutFull}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded transition-colors ${
                   loadoutFull
-                    ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed'
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                     : 'bg-amber-600/80 text-white hover:bg-amber-500/80 border border-amber-400/40'
                 }`}
               >
@@ -107,7 +107,7 @@ export function ArtifactCard({
                 disabled={analysisActive || !canAffordAnalysis}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded transition-colors ${
                   analysisActive || !canAffordAnalysis
-                    ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed'
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                     : 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
                 }`}
               >
