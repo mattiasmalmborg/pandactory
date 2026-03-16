@@ -123,7 +123,7 @@ export function useContracts() {
         },
       });
     }
-  }, [state.lifetimeStats, state.contracts, dispatch, state]);
+  }, [state.lifetimeStats, state.contracts, dispatch, state, hasPrestiged]);
 
   // Track production, food, level_up, and gather contracts via resource snapshots (every 5s)
   // Uses refs to avoid recreating interval on every state change (same pattern as game loop)

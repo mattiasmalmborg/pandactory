@@ -8,10 +8,10 @@ const BIOME_ORDER: BiomeId[] = ['lush_forest', 'misty_lake', 'arid_desert', 'fro
 
 export function TrophyRoom() {
   const { state } = useGame();
-  const inventory = state.artifacts?.inventory || [];
+  const inventory = useMemo(() => state.artifacts?.inventory || [], [state.artifacts?.inventory]);
   const discovered = useMemo(() => getDiscoveredTemplates(inventory), [inventory]);
 
-  const allTemplates = Object.values(ARTIFACT_TEMPLATES);
+  const allTemplates = useMemo(() => Object.values(ARTIFACT_TEMPLATES), []);
   const totalTemplates = allTemplates.length;
   const discoveredCount = discovered.size;
 
@@ -22,7 +22,7 @@ export function TrophyRoom() {
       biome: BIOMES[biomeId],
       templates: allTemplates.filter(t => t.originBiome === biomeId),
     }));
-  }, []);
+  }, [allTemplates]);
 
   return (
     <div className="space-y-3">
