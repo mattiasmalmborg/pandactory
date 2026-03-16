@@ -65,22 +65,26 @@ function ResearchStation({
   activeAnalysis,
   progress,
   remaining,
+  currentResearchLevel,
 }: {
   label: string;
   activeResearch: ActiveResearch | null;
   activeAnalysis: { artifactInstanceId: string; templateId: string } | null;
   progress: number;
   remaining: number;
+  currentResearchLevel?: number;
 }) {
   const isActive = activeResearch || activeAnalysis;
 
   if (!isActive) {
     return (
-      <div className="bg-gray-900/60 border border-gray-700/30 rounded-lg p-3 flex items-center gap-3">
-        <span className="text-lg text-gray-600">🔬</span>
+      <div className="bg-gray-950/80 backdrop-blur-sm border border-gray-600/40 rounded-xl p-4 flex items-center gap-3 shadow-lg">
+        <div className="w-10 h-10 rounded-lg bg-gray-800/80 border border-gray-600/30 flex items-center justify-center">
+          <span className="text-xl text-gray-500">🔬</span>
+        </div>
         <div className="flex-1">
-          <p className="text-[10px] text-gray-500 font-semibold">{label}</p>
-          <p className="text-[10px] text-gray-600 italic">Idle — select a research or artifact to analyze</p>
+          <p className="text-xs text-gray-400 font-bold tracking-wide uppercase">{label}</p>
+          <p className="text-[11px] text-gray-500 italic mt-0.5">Idle — select a research or artifact to analyze</p>
         </div>
       </div>
     );
@@ -88,34 +92,44 @@ function ResearchStation({
 
   const isResearch = !!activeResearch;
   const node = isResearch ? RESEARCH_NODES[activeResearch!.researchId] : null;
+  const levelInfo = isResearch && currentResearchLevel !== undefined ? `Lvl ${currentResearchLevel} → ${currentResearchLevel + 1}` : '';
 
   return (
-    <div className={`border rounded-lg p-3 ${
+    <div className={`rounded-xl p-4 shadow-lg backdrop-blur-sm ${
       isResearch
-        ? 'bg-purple-900/30 border-purple-500/40'
-        : 'bg-amber-900/20 border-amber-500/40'
+        ? 'bg-purple-950/80 border-2 border-purple-500/50'
+        : 'bg-amber-950/80 border-2 border-amber-500/50'
     }`}>
       <div className="flex items-center gap-3">
-        <span className="text-lg animate-pulse">{isResearch ? node!.icon : '🏺'}</span>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+          isResearch ? 'bg-purple-800/60 border border-purple-400/30' : 'bg-amber-800/60 border border-amber-400/30'
+        }`}>
+          <span className="text-xl animate-pulse">{isResearch ? node!.icon : '🏺'}</span>
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-gray-500 font-semibold">{label}</p>
-          <p className={`text-[11px] font-semibold truncate ${isResearch ? 'text-purple-300' : 'text-amber-300'}`}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400 font-bold tracking-wide uppercase">{label}</p>
+            {isResearch && levelInfo && (
+              <span className="text-[10px] text-purple-400 font-semibold">{levelInfo}</span>
+            )}
+          </div>
+          <p className={`text-sm font-bold truncate mt-0.5 ${isResearch ? 'text-purple-200' : 'text-amber-200'}`}>
             {isResearch ? node!.name : 'Analyzing artifact...'}
           </p>
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex-1 mr-2">
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex-1 mr-3">
+              <div className="h-2.5 bg-gray-800/80 rounded-full overflow-hidden border border-gray-700/50">
                 <div
                   className={`h-full rounded-full transition-all duration-100 ${
                     isResearch
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-400'
-                      : 'bg-gradient-to-r from-amber-600 to-amber-400'
+                      ? 'bg-gradient-to-r from-purple-600 via-purple-400 to-purple-300'
+                      : 'bg-gradient-to-r from-amber-600 via-amber-400 to-amber-300'
                   }`}
                   style={{ width: `${progress * 100}%` }}
                 />
               </div>
             </div>
-            <span className="text-[10px] text-gray-400 whitespace-nowrap">{formatTimeRemaining(remaining)}</span>
+            <span className="text-xs text-gray-300 font-mono whitespace-nowrap">{formatTimeRemaining(remaining)}</span>
           </div>
         </div>
       </div>
@@ -398,11 +412,12 @@ export function PandaLab() {
       {/* Research Stations */}
       <div className="space-y-2">
         <ResearchStation
-                    label="Research Station 1"
+          label="Research Station 1"
           activeResearch={activeResearch}
           activeAnalysis={!hasSecondStation ? activeAnalysis : null}
           progress={activeResearch ? researchProgress : (!hasSecondStation && activeAnalysis ? analysisProgress : 0)}
           remaining={activeResearch ? researchRemaining : (!hasSecondStation && activeAnalysis ? analysisRemaining : 0)}
+          currentResearchLevel={activeResearch ? (levels[activeResearch.researchId] || 0) : undefined}
         />
 
         {hasSecondStation ? (
@@ -414,11 +429,13 @@ export function PandaLab() {
             remaining={activeAnalysis ? analysisRemaining : 0}
           />
         ) : (
-          <div className="bg-gray-900/30 border border-dashed border-gray-700/30 rounded-lg p-3 flex items-center gap-3">
-            <span className="text-lg text-gray-700">🔒</span>
+          <div className="bg-gray-950/60 backdrop-blur-sm border-2 border-dashed border-gray-600/30 rounded-xl p-4 flex items-center gap-3 shadow-lg">
+            <div className="w-10 h-10 rounded-lg bg-gray-800/60 border border-gray-600/20 flex items-center justify-center">
+              <span className="text-xl text-gray-600">🔒</span>
+            </div>
             <div>
-              <p className="text-[10px] text-gray-600 font-semibold">Research Station 2</p>
-              <p className="text-[10px] text-gray-700 italic">Equip Crystal Resonator to unlock</p>
+              <p className="text-xs text-gray-500 font-bold tracking-wide uppercase">Research Station 2</p>
+              <p className="text-[11px] text-gray-600 italic mt-0.5">Equip Crystal Resonator to unlock</p>
             </div>
           </div>
         )}
