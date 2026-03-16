@@ -78,7 +78,7 @@ function ResearchStation({
 
   if (!isActive) {
     return (
-      <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-3 flex items-center gap-3">
+      <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
         <span className="text-lg text-gray-600">🔬</span>
         <div className="flex-1">
           <p className="text-[10px] text-gray-500 font-semibold">{label}</p>
@@ -93,10 +93,10 @@ function ResearchStation({
   const levelInfo = isResearch && currentResearchLevel !== undefined ? `Lvl ${currentResearchLevel} → ${currentResearchLevel + 1}` : '';
 
   return (
-    <div className={`rounded-lg p-3 backdrop-blur-sm ${
+    <div className={`rounded-lg p-4 backdrop-blur-sm ${
       isResearch
-        ? 'bg-purple-900/40 border border-purple-500/40'
-        : 'bg-amber-900/30 border border-amber-500/40'
+        ? 'bg-gray-800/90 border border-purple-500/40'
+        : 'bg-gray-800/90 border border-amber-500/40'
     }`}>
       <div className="flex items-center gap-3">
         <span className="text-lg animate-pulse">{isResearch ? node!.icon : '🏺'}</span>
@@ -176,7 +176,7 @@ function ResearchCard({
         <span className={`text-2xl mt-0.5 ${isThisResearching ? 'animate-pulse' : ''}`}>{node.icon}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-white truncate">{node.name}</h4>
+            <h4 className="font-semibold text-white truncate">{node.name}</h4>
             <div className="flex items-center gap-1.5">
               {currentLevel > 0 && (
                 <span className="text-[10px] text-green-400 font-semibold whitespace-nowrap">
@@ -197,8 +197,8 @@ function ResearchCard({
             </div>
           </div>
 
-          <p className="text-[11px] text-gray-300 mt-0.5">{node.description}</p>
-          <p className="text-[10px] text-gray-400 italic mt-1 leading-relaxed">{node.flavorText}</p>
+          <p className="text-xs text-gray-300 mt-0.5">{node.description}</p>
+          <p className="text-xs text-gray-400 italic mt-1">{node.flavorText}</p>
 
           {isThisResearching && (
             <div className="mt-2">
@@ -385,7 +385,7 @@ export function PandaLab() {
       </div>
 
       {/* Research Data + Progress */}
-      <div className="bg-gray-900/80 backdrop-blur-sm border border-purple-700/40 rounded-lg p-3">
+      <div className="bg-gray-800/90 backdrop-blur-sm border border-purple-700/40 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-purple-400">🔬</span>
@@ -423,7 +423,7 @@ export function PandaLab() {
             remaining={activeAnalysis ? analysisRemaining : 0}
           />
         ) : (
-          <div className="bg-gray-900/30 border border-dashed border-gray-700/30 rounded-lg p-3 flex items-center gap-3">
+          <div className="bg-gray-800/60 backdrop-blur-sm border border-dashed border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
             <span className="text-lg text-gray-700">🔒</span>
             <div>
               <p className="text-[10px] text-gray-600 font-semibold">Research Station 2</p>

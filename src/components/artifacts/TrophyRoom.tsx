@@ -34,7 +34,7 @@ export function TrophyRoom() {
       </div>
 
       {/* Progress */}
-      <div className="bg-gray-900/80 backdrop-blur-sm border border-amber-700/30 rounded-lg p-3">
+      <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-amber-400">🏺</span>

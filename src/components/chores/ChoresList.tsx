@@ -119,7 +119,7 @@ export function ChoresList() {
   };
 
   return (
-    <div className="bg-gray-900/70 backdrop-blur-sm border border-gray-700/40 rounded-lg overflow-hidden">
+    <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden">
       {/* Header — always visible, clickable to toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}

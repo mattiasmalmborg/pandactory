@@ -9,7 +9,7 @@ export function ArtifactLoadout() {
   const setBonuses = getActiveSetBonuses(inventory);
 
   return (
-    <div className="bg-gray-900/60 backdrop-blur-sm border border-amber-700/30 rounded-lg p-3 space-y-2">
+    <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-bold text-amber-400">Loadout</p>
         <span className="text-[10px] text-gray-400">{equipped.length}/{loadoutSlots} equipped</span>
