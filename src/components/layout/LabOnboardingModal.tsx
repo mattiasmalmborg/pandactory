@@ -46,7 +46,7 @@ export function LabOnboardingModal({ veteranBonus, onClose }: LabOnboardingModal
                 Spend <span className="text-purple-400 font-semibold">Research Data</span> to unlock permanent upgrades — faster gathering, cheaper builds, better expeditions, and more.
               </p>
               <p className="text-[10px] text-gray-500 italic">
-                Research progress persists through crashes!
+                Research Data persists through crashes. Research levels reset on prestige.
               </p>
             </div>
 

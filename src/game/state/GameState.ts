@@ -5,7 +5,7 @@ import { SKILL_TREE, getSkillTreeBonus, hasSkillEffect } from '../config/skillTr
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
-import { INITIAL_RESEARCH_STATE, RESEARCH_NODES, getResearchBonus } from '../config/research';
+import { INITIAL_RESEARCH_STATE, getResearchBonus } from '../config/research';
 import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses, getEffectiveLoadoutSlots } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -588,13 +588,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
-        // Tundra Set 3/3: all research starts at lvl 1 after prestige
+        // Tundra Set 3/3: first research in each category starts at lvl 1 after prestige
         research: (() => {
           const tundraSet = getActiveSetBonuses(state.artifacts?.inventory || []).get('frozen_tundra') || 0;
           if (tundraSet >= 3) {
             const levels: Partial<Record<ResearchId, number>> = {};
-            for (const id of Object.keys(RESEARCH_NODES)) {
-              levels[id as ResearchId] = 1;
+            // One per category: Production, Economy, Expeditions, Power
+            const categoryFirstNodes: ResearchId[] = [
+              'efficient_gathering',   // Production
+              'bulk_purchasing',       // Economy
+              'expedition_logistics',  // Expeditions
+              'power_cell_tuning',     // Power
+            ];
+            for (const id of categoryFirstNodes) {
+              levels[id] = 1;
             }
             return { ...INITIAL_RESEARCH_STATE, levels };
           }
@@ -778,6 +785,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         discoveredProducedFoods,
         pendingResourceDiscoveries: loadedState.pendingResourceDiscoveries || [],
         pendingFoodDiscoveries: loadedState.pendingFoodDiscoveries || [],
+        // Backfill v1.5 state fields for imported saves
+        contracts: loadedState.contracts || { ...INITIAL_CONTRACT_STATE },
+        research: loadedState.research
+          ? { ...loadedState.research, activeResearch: loadedState.research.activeResearch ?? null }
+          : { ...INITIAL_RESEARCH_STATE },
+        artifacts: loadedState.artifacts || { ...INITIAL_ARTIFACT_STATE },
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };
