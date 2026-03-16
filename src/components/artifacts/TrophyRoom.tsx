@@ -65,13 +65,17 @@ export function TrophyRoom() {
       {biomeGroups.map(({ biomeId, biome, templates }) => {
         const biomeDiscovered = templates.filter(t => discovered.has(t.id)).length;
         return (
-          <div key={biomeId} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{biome.icon}</span>
-                <h3 className="text-xs font-bold text-white">{biome.name}</h3>
-              </div>
-              <span className="text-[10px] text-gray-500">
+          <div key={biomeId} className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <span>{biome.icon}</span>
+                <span>{biome.name}</span>
+              </h2>
+              <span className={`text-sm font-medium px-2 py-0.5 rounded ${
+                biomeDiscovered === templates.length
+                  ? 'bg-green-900/50 text-green-300'
+                  : 'bg-gray-700/50 text-gray-400'
+              }`}>
                 {biomeDiscovered}/{templates.length}
               </span>
             </div>
@@ -84,32 +88,32 @@ export function TrophyRoom() {
                 return (
                   <div
                     key={template.id}
-                    className={`rounded-lg border p-3 transition-all ${
+                    className={`p-3 rounded-lg border transition-all duration-300 ${
                       isFound
                         ? `${rarity.bg} ${rarity.border} ${rarity.glow}`
-                        : 'bg-gray-900/80 border-gray-700/50'
+                        : 'bg-gray-800/50 border-gray-700/30 opacity-60'
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`text-2xl ${isFound ? '' : 'grayscale opacity-30'}`}>
+                      <div className={`text-2xl ${isFound ? '' : 'grayscale opacity-50'}`}>
                         {isFound ? template.icon : '❓'}
-                      </span>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <h4 className={`text-sm font-semibold truncate ${isFound ? 'text-white' : 'text-gray-600'}`}>
+                          <h3 className={`font-semibold text-sm ${isFound ? 'text-white' : 'text-gray-400'}`}>
                             {isFound ? template.name : '???'}
-                          </h4>
+                          </h3>
                           <span className={`text-[9px] font-bold uppercase tracking-wider ${isFound ? rarity.text : 'text-gray-700'}`}>
                             {template.rarity}
                           </span>
                         </div>
                         {isFound ? (
                           <>
-                            <p className="text-[11px] text-gray-300 mt-0.5">{template.description}</p>
-                            <p className="text-[10px] text-gray-400 italic mt-1">{template.flavorText}</p>
+                            <p className="text-xs mt-0.5 text-gray-300">{template.description}</p>
+                            <p className="text-xs mt-1 text-amber-400/80 italic">"{template.flavorText}"</p>
                           </>
                         ) : (
-                          <p className="text-[11px] text-gray-600 mt-0.5 italic">
+                          <p className="text-xs mt-0.5 text-gray-500">
                             Found during expeditions in {biome.name}
                           </p>
                         )}

@@ -1,12 +1,8 @@
-import { useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORIES, getAchievementsByCategory, getTotalAchievementCount } from '../../game/config/achievements';
 import { AchievementCategory, AchievementId } from '../../types/game.types';
 import { BackgroundWrapper } from '../layout/BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
-import { TrophyRoom } from '../artifacts/TrophyRoom';
-
-type CollectionTab = 'achievements' | 'trophy_room';
 
 interface AchievementCardProps {
   id: AchievementId;
@@ -149,8 +145,6 @@ function AchievementsContent() {
 }
 
 export function Achievements() {
-  const [activeTab, setActiveTab] = useState<CollectionTab>('achievements');
-
   return (
     <BackgroundWrapper
       backgroundPath={getBiomeBackgroundPath('skills_stats')}
@@ -158,33 +152,7 @@ export function Achievements() {
       overlayOpacity={50}
     >
       <div className="p-4 pb-24 space-y-4">
-        {/* Tab bar */}
-        <div className="flex bg-gray-900/80 rounded-lg border border-gray-700/50 p-1 gap-1">
-          <button
-            onClick={() => setActiveTab('achievements')}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
-              activeTab === 'achievements'
-                ? 'bg-amber-600/80 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-            }`}
-          >
-            🏆 Achievements
-          </button>
-          <button
-            onClick={() => setActiveTab('trophy_room')}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
-              activeTab === 'trophy_room'
-                ? 'bg-amber-600/80 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-            }`}
-          >
-            🏺 Trophy Room
-          </button>
-        </div>
-
-        {/* Tab content */}
-        {activeTab === 'achievements' && <AchievementsContent />}
-        {activeTab === 'trophy_room' && <TrophyRoom />}
+        <AchievementsContent />
       </div>
     </BackgroundWrapper>
   );

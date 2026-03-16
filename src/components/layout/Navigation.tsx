@@ -2,7 +2,7 @@ import { useGame } from '../../game/state/GameContext';
 import { isExpeditionComplete } from '../../game/config/expeditions';
 
 export type MainViewType = 'dashboard' | 'biome' | 'expedition' | 'lab' | 'more';
-export type SubViewType = 'skills' | 'achievements' | 'statistics';
+export type SubViewType = 'skills' | 'achievements' | 'trophy_room' | 'statistics';
 export type ViewType = MainViewType | SubViewType;
 
 interface NavigationProps {
@@ -35,7 +35,7 @@ export function Navigation({ currentView, onViewChange }: NavigationProps) {
   ];
 
   // Sub-views (skills, achievements, statistics) highlight "More" tab
-  const activeTab = (['skills', 'achievements', 'statistics'] as string[]).includes(currentView)
+  const activeTab = (['skills', 'achievements', 'trophy_room', 'statistics'] as string[]).includes(currentView)
     ? 'more'
     : currentView;
 

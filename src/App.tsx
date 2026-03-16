@@ -10,6 +10,7 @@ import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
 import { SkillTree } from './components/prestige/SkillTree';
 import { Achievements } from './components/achievements/Achievements';
+import { TrophyRoomView } from './components/artifacts/TrophyRoomView';
 import { ToastProvider } from './components/ui/ToastQueue';
 import { useAchievementToasts } from './components/achievements/AchievementToast';
 import { useChoreToasts } from './components/chores/ChoreToast';
@@ -32,7 +33,7 @@ import { BiomeId } from './types/game.types';
 import { OfflineProgressResult } from './utils/offlineProgress';
 import { STORAGE_KEYS } from './config/storage';
 
-const ALL_VIEWS: ViewType[] = ['dashboard', 'biome', 'expedition', 'lab', 'more', 'skills', 'achievements', 'statistics'];
+const ALL_VIEWS: ViewType[] = ['dashboard', 'biome', 'expedition', 'lab', 'more', 'skills', 'achievements', 'trophy_room', 'statistics'];
 
 // Load saved view from localStorage, default to 'dashboard'
 function getInitialView(): ViewType {
@@ -150,6 +151,7 @@ function GameContent() {
                        currentView === 'lab' ? 'skills_stats' :
                        currentView === 'expedition' ? state.player.currentBiome :
                        currentView === 'achievements' ? 'skills_stats' :
+                       currentView === 'trophy_room' ? 'skills_stats' :
                        state.player.currentBiome;
 
   // Show loading spinner
@@ -212,6 +214,7 @@ function GameContent() {
               {currentView === 'statistics' && <Statistics />}
               {currentView === 'skills' && <SkillTree />}
               {currentView === 'achievements' && <Achievements />}
+              {currentView === 'trophy_room' && <TrophyRoomView />}
             </div>
           </div>
         </div>
