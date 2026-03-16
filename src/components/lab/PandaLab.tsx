@@ -379,11 +379,11 @@ export function PandaLab() {
       overlayOpacity={50}
     >
     <div className="p-4 pt-0 pb-24 space-y-3">
-      {/* Header */}
-      <div className="text-center pt-2">
-        <h1 className="text-lg font-bold text-white">🔬 Dr. Redd's Lab</h1>
-        <p className="text-[11px] text-gray-400 mt-0.5">
-          "Science isn't about why. It's about why not." — Dr. Redd
+      {/* Header Card */}
+      <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
+        <h2 className="text-xl font-bold text-white mb-2">Dr. Redd's Lab</h2>
+        <p className="text-sm text-gray-300">
+          Spend Research Data on permanent upgrades, analyze expedition artifacts, and equip powerful loadouts.
         </p>
       </div>
 

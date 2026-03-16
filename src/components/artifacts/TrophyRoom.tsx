@@ -26,10 +26,11 @@ export function TrophyRoom() {
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="text-center">
-        <p className="text-[11px] text-gray-400 italic">
-          "Every artifact tells a story. Most of them are about me." — Dr. Redd
+      {/* Header Card */}
+      <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
+        <h2 className="text-xl font-bold text-white mb-2">Trophy Room</h2>
+        <p className="text-sm text-gray-300">
+          A catalog of every artifact discovered on your expeditions. Collect them all to prove Dr. Redd's superiority.
         </p>
       </div>
 
