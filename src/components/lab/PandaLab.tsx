@@ -6,6 +6,8 @@ import { ResearchId, ResearchNode, ActiveResearch } from '../../types/game.types
 import { formatNumber } from '../../utils/formatters';
 import { ArtifactCard } from '../artifacts/ArtifactCard';
 import { ArtifactLoadout } from '../artifacts/ArtifactLoadout';
+import { BackgroundWrapper } from '../layout/BackgroundWrapper';
+import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
 type LabTab = 'research' | 'artifacts';
 
@@ -360,6 +362,11 @@ export function PandaLab() {
   const equippedCount = getEquippedCount(inventory);
 
   return (
+    <BackgroundWrapper
+      backgroundPath={getBiomeBackgroundPath('research_lab')}
+      fallbackGradient={getFallbackGradient('research_lab')}
+      overlayOpacity={50}
+    >
     <div className="p-4 pt-0 pb-24 space-y-3">
       {/* Header */}
       <div className="text-center pt-2">
@@ -523,5 +530,6 @@ export function PandaLab() {
         </div>
       )}
     </div>
+    </BackgroundWrapper>
   );
 }

@@ -85,6 +85,10 @@ export const getAssetConfig = () => ({
       background: `${BASE}assets/backgrounds/bg_skills_stats.jpg`,
       fallbackGradient: 'from-indigo-900 via-purple-800 to-indigo-900',
     },
+    research_lab: {
+      background: `${BASE}assets/backgrounds/bg_research_lab.jpg`,
+      fallbackGradient: 'from-purple-900 via-gray-900 to-purple-900',
+    },
   },
 
   // UI elements - Cards, Panels, and Components
@@ -155,12 +159,15 @@ export type ScreenAssetConfig = typeof ASSET_CONFIG.screens;
 /**
  * Get background image path for a biome or screen
  */
-export function getBiomeBackgroundPath(biomeId: BiomeId | 'dashboard' | 'skills_stats'): string {
+export function getBiomeBackgroundPath(biomeId: BiomeId | 'dashboard' | 'skills_stats' | 'research_lab'): string {
   if (biomeId === 'dashboard') {
     return ASSET_CONFIG.screens.dashboard.background;
   }
   if (biomeId === 'skills_stats') {
     return ASSET_CONFIG.screens.skills_stats.background;
+  }
+  if (biomeId === 'research_lab') {
+    return ASSET_CONFIG.screens.research_lab.background;
   }
   return ASSET_CONFIG.biomes[biomeId].background;
 }
@@ -168,8 +175,8 @@ export function getBiomeBackgroundPath(biomeId: BiomeId | 'dashboard' | 'skills_
 /**
  * Get fallback gradient for a biome or screen
  */
-export function getFallbackGradient(id: BiomeId | 'dashboard' | 'skillTree' | 'prestige' | 'skills_stats'): string {
-  if (id === 'dashboard' || id === 'skillTree' || id === 'prestige' || id === 'skills_stats') {
+export function getFallbackGradient(id: BiomeId | 'dashboard' | 'skillTree' | 'prestige' | 'skills_stats' | 'research_lab'): string {
+  if (id === 'dashboard' || id === 'skillTree' || id === 'prestige' || id === 'skills_stats' || id === 'research_lab') {
     return ASSET_CONFIG.screens[id].fallbackGradient;
   }
   return ASSET_CONFIG.biomes[id].fallbackGradient;

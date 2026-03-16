@@ -6,7 +6,7 @@ import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { INITIAL_RESEARCH_STATE, RESEARCH_NODES, getResearchBonus } from '../config/research';
-import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses } from '../config/artifacts';
+import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses, getEffectiveLoadoutSlots } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -969,7 +969,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'EQUIP_ARTIFACT': {
       const { artifactInstanceId } = action.payload;
       const equippedCount = state.artifacts.inventory.filter(a => a.equipped).length;
-      if (equippedCount >= state.artifacts.loadoutSlots) return state;
+      if (equippedCount >= getEffectiveLoadoutSlots(state.artifacts.inventory)) return state;
       return {
         ...state,
         artifacts: {

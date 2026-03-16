@@ -110,7 +110,10 @@ export function ExpeditionTimer() {
       state.expeditionPityCounter || 0,
       state.powerCellPityCounter || 0,
       false, // Not completed
-      effectiveProgress
+      effectiveProgress,
+      state.artifacts?.inventory || [],
+      state.prestige.unlockedSkills,
+      state.research?.levels || {},
     );
 
     // Convert to record format for dispatch

@@ -23,6 +23,8 @@ export function useContracts() {
     totalAutomationsBuilt: state.lifetimeStats?.totalAutomationsBuilt || 0,
     totalUpgradesPurchased: state.lifetimeStats?.totalUpgradesPurchased || 0,
     totalExpeditionsCompleted: state.lifetimeStats?.totalExpeditionsCompleted || 0,
+    unlockedBiomeCount: state.unlockedBiomes?.length || 0,
+    discoveredResourceCount: Object.values(state.biomes).reduce((sum, b) => sum + (b.discoveredResources?.length || 0), 0),
   });
 
   useEffect(() => {
@@ -89,12 +91,26 @@ export function useContracts() {
       actions.push({ type: 'COLLECT_EXPEDITION' });
     }
 
+    // Detect new biome unlocks and resource discoveries
+    const currentBiomeCount = state.unlockedBiomes?.length || 0;
+    const currentResourceCount = Object.values(state.biomes).reduce((sum, b) => sum + (b.discoveredResources?.length || 0), 0);
+    const newBiomes = currentBiomeCount - prev.unlockedBiomeCount;
+    const newResources = currentResourceCount - prev.discoveredResourceCount;
+    for (let i = 0; i < newBiomes; i++) {
+      actions.push({ type: 'UNLOCK_BIOME' });
+    }
+    for (let i = 0; i < newResources; i++) {
+      actions.push({ type: 'ACKNOWLEDGE_RESOURCE_DISCOVERY' });
+    }
+
     // Update prev stats
     prevStatsRef.current = {
       totalResourcesGathered: stats?.totalResourcesGathered || 0,
       totalAutomationsBuilt: stats?.totalAutomationsBuilt || 0,
       totalUpgradesPurchased: stats?.totalUpgradesPurchased || 0,
       totalExpeditionsCompleted: stats?.totalExpeditionsCompleted || 0,
+      unlockedBiomeCount: currentBiomeCount,
+      discoveredResourceCount: currentResourceCount,
     };
 
     if (actions.length === 0) return;
