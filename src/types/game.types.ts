@@ -161,6 +161,7 @@ export interface GameState {
   artifacts: ArtifactState;
   gameStartTime: number; // When the save file was first created
   pendingVeteranBonus?: { amount: number; reason: string }; // One-time welcome bonus for returning players
+  pendingLabOnboarding?: boolean; // Show lab onboarding modal
   version: string;
 }
 
@@ -440,4 +441,5 @@ export type GameAction =
   | { type: 'EQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
   | { type: 'UNEQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
   | { type: 'SCRAP_ARTIFACT'; payload: { artifactInstanceId: string } }
-  | { type: 'CLEAR_VETERAN_BONUS' };
+  | { type: 'CLEAR_VETERAN_BONUS' }
+  | { type: 'DISMISS_LAB_ONBOARDING' };

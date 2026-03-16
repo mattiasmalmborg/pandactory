@@ -303,6 +303,7 @@ function migrateGameState(state: GameState): GameState {
           amount: totalBonus,
           reason: reasons.join(', '),
         },
+        pendingLabOnboarding: true,
       };
     }
   }

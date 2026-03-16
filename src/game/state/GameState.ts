@@ -569,6 +569,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Déjà Vu Explorer: instantly discover first new biome (Misty Lake)
       const instantBiome = hasSkillEffect(newUnlockedSkills, 'instant_first_biome');
 
+      const isFirstPrestige = state.prestige.totalPrestiges === 0;
+
       return {
         ...INITIAL_GAME_STATE,
         ...(instantBiome ? {
@@ -578,6 +580,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             misty_lake: { ...INITIAL_GAME_STATE.biomes.misty_lake, discovered: true },
           },
         } : {}),
+        ...(isFirstPrestige ? { pendingLabOnboarding: true } : {}),
         prestige: {
           cosmicBambooShards: state.prestige.cosmicBambooShards + shardsEarned,
           totalPrestiges: state.prestige.totalPrestiges + 1,
@@ -675,6 +678,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CLEAR_VETERAN_BONUS': {
       const { pendingVeteranBonus: _, ...rest } = state;
+      return rest as GameState;
+    }
+
+    case 'DISMISS_LAB_ONBOARDING': {
+      const { pendingLabOnboarding: _, pendingVeteranBonus: _v, ...rest } = state;
       return rest as GameState;
     }
 

@@ -10,7 +10,7 @@ import { BiomeView } from './components/layout/BiomeView';
 import { Statistics } from './components/layout/Statistics';
 import { SkillTree } from './components/prestige/SkillTree';
 import { Achievements } from './components/achievements/Achievements';
-import { ToastProvider, useToast } from './components/ui/ToastQueue';
+import { ToastProvider } from './components/ui/ToastQueue';
 import { useAchievementToasts } from './components/achievements/AchievementToast';
 import { useChoreToasts } from './components/chores/ChoreToast';
 import { Navigation } from './components/layout/Navigation';
@@ -21,6 +21,7 @@ import { PandaLab } from './components/lab/PandaLab';
 import { ExpeditionLauncher } from './components/expedition/ExpeditionLauncher';
 import { ExpeditionTimer } from './components/expedition/ExpeditionTimer';
 import { OfflineProgressModal } from './components/layout/OfflineProgressModal';
+import { LabOnboardingModal } from './components/layout/LabOnboardingModal';
 import { BiomeBackground } from './components/layout/BiomeBackground';
 import { HintSystem } from './components/tutorial/HintSystem';
 import { AlertSystem } from './components/alerts/AlertSystem';
@@ -170,8 +171,16 @@ function GameContent() {
         {/* Mobile frame - max width with centered content */}
         <div className="min-h-screen pb-20">
           <div className="max-w-md mx-auto h-full">
+            {/* Lab Onboarding Modal (first prestige or veteran migration) */}
+            {state.pendingLabOnboarding && (
+              <LabOnboardingModal
+                veteranBonus={state.pendingVeteranBonus}
+                onClose={() => dispatch({ type: 'DISMISS_LAB_ONBOARDING' })}
+              />
+            )}
+
             {/* Offline Progress Modal */}
-            {offlineProgress && (
+            {offlineProgress && !state.pendingLabOnboarding && (
               <OfflineProgressModal
                 offlineSeconds={offlineProgress.offlineSeconds}
                 cappedMinutes={offlineProgress.cappedMinutes}
@@ -227,28 +236,7 @@ function GameContent() {
 function ToastHooks() {
   useAchievementToasts();
   useChoreToasts();
-  useVeteranBonusToast();
   return null;
-}
-
-function useVeteranBonusToast() {
-  const { state, dispatch } = useGame();
-  const { enqueue } = useToast();
-
-  useEffect(() => {
-    if (state.pendingVeteranBonus) {
-      const { amount, reason } = state.pendingVeteranBonus;
-      enqueue({
-        id: 'veteran-bonus',
-        icon: '🔬',
-        label: 'Welcome to Panda Lab!',
-        title: `+${amount} Research Data`,
-        subtitle: `Earned from: ${reason}`,
-        colorScheme: 'info',
-      });
-      dispatch({ type: 'CLEAR_VETERAN_BONUS' });
-    }
-  }, [state.pendingVeteranBonus, enqueue, dispatch]);
 }
 
 function App() {
