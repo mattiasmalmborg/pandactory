@@ -172,8 +172,7 @@ function ResearchCard({
           : 'border-gray-700/50'
       }`}
     >
-      <div className="flex items-start gap-3">
-        <span className={`text-2xl mt-0.5 ${isThisResearching ? 'animate-pulse' : ''}`}>{node.icon}</span>
+      <div className="flex items-start">
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <h4 className="font-semibold text-white truncate">{node.name}</h4>
@@ -216,23 +215,27 @@ function ResearchCard({
           )}
 
           {!isThisResearching && (
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2">
               {isMaxed ? (
                 <span className="text-[10px] text-purple-400 font-semibold">✓ MAX LEVEL</span>
               ) : (
                 <>
-                  <div>
-                    <span className="text-[10px] text-gray-400">
-                      <span className={canAfford ? 'text-purple-300' : 'text-red-400'}>{formatNumber(cost)}</span> 🔬
-                    </span>
-                    <span className="text-[10px] text-gray-500 ml-2">
-                      ⏱ {formatTimeRemaining(duration)}
-                    </span>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="bg-gray-900/50 rounded-md px-2.5 py-1.5 flex items-center gap-2">
+                      <span className="text-lg">🔬</span>
+                      <div className={`font-semibold text-sm ${canAfford ? 'text-purple-300' : 'text-red-400'}`}>
+                        {formatNumber(cost)}
+                      </div>
+                    </div>
+                    <div className="bg-gray-900/50 rounded-md px-2.5 py-1.5 flex items-center gap-2">
+                      <span className="text-lg">⏱️</span>
+                      <div className="text-white font-semibold text-sm">{formatTimeRemaining(duration)}</div>
+                    </div>
                   </div>
                   <button
                     onClick={() => onStart(node.id, cost)}
                     disabled={!canStart}
-                    className={`text-[11px] font-bold px-3 py-1 rounded transition-colors ${
+                    className={`w-full text-[11px] font-bold px-3 py-1.5 rounded transition-colors ${
                       canStart
                         ? 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
                         : 'bg-gray-700 text-gray-400 cursor-not-allowed'
