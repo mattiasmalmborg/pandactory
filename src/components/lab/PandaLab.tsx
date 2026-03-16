@@ -378,7 +378,7 @@ export function PandaLab() {
       fallbackGradient={getFallbackGradient('research_lab')}
       overlayOpacity={50}
     >
-    <div className="p-4 pt-0 pb-24 space-y-3">
+    <div className="p-4 pt-6 pb-24 space-y-3">
       {/* Header Card */}
       <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
         <h2 className="text-xl font-bold text-white mb-2">Dr. Redd's Lab</h2>
