@@ -12,6 +12,10 @@ An incremental automation game where you help Dr. Redd Pawston III, a brilliant 
 - Deep production chains with 30+ resources
 - Expedition system with risk/reward mechanics
 - Prestige system with permanent skill upgrades
+- Dr. Redd's Lab — research upgrades and artifact analysis
+- Artifact system with expedition drops, loadout, and set bonuses
+- Daily and weekly chores with Research Data rewards
+- Artifact Collection catalog
 - Offline progress support
 - PWA - installable on mobile devices
 
@@ -38,6 +42,7 @@ Game runs at `http://localhost:3000`
 
 ## Version
 
+**v1.5.0** - Panda Lab: Research system, artifacts, chores, UI overhaul
 **v1.0.0** - Initial release
 
 ## License
