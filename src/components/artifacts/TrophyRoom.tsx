@@ -87,7 +87,7 @@ export function TrophyRoom() {
                     className={`rounded-lg border p-3 transition-all ${
                       isFound
                         ? `${rarity.bg} ${rarity.border} ${rarity.glow}`
-                        : 'bg-gray-900/40 border-gray-800/50'
+                        : 'bg-gray-900/80 border-gray-700/50'
                     }`}
                   >
                     <div className="flex items-start gap-3">
