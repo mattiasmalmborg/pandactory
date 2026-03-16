@@ -162,14 +162,14 @@ function ResearchCard({
 
   return (
     <div
-      className={`rounded-lg border p-3 transition-all ${
+      className={`bg-gray-800/90 backdrop-blur-sm rounded-lg border p-4 transition-all ${
         isMaxed
-          ? 'bg-purple-900/20 border-purple-600/30'
+          ? 'border-purple-600/30'
           : isThisResearching
-          ? 'bg-purple-900/30 border-purple-500/60 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
+          ? 'border-purple-500/60 shadow-[0_0_12px_rgba(168,85,247,0.2)]'
           : canAfford
-          ? 'bg-gray-900/60 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.15)]'
-          : 'bg-gray-900/60 border-gray-700/40'
+          ? 'border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.15)]'
+          : 'border-gray-700/50'
       }`}
     >
       <div className="flex items-start gap-3">
@@ -434,7 +434,7 @@ export function PandaLab() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-gray-900/60 rounded-lg p-1">
+      <div className="flex gap-1 bg-gray-800/90 backdrop-blur-sm rounded-lg p-1">
         <button
           onClick={() => setLabTab('research')}
           className={`flex-1 text-xs font-semibold py-2 rounded-md transition-colors ${
