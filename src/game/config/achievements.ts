@@ -1,6 +1,8 @@
-import { AchievementId, AchievementCategory, GameState, BiomeId, ResourceId, SkillId } from '../../types/game.types';
+import { AchievementId, AchievementCategory, GameState, BiomeId, ResourceId, SkillId, ResearchId } from '../../types/game.types';
 import { BIOMES } from './biomes';
 import { RESOURCES } from './resources';
+import { RESEARCH_NODES } from './research';
+import { ARTIFACT_TEMPLATES, getDiscoveredTemplates, getActiveSetBonuses } from './artifacts';
 
 export interface AchievementDefinition {
   id: AchievementId;
@@ -596,6 +598,138 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDefinition> = {
     category: 'secret',
     hidden: true,
   },
+
+  // === RESEARCH ACHIEVEMENTS (4) ===
+  first_research: {
+    id: 'first_research',
+    name: 'Lab Rat',
+    description: 'Complete your first research',
+    flavorText: 'Science! Or at least poking things with a stick.',
+    icon: '🔬',
+    category: 'research',
+  },
+  research_5: {
+    id: 'research_5',
+    name: 'Peer Reviewed',
+    description: 'Research 5 different technologies',
+    flavorText: 'Dr. Redd is mildly impressed.',
+    icon: '🧪',
+    category: 'research',
+  },
+  research_max_node: {
+    id: 'research_max_node',
+    name: 'Maxed Out',
+    description: 'Max out any single research node',
+    flavorText: 'There\'s nothing left to learn. About this one thing.',
+    icon: '📊',
+    category: 'research',
+  },
+  research_all_max: {
+    id: 'research_all_max',
+    name: 'Nobel Panda',
+    description: 'Max out ALL research nodes',
+    flavorText: 'You know everything. Time to pretend you don\'t.',
+    icon: '🎓',
+    category: 'research',
+    hidden: true,
+  },
+
+  // === ARTIFACT ACHIEVEMENTS (6) ===
+  first_artifact: {
+    id: 'first_artifact',
+    name: 'Finders Keepers',
+    description: 'Find your first artifact',
+    flavorText: 'Ooh, shiny! What does it do?',
+    icon: '🏺',
+    category: 'artifacts',
+  },
+  artifact_6: {
+    id: 'artifact_6',
+    name: 'Treasure Hunter',
+    description: 'Collect 6 unique artifacts',
+    flavorText: 'Your collection is growing nicely.',
+    icon: '🗿',
+    category: 'artifacts',
+  },
+  artifact_12: {
+    id: 'artifact_12',
+    name: 'Museum Curator',
+    description: 'Collect 12 unique artifacts',
+    flavorText: 'You should charge admission.',
+    icon: '🏛️',
+    category: 'artifacts',
+  },
+  full_collection: {
+    id: 'full_collection',
+    name: 'Complete Exhibition',
+    description: 'Collect all 18 artifacts',
+    flavorText: 'Every artifact. Every biome. Every story. Yours.',
+    icon: '👑',
+    category: 'artifacts',
+    hidden: true,
+  },
+  first_set_bonus: {
+    id: 'first_set_bonus',
+    name: 'Set Collector',
+    description: 'Activate your first set bonus',
+    flavorText: 'Two from the same place? That\'s not a coincidence.',
+    icon: '🎴',
+    category: 'artifacts',
+  },
+  legendary_find: {
+    id: 'legendary_find',
+    name: 'Jackpot!',
+    description: 'Find a legendary artifact',
+    flavorText: 'The rarest of the rare. Frame it.',
+    icon: '⭐',
+    category: 'artifacts',
+    hidden: true,
+  },
+
+  // === CHORE ACHIEVEMENTS (4) ===
+  first_chore: {
+    id: 'first_chore',
+    name: 'Hired Paw',
+    description: 'Complete your first chore',
+    flavorText: 'Dr. Redd nods approvingly. Barely.',
+    icon: '📋',
+    category: 'chores',
+  },
+  chores_25: {
+    id: 'chores_25',
+    name: 'Reliable Worker',
+    description: 'Complete 25 chores',
+    flavorText: 'You show up, you deliver. Respect.',
+    icon: '📝',
+    category: 'chores',
+  },
+  chores_100: {
+    id: 'chores_100',
+    name: 'Employee of the Month',
+    description: 'Complete 100 chores',
+    flavorText: 'Dr. Redd might actually smile. Might.',
+    icon: '🏅',
+    category: 'chores',
+  },
+  weekly_complete: {
+    id: 'weekly_complete',
+    name: 'Weekend Warrior',
+    description: 'Complete all 3 weekly chores in one week',
+    flavorText: 'Who needs rest when there\'s science to fund?',
+    icon: '📅',
+    category: 'chores',
+  },
+
+  // === PRESTIGE ADDITIONS (1) ===
+  double_digits: {
+    id: 'double_digits',
+    name: 'Double Digits',
+    description: 'Reach prestige level 10',
+    flavorText: 'Crashing is a lifestyle now.',
+    icon: '🔟',
+    category: 'crashes',
+    hidden: true,
+  },
 };
 
 // Helper to get achievements by category
@@ -819,7 +953,60 @@ export function checkAchievements(state: GameState): AchievementId[] {
     check('crash_5', state.prestige.totalPrestiges >= 5);
     check('crash_10', state.prestige.totalPrestiges >= 10);
     check('crash_25', state.prestige.totalPrestiges >= 25);
+    check('double_digits', state.prestige.totalPrestiges >= 10);
   }
+
+  // === RESEARCH ACHIEVEMENTS ===
+  const researchLevels = state.research?.levels || {};
+  const researchedCount = Object.values(researchLevels).filter(lvl => (lvl || 0) >= 1).length;
+  check('first_research', researchedCount >= 1);
+  check('research_5', researchedCount >= 5);
+
+  // Check if any research node is maxed
+  const allResearchIds = Object.keys(RESEARCH_NODES) as ResearchId[];
+  const hasMaxedNode = allResearchIds.some(id => {
+    const node = RESEARCH_NODES[id];
+    return (researchLevels[id] || 0) >= node.maxLevel;
+  });
+  check('research_max_node', hasMaxedNode);
+
+  // Check if ALL research nodes are maxed
+  const allMaxed = allResearchIds.every(id => {
+    const node = RESEARCH_NODES[id];
+    return (researchLevels[id] || 0) >= node.maxLevel;
+  });
+  check('research_all_max', allMaxed);
+
+  // === ARTIFACT ACHIEVEMENTS ===
+  const inventory = state.artifacts?.inventory || [];
+  const discoveredTemplates = getDiscoveredTemplates(inventory);
+  check('first_artifact', discoveredTemplates.size >= 1);
+  check('artifact_6', discoveredTemplates.size >= 6);
+  check('artifact_12', discoveredTemplates.size >= 12);
+  check('full_collection', discoveredTemplates.size >= Object.keys(ARTIFACT_TEMPLATES).length);
+
+  // Set bonus - check if any biome has 2+ equipped artifacts
+  const activeSets = getActiveSetBonuses(inventory);
+  const hasSetBonus = [...activeSets.values()].some(tier => tier >= 2);
+  check('first_set_bonus', hasSetBonus);
+
+  // Legendary find - check if any analyzed artifact is legendary
+  const hasLegendary = inventory.some(a => {
+    const template = ARTIFACT_TEMPLATES[a.templateId];
+    return template && template.rarity === 'legendary';
+  });
+  check('legendary_find', hasLegendary);
+
+  // === CHORE ACHIEVEMENTS ===
+  const totalChores = stats.totalChoresCompleted || 0;
+  check('first_chore', totalChores >= 1);
+  check('chores_25', totalChores >= 25);
+  check('chores_100', totalChores >= 100);
+
+  // Weekend Warrior - all 3 weekly chores completed and claimed
+  const weeklyChores = state.contracts?.weekly || [];
+  const allWeeklyComplete = weeklyChores.length >= 3 && weeklyChores.every(c => c.claimed);
+  check('weekly_complete', allWeeklyComplete);
 
   // === SKILL ACHIEVEMENTS ===
   const skills = state.prestige.unlockedSkills || [];
@@ -926,6 +1113,9 @@ export const ACHIEVEMENT_CATEGORIES: Record<AchievementCategory, { name: string;
   power_cells: { name: 'Power Cells', icon: '🔋' },
   expedition: { name: 'Expedition', icon: '🗺️' },
   biomes: { name: 'Biomes', icon: '🌍' },
+  research: { name: 'Research', icon: '🔬' },
+  artifacts: { name: 'Artifacts', icon: '🏺' },
+  chores: { name: 'Chores', icon: '📋' },
   crashes: { name: 'Crashes', icon: '💥' },
   skills: { name: 'Skills', icon: '🧠' },
   milestones: { name: 'Milestones', icon: '🏆' },

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { EXPEDITION_TIERS, getExpeditionProgress, isExpeditionComplete } from '../../game/config/expeditions';
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
+import { hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
 import { ResourceId } from '../../types/game.types';
 import { ExpeditionRewards } from './ExpeditionRewards';
 import { BIOMES } from '../../game/config/biomes';
@@ -50,6 +51,7 @@ export function ExpeditionTimer() {
         powerCells={calculatedRewards.powerCells}
         newBiome={calculatedRewards.newBiome}
         newResources={calculatedRewards.newResources}
+        artifactDrops={calculatedRewards.artifactDrops}
         onClose={() => {
           setShowRewards(false);
           setCalculatedRewards(null);
@@ -87,6 +89,17 @@ export function ExpeditionTimer() {
       return;
     }
 
+    // Safe Return artifact: recalled expeditions keep 75% of rewards
+    // Lake Set 3/3: recalled expeditions give full rewards
+    const inventory = state.artifacts?.inventory || [];
+    const lakeSetLevel = getActiveSetBonuses(inventory).get('misty_lake') || 0;
+    let effectiveProgress = progress;
+    if (lakeSetLevel >= 3) {
+      effectiveProgress = 1.0; // Full rewards
+    } else if (hasArtifactEffect(inventory, 'safe_return')) {
+      effectiveProgress = Math.max(progress, 0.75);
+    }
+
     // Calculate partial rewards based on progress
     const partialRewards = calculateExpeditionRewards(
       expedition.tier,
@@ -97,7 +110,10 @@ export function ExpeditionTimer() {
       state.expeditionPityCounter || 0,
       state.powerCellPityCounter || 0,
       false, // Not completed
-      progress // Current progress percentage
+      effectiveProgress,
+      state.artifacts?.inventory || [],
+      state.prestige.unlockedSkills,
+      state.research?.levels || {},
     );
 
     // Convert to record format for dispatch

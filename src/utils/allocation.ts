@@ -1,14 +1,18 @@
-import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId } from '../types/game.types';
+import { BiomeState, ResourceId, Automation, AutomationType, SkillId, BiomeId, ResearchId, Artifact } from '../types/game.types';
 import { AUTOMATIONS } from '../game/config/automations';
 import { calculateProductionRate } from './calculations';
 import { getEffectivePowerCellBonus, countInstalledPowerCells, getSkillTreeBonus } from '../game/config/skillTree';
 import { getMasteryBonus } from '../game/config/achievements';
+import { getResearchBonus } from '../game/config/research';
+import { hasArtifactEffect, getActiveSetBonuses } from '../game/config/artifacts';
 import { AchievementId } from '../types/game.types';
 
 export interface BiomeProductionContext {
   unlockedSkills?: SkillId[];
   unlockedAchievements?: AchievementId[];
   allBiomes?: Record<BiomeId, BiomeState>;
+  researchLevels?: Partial<Record<ResearchId, number>>;
+  artifactInventory?: Artifact[];
 }
 
 /**
@@ -27,6 +31,7 @@ export function calculateBiomeProductionRates(
   // Get skill bonuses if context provided
   const unlockedSkills = context?.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context?.researchLevels || {}, 'production');
 
   // Get mastery bonus
   const masteryBonus = getMasteryBonus(context?.unlockedAchievements || []);
@@ -43,19 +48,35 @@ export function calculateBiomeProductionRates(
     // Skip paused automations
     if (automation.paused) return;
 
-    // Calculate effective power cell bonus (handles null/undefined and skill bonuses)
+    // Calculate effective power cell bonus (handles null/undefined and skill/research bonuses)
     const basePowerCellBonus = automation.powerCell?.bonus || 0;
+    const researchPowerCellBonus = getResearchBonus(context?.researchLevels || {}, 'power_cell');
     const effectivePowerCellBonus = getEffectivePowerCellBonus(
       basePowerCellBonus,
       totalInstalledCells,
-      unlockedSkills
+      unlockedSkills,
+      researchPowerCellBonus
     );
 
-    // Calculate effective production rate with level scaling, skills, mastery, and power cell
+    // Thermal Vent artifact: power cells give bonus effective levels
+    let effectiveLevel = automation.level;
+    if (automation.powerCell && context?.artifactInventory) {
+      if (hasArtifactEffect(context.artifactInventory, 'thermal_vent')) {
+        const volcanicSet = getActiveSetBonuses(context.artifactInventory).get('volcanic_isle') || 0;
+        effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+      }
+    }
+
+    // Spaceship research bonus for final_assembler automations
+    const spaceshipBonus = config.category === 'final_assembler'
+      ? getResearchBonus(context?.researchLevels || {}, 'spaceship')
+      : 0;
+
+    // Calculate effective production rate with level scaling, skills, mastery, research, and power cell
     const effectiveRate = calculateProductionRate(
       config.baseProductionRate,
-      automation.level,
-      productionSpeedBonus + masteryBonus.productionBonus,
+      effectiveLevel,
+      productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus,
       effectivePowerCellBonus
     );
 
@@ -98,6 +119,7 @@ export function getAutomationEfficiency(
   // Get skill bonuses
   const unlockedSkills = context?.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context?.researchLevels || {}, 'production');
   const masteryBonus = getMasteryBonus(context?.unlockedAchievements || []);
 
   // Count installed power cells for resonance
@@ -105,18 +127,34 @@ export function getAutomationEfficiency(
     ? countInstalledPowerCells(context.allBiomes)
     : 0;
 
-  // Calculate effective power cell bonus
+  // Calculate effective power cell bonus (including research)
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const researchPCBonus = getResearchBonus(context?.researchLevels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    unlockedSkills
+    unlockedSkills,
+    researchPCBonus
   );
+
+  // Thermal Vent artifact: power cells give bonus effective levels
+  let effectiveLevel = automation.level;
+  if (automation.powerCell && context?.artifactInventory) {
+    if (hasArtifactEffect(context.artifactInventory, 'thermal_vent')) {
+      const volcanicSet = getActiveSetBonuses(context.artifactInventory).get('volcanic_isle') || 0;
+      effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+    }
+  }
+
+  // Spaceship research bonus for final_assembler automations
+  const spaceshipBonus2 = config.category === 'final_assembler'
+    ? getResearchBonus(context?.researchLevels || {}, 'spaceship')
+    : 0;
 
   const effectiveRate = calculateProductionRate(
     config.baseProductionRate,
-    automation.level,
-    productionSpeedBonus + masteryBonus.productionBonus,
+    effectiveLevel,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus2,
     effectivePowerCellBonus
   );
 

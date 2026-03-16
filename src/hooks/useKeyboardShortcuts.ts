@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 import { BiomeId } from '../types/game.types';
 
-type ViewType = 'dashboard' | 'biome' | 'expedition' | 'statistics' | 'skills' | 'achievements';
-
 interface UseKeyboardShortcutsProps {
-  currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
+  currentView: string;
+  onViewChange: (view: string) => void;
   unlockedBiomes: BiomeId[];
   onBiomeChange: (biomeId: BiomeId) => void;
 }

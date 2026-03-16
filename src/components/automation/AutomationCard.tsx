@@ -7,6 +7,8 @@ import { FOOD_ITEMS } from '../../game/config/food';
 import { calculateLevelUpCost, calculateProductionRate, canAfford, applyCostReduction } from '../../utils/calculations';
 import { calculateBiomeProductionRates, getAutomationEfficiency } from '../../utils/allocation';
 import { countInstalledPowerCells, getEffectivePowerCellBonus } from '../../game/config/skillTree';
+import { getResearchBonus } from '../../game/config/research';
+import { hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
 import { useGame } from '../../game/state/GameContext';
 import { formatNumber } from '../../utils/formatters';
 import { getResourceSourceDescription } from '../../utils/resourceTracking';
@@ -32,8 +34,6 @@ export function AutomationCard({
   const config = AUTOMATIONS[automation.type];
   const isOnExpedition = state.panda.status === 'expedition';
 
-  if (!config) return null;
-
   // Gather all resources from ALL biomes for cross-biome upgrades (memoized)
   const allResources = useMemo(() => {
     const resources: Record<string, number> = {};
@@ -50,7 +50,9 @@ export function AutomationCard({
     unlockedSkills: state.prestige.unlockedSkills,
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
-  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes]);
+    researchLevels: state.research?.levels || {},
+    artifactInventory: state.artifacts?.inventory,
+  }), [state.prestige.unlockedSkills, state.achievements?.unlocked, state.biomes, state.research?.levels, state.artifacts?.inventory]);
 
   // Calculate GLOBAL production AND consumption rates from ALL biomes for efficiency calculation (memoized)
   const { globalProduction, globalConsumption } = useMemo(() => {
@@ -71,12 +73,14 @@ export function AutomationCard({
   // Count total installed power cells for resonance calculation
   const totalInstalledCells = countInstalledPowerCells(state.biomes);
 
-  // Calculate effective power cell bonus with resonance
+  // Calculate effective power cell bonus with resonance + research
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  const researchPowerCellBonus = getResearchBonus(state.research?.levels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    state.prestige.unlockedSkills
+    state.prestige.unlockedSkills,
+    researchPowerCellBonus
   );
 
   // Calculate efficiency based on NET production (production minus OTHER automations' consumption)
@@ -112,8 +116,18 @@ export function AutomationCard({
   const efficiency = getAutomationEfficiency(automation, netProduction, productionContext);
   const efficiencyPercent = Math.round(efficiency * 100);
 
-  // Calculate production rates with new formula (+25% per level)
-  const baseRate = calculateProductionRate(config.baseProductionRate, automation.level);
+  // Thermal Vent artifact: power cells give bonus effective levels
+  const artifactInventory = state.artifacts?.inventory;
+  let effectiveLevel = automation.level;
+  if (automation.powerCell && artifactInventory) {
+    if (hasArtifactEffect(artifactInventory, 'thermal_vent')) {
+      const volcanicSet = getActiveSetBonuses(artifactInventory).get('volcanic_isle') || 0;
+      effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+    }
+  }
+
+  // Calculate production rates with effective level (includes thermal_vent)
+  const baseRate = config ? calculateProductionRate(config.baseProductionRate, effectiveLevel) : 0;
   const actualRate = effectivePowerCellBonus > 0
     ? baseRate * (1 + effectivePowerCellBonus)
     : baseRate;
@@ -121,7 +135,7 @@ export function AutomationCard({
 
   // Identify which specific resources are bottlenecking this automation
   const bottleneckResources = useMemo(() => {
-    if (!config.consumes || efficiency >= 0.99) return [];
+    if (!config?.consumes || efficiency >= 0.99) return [];
 
     const bottlenecks: ResourceId[] = [];
     config.consumes.forEach(consume => {
@@ -135,18 +149,21 @@ export function AutomationCard({
     });
 
     return bottlenecks;
-  }, [config.consumes, actualRate, netProduction, efficiency]);
+  }, [config?.consumes, actualRate, netProduction, efficiency]);
 
-  // Calculate next level production
-  const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, automation.level + 1);
+  // Guard: all hooks above, safe to return early now
+  if (!config) return null;
+
+  // Calculate next level production (with thermal_vent effective level)
+  const nextLevelBaseRate = calculateProductionRate(config.baseProductionRate, effectiveLevel + 1);
   const boostPercent = Math.round(((nextLevelBaseRate - baseRate) / baseRate) * 100);
 
   // Get achievement-based cost reduction
   const unlockedAchievements = state.achievements?.unlocked || [];
 
-  // Calculate upgrade cost (using resources from ALL biomes, with mastery discount)
+  // Calculate upgrade cost (using resources from ALL biomes, with mastery + research discount)
   const baseUpgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
-  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements);
+  const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade', state.prestige.unlockedSkills);
   const canAffordUpgrade = canAfford(allResources, upgradeCost);
 
   const powerCellInfo = automation.powerCell

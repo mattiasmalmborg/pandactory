@@ -1,12 +1,16 @@
-import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier } from '../types/game.types';
+import { ResourceId, PowerCellTier, BiomeId, ExpeditionTier, ArtifactTemplateId, Artifact, SkillId, ResearchId } from '../types/game.types';
 import { EXPEDITION_TIERS } from '../game/config/expeditions';
 import { BIOMES } from '../game/config/biomes';
+import { rollArtifactDrop, hasArtifactEffect, getActiveSetBonuses } from '../game/config/artifacts';
+import { getSkillTreeBonus } from '../game/config/skillTree';
+import { getResearchBonus } from '../game/config/research';
 
 export interface CalculatedRewards {
   resources: { resourceId: ResourceId; amount: number }[];
   powerCells: PowerCellTier[];
   newBiome: BiomeId | null;
   newResources: ResourceId[];
+  artifactDrops: ArtifactTemplateId[];
 }
 
 /**
@@ -34,7 +38,10 @@ export function calculateExpeditionRewards(
   biomePityCounter: number = 0,
   powerCellPityCounter: number = 0,
   isCompleted: boolean = true,
-  progressPercent: number = 1.0
+  progressPercent: number = 1.0,
+  artifactInventory: Artifact[] = [],
+  unlockedSkills: SkillId[] = [],
+  researchLevels: Partial<Record<ResearchId, number>> = {},
 ): CalculatedRewards {
   const config = EXPEDITION_TIERS[tier];
   const baseMultiplier = config.resourceMultiplier;
@@ -45,10 +52,14 @@ export function calculateExpeditionRewards(
   // Completion bonus: +20% if expedition completed fully
   const completionBonus = isCompleted ? 0.20 : 0;
 
+  // Skill tree + research expedition resource bonus
+  const skillResourceBonus = getSkillTreeBonus(unlockedSkills, 'expedition_resource_bonus');
+  const researchResourceBonus = getResearchBonus(researchLevels, 'expedition_resource');
+
   // Progress scaling: partial rewards if recalled early
   const progressMultiplier = isCompleted ? 1.0 : progressPercent;
 
-  const totalMultiplier = baseMultiplier * (1 + bonus + completionBonus) * progressionScale * progressMultiplier;
+  const totalMultiplier = baseMultiplier * (1 + bonus + completionBonus + skillResourceBonus + researchResourceBonus) * progressionScale * progressMultiplier;
 
   // Calculate resource rewards based on current biome's primary resources
   // Base amount: 20-50 per resource, then scaled
@@ -63,7 +74,9 @@ export function calculateExpeditionRewards(
   const powerCells: PowerCellTier[] = [];
   if (isCompleted) {
     const pityBonus = Math.min(powerCellPityCounter * 0.05, 0.40);
-    const effectivePowerCellChance = config.powerCellChance + pityBonus;
+    // Skill tree: power_cell_drop_bonus increases drop chance
+    const skillDropBonus = getSkillTreeBonus(unlockedSkills, 'power_cell_drop_bonus');
+    const effectivePowerCellChance = config.powerCellChance * (1 + skillDropBonus) + pityBonus;
 
     if (Math.random() < effectivePowerCellChance) {
       // Random power cell tier (weighted towards lower tiers)
@@ -104,12 +117,15 @@ export function calculateExpeditionRewards(
 
   let newBiome: BiomeId | null = null;
 
+  // Trailblazer artifact: doubles discovery chances
+  const trailblazerMultiplier = hasArtifactEffect(artifactInventory, 'trailblazer') ? 2.0 : 1.0;
+
   // Only check for biome discovery if expedition was completed
   if (isCompleted) {
     // Pity system: +5% chance per failed expedition (hidden from player)
     // Caps at +50% bonus (10 failed expeditions)
     const biomePityBonus = Math.min(biomePityCounter * 0.05, 0.50);
-    const effectiveDiscoveryChance = config.biomeDiscoveryChance + biomePityBonus;
+    const effectiveDiscoveryChance = (config.biomeDiscoveryChance + biomePityBonus) * trailblazerMultiplier;
 
     if (Math.random() < effectiveDiscoveryChance) {
       // Get the next biome in progression from current biome
@@ -134,8 +150,8 @@ export function calculateExpeditionRewards(
       .filter(resourceId => !discoveredResources.includes(resourceId))
       .sort(() => Math.random() - 0.5);
 
-    // Use tier-specific resource discovery chance
-    const resourceDiscoveryChance = config.resourceDiscoveryChance;
+    // Use tier-specific resource discovery chance (trailblazer doubles it)
+    const resourceDiscoveryChance = config.resourceDiscoveryChance * trailblazerMultiplier;
 
     for (const resourceId of shuffledResources) {
       if (newResources.length >= maxNewResources) break;
@@ -149,10 +165,39 @@ export function calculateExpeditionRewards(
     }
   }
 
+  // Artifact drops - ONLY on completed expeditions
+  const artifactDrops: ArtifactTemplateId[] = [];
+  if (isCompleted) {
+    const drop = rollArtifactDrop(currentBiomeId, tier, artifactInventory);
+    if (drop) {
+      artifactDrops.push(drop);
+    } else if (tier === 'epic_journey' && hasArtifactEffect(artifactInventory, 'meteor_strike')) {
+      // Meteor Strike: Epic Journeys always drop at least 1 artifact
+      const guaranteedDrop = rollArtifactDrop(currentBiomeId, tier, []);
+      if (guaranteedDrop) artifactDrops.push(guaranteedDrop);
+    }
+    // Epic Journey has a small chance for a second artifact
+    if (tier === 'epic_journey' && Math.random() < 0.15) {
+      const secondDrop = rollArtifactDrop(currentBiomeId, tier, artifactInventory);
+      if (secondDrop) artifactDrops.push(secondDrop);
+    }
+  }
+
+  // Desert Cache: 30% chance expedition also gives Research Data
+  // (Tracked as metadata, handled by the collector)
+
+  // Volcanic set 3/3: double power cell drops
+  const setBonuses = getActiveSetBonuses(artifactInventory);
+  if (setBonuses.get('volcanic_isle') === 3 && isCompleted) {
+    const extraCells = [...powerCells];
+    powerCells.push(...extraCells);
+  }
+
   return {
     resources,
     powerCells,
     newBiome,
-    newResources
+    newResources,
+    artifactDrops,
   };
 }

@@ -1,15 +1,19 @@
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useState } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { RESOURCES } from '../../game/config/resources';
 import { FOOD_ITEMS } from '../../game/config/food';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { formatNumber } from '../../utils/formatters';
 import { createProductionContext, getAutomationProductionRate } from '../../utils/calculations';
-import { ResourceId, FoodId } from '../../types/game.types';
+import { ResourceId, FoodId, BiomeId } from '../../types/game.types';
 import { SaveManager } from './SaveManager';
 import { BackgroundWrapper } from './BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 import { calculateBiomeProductionRates } from '../../utils/allocation';
+import { SKILL_TREE, getSkillTreeBonus } from '../../game/config/skillTree';
+import { RESEARCH_NODES } from '../../game/config/research';
+import { ARTIFACT_TEMPLATES, getActiveSetBonuses, SET_BONUSES } from '../../game/config/artifacts';
+import { getMasteryBonus, hasAllAchievements } from '../../game/config/achievements';
 
 export function Statistics() {
   const { state } = useGame();
@@ -43,7 +47,7 @@ export function Statistics() {
       biome.automations.forEach((automation) => {
         const config = AUTOMATIONS[automation.type];
         if (!config || !config.producesFood || automation.paused) return;
-        const rate = getAutomationProductionRate(automation, productionContext);
+        const rate = getAutomationProductionRate(automation, productionContext, state.artifacts?.inventory);
         config.producesFood.forEach((foodProduce) => {
           const fid = foodProduce.foodId as ResourceId;
           if (!allResources[fid]) {
@@ -403,6 +407,9 @@ export function Statistics() {
         </div>
       )}
 
+      {/* Active Bonuses */}
+      <ActiveBonuses />
+
       {/* Save Management */}
       <SaveManager />
 
@@ -429,6 +436,212 @@ export function Statistics() {
     >
       {statisticsContent}
     </BackgroundWrapper>
+  );
+}
+
+// === Collapsible Card ===
+
+function CollapsibleCard({ title, icon, color, children, defaultOpen = false }: {
+  title: string;
+  icon: string;
+  color: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-gray-900/50 rounded-lg border border-gray-700/30 overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between p-3 hover:bg-gray-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{icon}</span>
+          <span className={`font-semibold text-sm ${color}`}>{title}</span>
+        </div>
+        <span className="text-gray-400 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-1 border-t border-gray-700/30 pt-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === Bonus Row ===
+
+function BonusRow({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <div className="flex items-start justify-between text-xs py-0.5">
+      <span className="text-gray-300">{label}</span>
+      <div className="text-right">
+        <span className="text-white font-medium">{value}</span>
+        {detail && <span className="text-gray-500 ml-1">({detail})</span>}
+      </div>
+    </div>
+  );
+}
+
+// === Active Bonuses Section ===
+
+function ActiveBonuses() {
+  const { state } = useGame();
+
+  const skillBonuses = useMemo(() => {
+    const skills = state.prestige.unlockedSkills;
+    if (skills.length === 0) return null;
+
+    const production = getSkillTreeBonus(skills, 'production_speed');
+    const buildCost = getSkillTreeBonus(skills, 'build_cost_reduction');
+    const upgradeCost = getSkillTreeBonus(skills, 'upgrade_cost_reduction');
+    const allCost = getSkillTreeBonus(skills, 'all_cost_reduction');
+    const expTime = getSkillTreeBonus(skills, 'expedition_time_reduction');
+    const expFood = getSkillTreeBonus(skills, 'expedition_food_reduction');
+    const expResource = getSkillTreeBonus(skills, 'expedition_resource_bonus');
+    const cellEff = getSkillTreeBonus(skills, 'power_cell_effectiveness');
+    const cellRes = getSkillTreeBonus(skills, 'power_cell_resonance');
+    const cellDrop = getSkillTreeBonus(skills, 'power_cell_drop_bonus');
+    const hasInstantBiome = skills.includes('exp_4');
+    const hasSingularity = skills.includes('cell_5');
+
+    const entries: { label: string; value: string; detail: string }[] = [];
+    if (production > 0) entries.push({ label: 'Production Speed', value: `+${Math.round(production * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'production_speed').map(s => SKILL_TREE[s].name).join(', ') });
+    if (buildCost > 0) entries.push({ label: 'Build Cost', value: `-${Math.round(buildCost * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'build_cost_reduction').map(s => SKILL_TREE[s].name).join(', ') });
+    if (upgradeCost > 0) entries.push({ label: 'Upgrade Cost', value: `-${Math.round(upgradeCost * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'upgrade_cost_reduction').map(s => SKILL_TREE[s].name).join(', ') });
+    if (allCost > 0) entries.push({ label: 'All Costs', value: `-${Math.round(allCost * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'all_cost_reduction').map(s => SKILL_TREE[s].name).join(', ') });
+    if (expTime > 0) entries.push({ label: 'Expedition Duration', value: `-${Math.round(expTime * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'expedition_time_reduction').map(s => SKILL_TREE[s].name).join(', ') });
+    if (expFood > 0) entries.push({ label: 'Expedition Food Cost', value: `-${Math.round(expFood * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'expedition_food_reduction').map(s => SKILL_TREE[s].name).join(', ') });
+    if (expResource > 0) entries.push({ label: 'Expedition Resources', value: `+${Math.round(expResource * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'expedition_resource_bonus').map(s => SKILL_TREE[s].name).join(', ') });
+    if (cellEff > 0) entries.push({ label: 'Power Cell Effectiveness', value: `+${Math.round(cellEff * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'power_cell_effectiveness').map(s => SKILL_TREE[s].name).join(', ') });
+    if (cellRes > 0) entries.push({ label: 'Cell Resonance', value: `+${Math.round(cellRes * 100)}%/cell${hasSingularity ? ' (2x)' : ''}`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'power_cell_resonance').map(s => SKILL_TREE[s].name).join(', ') });
+    if (cellDrop > 0) entries.push({ label: 'Power Cell Drops', value: `+${Math.round(cellDrop * 100)}%`, detail: skills.filter(s => SKILL_TREE[s].effect.type === 'power_cell_drop_bonus').map(s => SKILL_TREE[s].name).join(', ') });
+    if (hasInstantBiome) entries.push({ label: 'Instant First Biome', value: 'Active', detail: 'Deja Vu Explorer' });
+
+    return entries.length > 0 ? entries : null;
+  }, [state.prestige.unlockedSkills]);
+
+  const researchBonuses = useMemo(() => {
+    const levels = state.research?.levels || {};
+    const entries: { label: string; value: string; detail: string }[] = [];
+
+    for (const [id, level] of Object.entries(levels)) {
+      if (!level || level <= 0) continue;
+      const node = RESEARCH_NODES[id as keyof typeof RESEARCH_NODES];
+      if (!node) continue;
+      const totalBonus = node.bonusPerLevel * level;
+      const isReduction = node.bonusType.includes('cost') || node.bonusType.includes('food') || node.bonusType.includes('waste') || node.bonusType.includes('time');
+      entries.push({
+        label: node.name,
+        value: `${isReduction ? '-' : '+'}${Math.round(totalBonus * 100)}%`,
+        detail: `Lv.${level}/${node.maxLevel}`,
+      });
+    }
+
+    return entries.length > 0 ? entries : null;
+  }, [state.research?.levels]);
+
+  const artifactBonuses = useMemo(() => {
+    const inventory = state.artifacts?.inventory || [];
+    const equipped = inventory.filter(a => a.equipped && a.status === 'analyzed');
+    if (equipped.length === 0) return null;
+
+    return equipped.map(a => {
+      const template = ARTIFACT_TEMPLATES[a.templateId];
+      return {
+        label: `${template.icon} ${template.name}`,
+        value: template.description,
+        detail: template.rarity,
+      };
+    });
+  }, [state.artifacts?.inventory]);
+
+  const setBonus = useMemo(() => {
+    const inventory = state.artifacts?.inventory || [];
+    const activeSets = getActiveSetBonuses(inventory);
+    if (activeSets.size === 0) return null;
+
+    const entries: { label: string; value: string; detail: string }[] = [];
+    for (const [biome, count] of activeSets) {
+      const bonus = SET_BONUSES[biome as BiomeId];
+      if (!bonus) continue;
+      entries.push({
+        label: bonus.name,
+        value: count >= 3 ? bonus.threeBonus : bonus.twoBonus,
+        detail: `${count}/3`,
+      });
+    }
+    return entries.length > 0 ? entries : null;
+  }, [state.artifacts?.inventory]);
+
+  const masteryActive = useMemo(() => {
+    const unlocked = state.achievements?.unlocked || [];
+    if (!hasAllAchievements(unlocked)) return null;
+    const bonus = getMasteryBonus(unlocked);
+    return [
+      { label: 'Production Bonus', value: `+${Math.round(bonus.productionBonus * 100)}%`, detail: 'All achievements' },
+      { label: 'Cost Reduction', value: `-${Math.round(bonus.costReduction * 100)}%`, detail: 'All achievements' },
+    ];
+  }, [state.achievements?.unlocked]);
+
+  const hasAnyBonus = skillBonuses || researchBonuses || artifactBonuses || setBonus || masteryActive;
+
+  if (!hasAnyBonus) return null;
+
+  return (
+    <div className="bg-gray-800/85 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4 space-y-3">
+      <h2 className="text-lg font-semibold text-amber-300 flex items-center gap-2">
+        Active Bonuses
+      </h2>
+
+      {skillBonuses && (
+        <CollapsibleCard title="Skill Tree" icon="🌟" color="text-purple-300" defaultOpen>
+          {skillBonuses.map((b, i) => (
+            <BonusRow key={i} label={b.label} value={b.value} detail={b.detail} />
+          ))}
+        </CollapsibleCard>
+      )}
+
+      {researchBonuses && (
+        <CollapsibleCard title="Research Lab" icon="🔬" color="text-cyan-300">
+          <p className="text-[10px] text-gray-500 mb-1">Resets on prestige</p>
+          {researchBonuses.map((b, i) => (
+            <BonusRow key={i} label={b.label} value={b.value} detail={b.detail} />
+          ))}
+        </CollapsibleCard>
+      )}
+
+      {artifactBonuses && (
+        <CollapsibleCard title="Equipped Artifacts" icon="🏺" color="text-amber-300">
+          {artifactBonuses.map((b, i) => (
+            <div key={i} className="text-xs py-0.5">
+              <div className="flex items-start justify-between">
+                <span className="text-gray-300">{b.label}</span>
+                <span className="text-gray-500 capitalize">{b.detail}</span>
+              </div>
+              <p className="text-white/70 text-[11px] mt-0.5">{b.value}</p>
+            </div>
+          ))}
+        </CollapsibleCard>
+      )}
+
+      {setBonus && (
+        <CollapsibleCard title="Set Bonuses" icon="🎯" color="text-green-300">
+          {setBonus.map((b, i) => (
+            <BonusRow key={i} label={b.label} value={b.value} detail={b.detail} />
+          ))}
+        </CollapsibleCard>
+      )}
+
+      {masteryActive && (
+        <CollapsibleCard title="Mastery" icon="👑" color="text-yellow-300">
+          {masteryActive.map((b, i) => (
+            <BonusRow key={i} label={b.label} value={b.value} detail={b.detail} />
+          ))}
+        </CollapsibleCard>
+      )}
+    </div>
   );
 }
 

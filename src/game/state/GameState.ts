@@ -1,9 +1,12 @@
-import { GameState, GameAction, ResourceId, FoodId, BiomeId } from '../../types/game.types';
+import { GameState, GameAction, ResourceId, FoodId, BiomeId, ResearchId } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
 import { EXPEDITION_TIERS } from '../config/expeditions';
-import { SKILL_TREE } from '../config/skillTree';
+import { SKILL_TREE, getSkillTreeBonus, hasSkillEffect } from '../config/skillTree';
 import { RESOURCES } from '../config/resources';
 import { BIOMES } from '../config/biomes';
+import { INITIAL_CONTRACT_STATE } from '../config/contracts';
+import { INITIAL_RESEARCH_STATE, getResearchBonus } from '../config/research';
+import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses, getEffectiveLoadoutSlots } from '../config/artifacts';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -101,7 +104,11 @@ export const INITIAL_GAME_STATE: GameState = {
       epic_journey: 0,
     },
     totalSessions: 1,
+    totalChoresCompleted: 0,
   },
+  contracts: { ...INITIAL_CONTRACT_STATE },
+  research: { ...INITIAL_RESEARCH_STATE },
+  artifacts: { ...INITIAL_ARTIFACT_STATE },
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
@@ -276,6 +283,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { tier, foodConsumed } = action.payload;
       const config = EXPEDITION_TIERS[tier];
 
+      // Apply expedition time reductions
+      let durationMs = config.durationMinutes * 60 * 1000;
+
+      // Skill tree: expedition_time_reduction
+      const skillTimeReduction = getSkillTreeBonus(state.prestige.unlockedSkills, 'expedition_time_reduction');
+      // Research: expedition_time
+      const researchTimeReduction = getResearchBonus(state.research?.levels || {}, 'expedition_time');
+      const totalTimeReduction = Math.min(skillTimeReduction + researchTimeReduction, 0.8); // Cap at 80%
+      durationMs = Math.floor(durationMs * (1 - totalTimeReduction));
+
+      // Oasis artifact: Swift Forage and Local Expedition take half the time
+      if (
+        (tier === 'quick_dash' || tier === 'quick_scout') &&
+        hasArtifactEffect(state.artifacts?.inventory || [], 'oasis')
+      ) {
+        durationMs = Math.floor(durationMs / 2);
+      }
+
       // Deduct food
       const newFood = { ...state.food };
       foodConsumed.forEach(({ id, amount }) => {
@@ -289,7 +314,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           expedition: {
             tier,
             startTime: Date.now(),
-            durationMs: config.durationMinutes * 60 * 1000,
+            durationMs,
             foodConsumed,
             completed: false,
             collectedAt: null,
@@ -301,7 +326,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'COLLECT_EXPEDITION': {
-      const { rewards, powerCells, newBiome, newResources } = action.payload;
+      const { rewards, powerCells, newBiome, newResources, artifacts: newArtifacts } = action.payload;
       const newState = { ...state };
 
       // Add rewards - check if food or resource
@@ -381,6 +406,44 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...state.lifetimeStats?.expeditionsByTier,
             [expeditionTier]: ((state.lifetimeStats?.expeditionsByTier?.[expeditionTier]) || 0) + 1,
           },
+        };
+      }
+
+      // Add artifacts to inventory
+      if (newArtifacts && newArtifacts.length > 0) {
+        newState.artifacts = {
+          ...(state.artifacts || INITIAL_ARTIFACT_STATE),
+          inventory: [...(state.artifacts?.inventory || []), ...newArtifacts],
+          totalFound: (state.artifacts?.totalFound || 0) + newArtifacts.length,
+        };
+      }
+
+      // Mirage artifact: 25% chance completed expeditions refund all food cost
+      const artifactInv = newState.artifacts?.inventory || state.artifacts?.inventory || [];
+      if (
+        hasArtifactEffect(artifactInv, 'mirage') &&
+        state.panda.expedition?.foodConsumed &&
+        Math.random() < 0.25
+      ) {
+        const refundFood = { ...newState.food };
+        state.panda.expedition.foodConsumed.forEach(({ id, amount }) => {
+          refundFood[id] = (refundFood[id] || 0) + amount;
+        });
+        newState.food = refundFood;
+      }
+
+      // Desert Cache artifact: 30% chance to award 3-8 Research Data (60% with Desert Set 2/3)
+      const desertSet = getActiveSetBonuses(artifactInv).get('arid_desert') || 0;
+      const desertCacheChance = desertSet >= 2 ? 0.60 : 0.30;
+      if (hasArtifactEffect(artifactInv, 'desert_cache') && Math.random() < desertCacheChance) {
+        // Lake Set 2/3: +50% Research Data from all sources
+        const lakeSet = getActiveSetBonuses(artifactInv).get('misty_lake') || 0;
+        let bonusRD = Math.floor(Math.random() * 6) + 3;
+        if (lakeSet >= 2) bonusRD = Math.ceil(bonusRD * 1.5);
+        newState.contracts = {
+          ...newState.contracts,
+          researchData: (newState.contracts?.researchData || 0) + bonusRD,
+          totalResearchDataEarned: (newState.contracts?.totalResearchDataEarned || 0) + bonusRD,
         };
       }
 
@@ -500,16 +563,56 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PRESTIGE': {
       const { shardsEarned } = action.payload;
 
-      // Reset everything except prestige data, achievements, lifetime stats, and gameStartTime
+      // Reset everything except prestige data, achievements, lifetime stats, research, and gameStartTime
+      const newUnlockedSkills = state.prestige.unlockedSkills;
+
+      // Déjà Vu Explorer: instantly discover first new biome (Misty Lake)
+      const instantBiome = hasSkillEffect(newUnlockedSkills, 'instant_first_biome');
+
+      const isFirstPrestige = state.prestige.totalPrestiges === 0;
+
       return {
         ...INITIAL_GAME_STATE,
+        ...(instantBiome ? {
+          unlockedBiomes: ['lush_forest', 'misty_lake'] as BiomeId[],
+          biomes: {
+            ...INITIAL_GAME_STATE.biomes,
+            misty_lake: { ...INITIAL_GAME_STATE.biomes.misty_lake, discovered: true },
+          },
+        } : {}),
+        ...(isFirstPrestige ? { pendingLabOnboarding: true } : {}),
         prestige: {
           cosmicBambooShards: state.prestige.cosmicBambooShards + shardsEarned,
           totalPrestiges: state.prestige.totalPrestiges + 1,
-          unlockedSkills: state.prestige.unlockedSkills, // Skills persist!
+          unlockedSkills: newUnlockedSkills, // Skills persist!
         },
         achievements: state.achievements, // Achievements persist!
         lifetimeStats: state.lifetimeStats, // Lifetime stats persist!
+        // Tundra Set 3/3: first research in each category starts at lvl 1 after prestige
+        research: (() => {
+          const tundraSet = getActiveSetBonuses(state.artifacts?.inventory || []).get('frozen_tundra') || 0;
+          if (tundraSet >= 3) {
+            const levels: Partial<Record<ResearchId, number>> = {};
+            // One per category: Production, Economy, Expeditions, Power
+            const categoryFirstNodes: ResearchId[] = [
+              'efficient_gathering',   // Production
+              'bulk_purchasing',       // Economy
+              'expedition_logistics',  // Expeditions
+              'power_cell_tuning',     // Power
+            ];
+            for (const id of categoryFirstNodes) {
+              levels[id] = 1;
+            }
+            return { ...INITIAL_RESEARCH_STATE, levels };
+          }
+          return { ...INITIAL_RESEARCH_STATE };
+        })(), // Research resets on prestige!
+        artifacts: state.artifacts, // Artifacts persist!
+        contracts: {
+          ...INITIAL_CONTRACT_STATE,
+          researchData: state.contracts.researchData, // Keep unspent Research Data
+          totalResearchDataEarned: state.contracts.totalResearchDataEarned,
+        },
         gameStartTime: state.gameStartTime, // Keep original start time!
       };
     }
@@ -578,6 +681,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // Remove from pending queue
         pendingFoodDiscoveries: pending.filter(id => id !== foodId),
       };
+    }
+
+    case 'CLEAR_VETERAN_BONUS': {
+      const { pendingVeteranBonus: _, ...rest } = state;
+      return rest as GameState;
+    }
+
+    case 'DISMISS_LAB_ONBOARDING': {
+      const { pendingLabOnboarding: _, pendingVeteranBonus: _v, ...rest } = state;
+      return rest as GameState;
     }
 
     case 'SAVE_GAME': {
@@ -650,6 +763,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           epic_journey: 0,
         },
         totalSessions: existingStats?.totalSessions || 1,
+        totalChoresCompleted: existingStats?.totalChoresCompleted || 0,
       };
 
       // Migration: Ensure achievements structure exists
@@ -671,6 +785,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         discoveredProducedFoods,
         pendingResourceDiscoveries: loadedState.pendingResourceDiscoveries || [],
         pendingFoodDiscoveries: loadedState.pendingFoodDiscoveries || [],
+        // Backfill v1.5 state fields for imported saves
+        contracts: loadedState.contracts || { ...INITIAL_CONTRACT_STATE },
+        research: loadedState.research
+          ? { ...loadedState.research, activeResearch: loadedState.research.activeResearch ?? null }
+          : { ...INITIAL_RESEARCH_STATE },
+        artifacts: loadedState.artifacts || { ...INITIAL_ARTIFACT_STATE },
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };
@@ -731,6 +851,194 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           sessionStartTime: now,
           clickCount: 0,
           lastClickTime: now,
+        },
+      };
+    }
+
+    case 'UPDATE_CONTRACTS': {
+      return {
+        ...state,
+        contracts: action.payload.contracts,
+      };
+    }
+
+    case 'CLAIM_CONTRACT': {
+      const { contractId, period } = action.payload;
+      const contractList = period === 'daily' ? [...state.contracts.daily] : [...state.contracts.weekly];
+      const idx = contractList.findIndex(c => c.id === contractId);
+      if (idx === -1 || !contractList[idx].completed || contractList[idx].claimed) return state;
+
+      let reward = contractList[idx].researchDataReward;
+      // Lake Set 2/3: +50% Research Data from all sources
+      const lakeSet = getActiveSetBonuses(state.artifacts?.inventory || []).get('misty_lake') || 0;
+      if (lakeSet >= 2) {
+        reward = Math.ceil(reward * 1.5);
+      }
+      contractList[idx] = { ...contractList[idx], claimed: true };
+
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          [period]: contractList,
+          researchData: state.contracts.researchData + reward,
+          totalResearchDataEarned: state.contracts.totalResearchDataEarned + reward,
+        },
+        lifetimeStats: {
+          ...state.lifetimeStats,
+          totalChoresCompleted: (state.lifetimeStats?.totalChoresCompleted || 0) + 1,
+        },
+      };
+    }
+
+    case 'START_RESEARCH': {
+      const { researchId, cost, startTime, endTime } = action.payload;
+
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData - cost,
+        },
+        research: {
+          ...state.research,
+          activeResearch: { researchId, startTime, endTime },
+        },
+      };
+    }
+
+    case 'COMPLETE_RESEARCH': {
+      const { researchId } = action.payload;
+      const currentLevel = state.research.levels[researchId] || 0;
+
+      return {
+        ...state,
+        research: {
+          ...state.research,
+          levels: {
+            ...state.research.levels,
+            [researchId]: currentLevel + 1,
+          },
+          activeResearch: null,
+        },
+      };
+    }
+
+    case 'CANCEL_RESEARCH': {
+      // Refund is not given — research data was already spent
+      return {
+        ...state,
+        research: {
+          ...state.research,
+          activeResearch: null,
+        },
+      };
+    }
+
+    case 'START_ANALYSIS': {
+      const { artifactInstanceId, templateId, cost, startTime, endTime } = action.payload;
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData - cost,
+        },
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId ? { ...a, status: 'analyzing' as const } : a
+          ),
+          activeAnalysis: { artifactInstanceId, templateId, startTime, endTime },
+        },
+      };
+    }
+
+    case 'COMPLETE_ANALYSIS': {
+      const { artifactInstanceId } = action.payload;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId
+              ? { ...a, status: 'analyzed' as const, analyzedAt: Date.now() }
+              : a
+          ),
+          activeAnalysis: null,
+          totalAnalyzed: state.artifacts.totalAnalyzed + 1,
+        },
+      };
+    }
+
+    case 'CANCEL_ANALYSIS': {
+      const activeAnalysis = state.artifacts.activeAnalysis;
+      if (!activeAnalysis) return state;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === activeAnalysis.artifactInstanceId
+              ? { ...a, status: 'unanalyzed' as const }
+              : a
+          ),
+          activeAnalysis: null,
+        },
+      };
+    }
+
+    case 'EQUIP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      const equippedCount = state.artifacts.inventory.filter(a => a.equipped).length;
+      if (equippedCount >= getEffectiveLoadoutSlots(state.artifacts.inventory)) return state;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId && a.status === 'analyzed'
+              ? { ...a, equipped: true }
+              : a
+          ),
+        },
+      };
+    }
+
+    case 'UNEQUIP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      return {
+        ...state,
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === artifactInstanceId ? { ...a, equipped: false } : a
+          ),
+        },
+      };
+    }
+
+    case 'SCRAP_ARTIFACT': {
+      const { artifactInstanceId } = action.payload;
+      const artifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
+      if (!artifact) return state;
+      // Refund analysis cost if analyzed (50% base, 100% with Idol's Favor)
+      let refund = 0;
+      if (artifact.status === 'analyzed') {
+        const template = ARTIFACT_TEMPLATES[artifact.templateId];
+        const hasIdolsFavor = state.artifacts.inventory.some(
+          a => a.equipped && a.status === 'analyzed' && ARTIFACT_TEMPLATES[a.templateId].effect === 'idols_favor'
+        );
+        refund = Math.floor(template.analysisCost * (hasIdolsFavor ? 1.0 : 0.5));
+      }
+      return {
+        ...state,
+        contracts: {
+          ...state.contracts,
+          researchData: state.contracts.researchData + refund,
+        },
+        artifacts: {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.filter(a => a.instanceId !== artifactInstanceId),
         },
       };
     }

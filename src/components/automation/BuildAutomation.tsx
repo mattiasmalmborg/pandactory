@@ -54,12 +54,14 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
   });
 
   // Get achievement-based cost reduction
-  const unlockedAchievements = state.achievements?.unlocked || [];
+  const unlockedAchievements = useMemo(() => state.achievements?.unlocked || [], [state.achievements?.unlocked]);
 
-  // Helper to get costs with mastery reduction applied
+  // Helper to get costs with mastery + research + skill tree reduction applied
+  const researchLevels = state.research?.levels;
+  const unlockedSkills = state.prestige.unlockedSkills;
   const getAdjustedCosts = useMemo(() => (baseCost: ResourceCost[]) => {
-    return applyCostReduction(baseCost, unlockedAchievements);
-  }, [unlockedAchievements]);
+    return applyCostReduction(baseCost, unlockedAchievements, researchLevels, 'build', unlockedSkills);
+  }, [unlockedAchievements, researchLevels, unlockedSkills]);
 
   const buildAutomation = (type: AutomationType) => {
     const config = AUTOMATIONS[type];

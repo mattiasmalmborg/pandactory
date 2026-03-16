@@ -1,6 +1,8 @@
-import { ResourceCost, AchievementId, BiomeId, BiomeState, SkillId, Automation } from '../types/game.types';
+import { ResourceCost, AchievementId, BiomeId, BiomeState, SkillId, Automation, Artifact, ResearchId, ResearchState } from '../types/game.types';
 import { getMasteryBonus } from '../game/config/achievements';
 import { getSkillTreeBonus, countInstalledPowerCells, getEffectivePowerCellBonus } from '../game/config/skillTree';
+import { getResearchBonus } from '../game/config/research';
+import { hasArtifactEffect, getActiveSetBonuses } from '../game/config/artifacts';
 import { AUTOMATIONS } from '../game/config/automations';
 import { BiomeProductionContext } from './allocation';
 
@@ -26,11 +28,15 @@ export function createProductionContext(state: {
   prestige: { unlockedSkills: SkillId[] };
   achievements?: { unlocked: AchievementId[] };
   biomes: Record<BiomeId, BiomeState>;
+  research?: ResearchState;
+  artifacts?: { inventory: Artifact[] };
 }): BiomeProductionContext {
   return {
     unlockedSkills: state.prestige.unlockedSkills,
     unlockedAchievements: state.achievements?.unlocked || [],
     allBiomes: state.biomes,
+    researchLevels: state.research?.levels || {},
+    artifactInventory: state.artifacts?.inventory,
   };
 }
 
@@ -41,13 +47,15 @@ export function createProductionContext(state: {
  */
 export function getAutomationProductionRate(
   automation: Automation,
-  context: BiomeProductionContext
+  context: BiomeProductionContext,
+  artifactInventory?: Artifact[]
 ): number {
   const config = AUTOMATIONS[automation.type];
   if (!config) return 0;
 
   const unlockedSkills = context.unlockedSkills || [];
   const productionSpeedBonus = getSkillTreeBonus(unlockedSkills, 'production_speed');
+  const researchProductionBonus = getResearchBonus(context.researchLevels || {}, 'production');
   const masteryBonus = getMasteryBonus(context.unlockedAchievements || []);
 
   const totalInstalledCells = context.allBiomes
@@ -55,30 +63,80 @@ export function getAutomationProductionRate(
     : 0;
 
   const basePowerCellBonus = automation.powerCell?.bonus || 0;
+  // Research: power_cell boosts effectiveness additively
+  const researchPowerCellBonus = getResearchBonus(context.researchLevels || {}, 'power_cell');
   const effectivePowerCellBonus = getEffectivePowerCellBonus(
     basePowerCellBonus,
     totalInstalledCells,
-    unlockedSkills
+    unlockedSkills,
+    researchPowerCellBonus
   );
+
+  // Thermal Vent artifact: power cells give bonus as if +1 level higher
+  // Volcanic Set 2/3: +2 effective levels instead of +1
+  let effectiveLevel = automation.level;
+  if (automation.powerCell && artifactInventory) {
+    if (hasArtifactEffect(artifactInventory, 'thermal_vent')) {
+      const volcanicSet = getActiveSetBonuses(artifactInventory).get('volcanic_isle') || 0;
+      effectiveLevel += volcanicSet >= 2 ? 2 : 1;
+    }
+  }
+
+  // Research: spaceship bonus applies to final_assembler automations (ship parts)
+  let spaceshipBonus = 0;
+  if (config.category === 'final_assembler') {
+    spaceshipBonus = getResearchBonus(context.researchLevels || {}, 'spaceship');
+  }
 
   return calculateProductionRate(
     config.baseProductionRate,
-    automation.level,
-    productionSpeedBonus + masteryBonus.productionBonus,
+    effectiveLevel,
+    productionSpeedBonus + masteryBonus.productionBonus + researchProductionBonus + spaceshipBonus,
     effectivePowerCellBonus
   );
 }
 
-// Apply cost reduction from mastery bonus (all achievements unlocked)
-export function applyCostReduction(costs: ResourceCost[], unlockedAchievements: AchievementId[]): ResourceCost[] {
+// Apply cost reduction from mastery bonus, research, and skill tree
+export function applyCostReduction(
+  costs: ResourceCost[],
+  unlockedAchievements: AchievementId[],
+  researchLevels?: Partial<Record<ResearchId, number>>,
+  costType?: 'build' | 'upgrade',
+  unlockedSkills?: SkillId[],
+): ResourceCost[] {
   const masteryBonus = getMasteryBonus(unlockedAchievements);
-  if (masteryBonus.costReduction === 0) {
+
+  // Research cost reduction (build or upgrade)
+  let researchReduction = 0;
+  if (researchLevels && costType === 'build') {
+    researchReduction = getResearchBonus(researchLevels, 'build_cost');
+  } else if (researchLevels && costType === 'upgrade') {
+    researchReduction = getResearchBonus(researchLevels, 'upgrade_cost');
+  }
+
+  // Skill tree cost reduction
+  let skillReduction = 0;
+  if (unlockedSkills) {
+    // all_cost_reduction applies to both build and upgrade
+    skillReduction = getSkillTreeBonus(unlockedSkills, 'all_cost_reduction');
+    // Specific build/upgrade reduction stacks
+    if (costType === 'build') {
+      skillReduction += getSkillTreeBonus(unlockedSkills, 'build_cost_reduction');
+    } else if (costType === 'upgrade') {
+      skillReduction += getSkillTreeBonus(unlockedSkills, 'upgrade_cost_reduction');
+    }
+  }
+
+  const totalReduction = masteryBonus.costReduction + researchReduction + skillReduction;
+  if (totalReduction === 0) {
     return costs;
   }
-  // Apply 50% cost reduction
+
+  // Cap at 80% reduction to keep some cost
+  const clampedReduction = Math.min(totalReduction, 0.8);
   return costs.map(cost => ({
     ...cost,
-    amount: Math.ceil(cost.amount * (1 - masteryBonus.costReduction)),
+    amount: Math.ceil(cost.amount * (1 - clampedReduction)),
   }));
 }
 

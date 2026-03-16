@@ -3,6 +3,7 @@ import { useGame } from '../../game/state/GameContext';
 import { EXPEDITION_TIERS, isExpeditionComplete, calculateExpeditionBonus, getScaledFoodCost } from '../../game/config/expeditions';
 import { FOOD_ITEMS, calculateTotalNutrition, optimizeFoodSelection, calculateWastedNutrition } from '../../game/config/food';
 import { createPowerCell } from '../../game/config/powerCells';
+import { createArtifact } from '../../game/config/artifacts';
 import { ExpeditionTier, FoodId } from '../../types/game.types';
 import { ExpeditionRewards } from './ExpeditionRewards';
 import { calculateExpeditionRewards } from '../../utils/expeditionRewards';
@@ -22,7 +23,7 @@ export function ExpeditionLauncher() {
 
   const tierConfig = EXPEDITION_TIERS[selectedTier];
   const unlockedBiomeCount = state.unlockedBiomes.length;
-  const scaledFoodCost = getScaledFoodCost(tierConfig.foodCost, unlockedBiomeCount);
+  const scaledFoodCost = getScaledFoodCost(tierConfig.foodCost, unlockedBiomeCount, state.prestige.unlockedSkills, state.research?.levels);
   const totalNutrition = calculateTotalNutrition(foodSelection);
   const hasEnoughFood = totalNutrition >= scaledFoodCost;
   const wastedNutrition = calculateWastedNutrition(foodSelection, scaledFoodCost);
@@ -116,11 +117,19 @@ export function ExpeditionLauncher() {
       state.player.currentBiome,
       allDiscoveredResources,
       state.expeditionPityCounter || 0,
-      state.powerCellPityCounter || 0
+      state.powerCellPityCounter || 0,
+      true,
+      1.0,
+      state.artifacts?.inventory || [],
+      state.prestige.unlockedSkills,
+      state.research?.levels || {},
     );
 
     // Convert PowerCellTier[] to PowerCell[] using createPowerCell to ensure bonus is set
     const powerCellObjects = rewards.powerCells.map(tier => createPowerCell(tier));
+
+    // Create artifact instances from template drops
+    const artifactInstances = rewards.artifactDrops.map(templateId => createArtifact(templateId));
 
     // IMMEDIATELY dispatch COLLECT_EXPEDITION to clear expedition from state
     // This prevents the loop if user presses F5 during the rewards modal
@@ -134,6 +143,7 @@ export function ExpeditionLauncher() {
         powerCells: powerCellObjects,
         newBiome: rewards.newBiome || null,
         newResources: rewards.newResources,
+        artifacts: artifactInstances,
       },
     });
 
@@ -180,6 +190,7 @@ export function ExpeditionLauncher() {
         powerCells={calculatedRewards.powerCells}
         newBiome={calculatedRewards.newBiome}
         newResources={calculatedRewards.newResources}
+        artifactDrops={calculatedRewards.artifactDrops}
         onClose={handleRewardsClose}
       />
     );
@@ -239,7 +250,7 @@ export function ExpeditionLauncher() {
         <h3 className="text-md font-semibold text-white">Expedition Tier</h3>
         {(Object.keys(EXPEDITION_TIERS) as ExpeditionTier[]).map((tier) => {
           const config = EXPEDITION_TIERS[tier];
-          const tierScaledCost = getScaledFoodCost(config.foodCost, unlockedBiomeCount);
+          const tierScaledCost = getScaledFoodCost(config.foodCost, unlockedBiomeCount, state.prestige.unlockedSkills, state.research?.levels);
           return (
             <div
               key={tier}

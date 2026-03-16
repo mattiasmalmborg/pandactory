@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { RESOURCES } from '../../game/config/resources';
 import { BIOMES } from '../../game/config/biomes';
-import { ResourceId, BiomeId, PowerCellTier } from '../../types/game.types';
+import { ResourceId, BiomeId, PowerCellTier, ArtifactTemplateId } from '../../types/game.types';
 import { POWER_CELLS } from '../../game/config/powerCells';
+import { ARTIFACT_TEMPLATES, RARITY_COLORS } from '../../game/config/artifacts';
 
 interface ExpeditionRewardsProps {
   rewards: { resourceId: ResourceId; amount: number }[];
   powerCells: PowerCellTier[];
   newBiome: BiomeId | null;
   newResources: ResourceId[];
+  artifactDrops?: ArtifactTemplateId[];
   onClose: () => void;
 }
 
@@ -18,27 +20,45 @@ const CONFIRMATION_TEXTS = [
   'Fantastic!', 'Wonderful!', 'Nice!', 'Sweet!', 'Cool!'
 ];
 
+type RewardStep = 'rewards' | 'artifacts' | 'biome' | 'resources' | 'done';
+
 export function ExpeditionRewards({
   rewards,
   powerCells,
   newBiome,
   newResources,
+  artifactDrops = [],
   onClose
 }: ExpeditionRewardsProps) {
-  const [currentStep, setCurrentStep] = useState<'rewards' | 'biome' | 'resources' | 'done'>('rewards');
+  const [currentStep, setCurrentStep] = useState<RewardStep>('rewards');
   const [shownResources, setShownResources] = useState<ResourceId[]>([]);
+  const [shownArtifacts, setShownArtifacts] = useState(0);
   // Random button text - calculated once and stays the same
   const [randomButtonText] = useState(() => CONFIRMATION_TEXTS[Math.floor(Math.random() * CONFIRMATION_TEXTS.length)]);
 
+  const goToNextAfterArtifacts = () => {
+    if (newBiome) setCurrentStep('biome');
+    else if (newResources.length > 0) setCurrentStep('resources');
+    else { setCurrentStep('done'); onClose(); }
+  };
+
   const handleNext = () => {
     if (currentStep === 'rewards') {
-      if (newBiome) {
+      if (artifactDrops.length > 0) {
+        setCurrentStep('artifacts');
+      } else if (newBiome) {
         setCurrentStep('biome');
       } else if (newResources.length > 0) {
         setCurrentStep('resources');
       } else {
         setCurrentStep('done');
         onClose();
+      }
+    } else if (currentStep === 'artifacts') {
+      if (shownArtifacts + 1 < artifactDrops.length) {
+        setShownArtifacts(shownArtifacts + 1);
+      } else {
+        goToNextAfterArtifacts();
       }
     } else if (currentStep === 'biome') {
       if (newResources.length > 0) {
@@ -48,14 +68,9 @@ export function ExpeditionRewards({
         onClose();
       }
     } else if (currentStep === 'resources') {
-      // Show next resource or finish
-      // Note: When clicking, we're viewing resource at index shownResources.length
-      // So if shownResources.length + 1 >= newResources.length, we've seen the last one
       if (shownResources.length + 1 < newResources.length) {
-        // More resources to show
         setShownResources([...shownResources, newResources[shownResources.length]]);
       } else {
-        // This was the last resource
         setCurrentStep('done');
         onClose();
       }
@@ -123,6 +138,57 @@ export function ExpeditionRewards({
             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors"
           >
             {randomButtonText}
+          </button>
+        </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show artifact discovery
+  if (currentStep === 'artifacts' && shownArtifacts < artifactDrops.length) {
+    const templateId = artifactDrops[shownArtifacts];
+    const template = ARTIFACT_TEMPLATES[templateId];
+    const rarity = RARITY_COLORS[template.rarity];
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-85 z-50 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
+        <div className={`bg-gradient-to-br from-amber-950 via-yellow-950 to-amber-900 rounded-xl border-2 border-amber-500 p-4 sm:p-6 max-w-md w-full shadow-2xl ${rarity.glow}`}>
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-3">🏺</div>
+            <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-200 mb-2">
+              Artifact Found!
+            </h2>
+            <p className="text-amber-200 text-sm">
+              "Wait, what's this? Something unusual buried in the ground..."
+            </p>
+          </div>
+
+          {/* Artifact Info */}
+          <div className={`bg-black/30 rounded-lg p-6 mb-4 border ${rarity.border} text-center shadow-inner`}>
+            <div className="text-6xl mb-4">{template.icon}</div>
+            <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${rarity.text}`}>
+              {template.rarity}
+            </p>
+            <h3 className="text-2xl font-bold text-white mb-1">???</h3>
+            <p className="text-amber-200/60 text-sm italic">Unanalyzed — take it to the Lab!</p>
+          </div>
+
+          {/* Hint */}
+          <div className="text-center text-xs text-amber-300 mb-4">
+            Visit Dr. Redd's Lab to analyze this artifact and discover its secrets.
+          </div>
+
+          {/* Continue Button */}
+          <button
+            onClick={handleNext}
+            className="w-full bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all shadow-lg"
+          >
+            {artifactDrops.length > 1 && shownArtifacts + 1 < artifactDrops.length
+              ? 'There\'s more...'
+              : randomButtonText}
           </button>
         </div>
         </div>

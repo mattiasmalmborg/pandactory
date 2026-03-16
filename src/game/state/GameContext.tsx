@@ -3,6 +3,10 @@ import { GameState, GameAction, FoodId, BiomeId, ResourceId } from '../../types/
 import { gameReducer, INITIAL_GAME_STATE } from './GameState';
 import { applyOfflineProgress, OfflineProgressResult } from '../../utils/offlineProgress';
 import { BIOMES } from '../config/biomes';
+import { INITIAL_CONTRACT_STATE } from '../config/contracts';
+import { INITIAL_RESEARCH_STATE } from '../config/research';
+import { INITIAL_ARTIFACT_STATE } from '../config/artifacts';
+import { STORAGE_KEYS } from '../../config/storage';
 
 // Store the offline progress result globally so it can be accessed by the app
 let lastOfflineProgressResult: OfflineProgressResult | null = null;
@@ -198,6 +202,7 @@ function migrateGameState(state: GameState): GameState {
           epic_journey: 0,
         },
         totalSessions: 0,
+        totalChoresCompleted: 0,
       },
     };
   }
@@ -230,6 +235,79 @@ function migrateGameState(state: GameState): GameState {
     };
   }
 
+  // Migrate contracts (added in v1.5.0)
+  if (!migratedState.contracts) {
+    migratedState = {
+      ...migratedState,
+      contracts: { ...INITIAL_CONTRACT_STATE },
+    };
+  }
+
+  // Migrate research (added in v1.5.0)
+  if (!migratedState.research) {
+    migratedState = {
+      ...migratedState,
+      research: { ...INITIAL_RESEARCH_STATE },
+    };
+  }
+
+  // Migrate activeResearch field (added for research timers)
+  if (migratedState.research && migratedState.research.activeResearch === undefined) {
+    migratedState = {
+      ...migratedState,
+      research: {
+        ...migratedState.research,
+        activeResearch: null,
+      },
+    };
+  }
+
+  // Migrate artifacts (added in Fas 4)
+  if (!migratedState.artifacts) {
+    migratedState = {
+      ...migratedState,
+      artifacts: { ...INITIAL_ARTIFACT_STATE },
+    };
+  }
+
+  // Veteran welcome bonus: give returning players Research Data based on progression
+  // Triggers once when a pre-contracts save first loads the new version
+  if (
+    migratedState.contracts?.researchData === 0 &&
+    migratedState.contracts?.totalResearchDataEarned === 0 &&
+    !migratedState.pendingVeteranBonus &&
+    migratedState.lifetimeStats
+  ) {
+    const stats = migratedState.lifetimeStats;
+    const hasProgression = stats.totalAutomationsBuilt > 0 || stats.totalExpeditionsCompleted > 0;
+
+    if (hasProgression) {
+      const autoBonus = Math.min(25, stats.totalAutomationsBuilt);
+      const expBonus = Math.min(30, stats.totalExpeditionsCompleted * 2);
+      const upgradeBonus = Math.min(20, Math.floor(stats.totalUpgradesPurchased / 5));
+      const totalBonus = 25 + autoBonus + expBonus + upgradeBonus;
+
+      const reasons: string[] = [];
+      if (stats.totalAutomationsBuilt > 0) reasons.push(`${stats.totalAutomationsBuilt} automations built`);
+      if (stats.totalExpeditionsCompleted > 0) reasons.push(`${stats.totalExpeditionsCompleted} expeditions completed`);
+      if (stats.totalUpgradesPurchased > 0) reasons.push(`${stats.totalUpgradesPurchased} upgrades purchased`);
+
+      migratedState = {
+        ...migratedState,
+        contracts: {
+          ...migratedState.contracts,
+          researchData: totalBonus,
+          totalResearchDataEarned: totalBonus,
+        },
+        pendingVeteranBonus: {
+          amount: totalBonus,
+          reason: reasons.join(', '),
+        },
+        pendingLabOnboarding: true,
+      };
+    }
+  }
+
   return migratedState;
 }
 
@@ -237,18 +315,18 @@ function migrateGameState(state: GameState): GameState {
 function getInitialState(): GameState {
   try {
     // Check if we're coming back from a reset (check both localStorage and sessionStorage)
-    const shouldReset = localStorage.getItem('pandactory-reset-pending') ||
-                        sessionStorage.getItem('pandactory-reset-pending');
+    const shouldReset = localStorage.getItem(STORAGE_KEYS.resetPending) ||
+                        sessionStorage.getItem(STORAGE_KEYS.resetPending);
     if (shouldReset) {
       // Clear all flags and save data
-      localStorage.removeItem('pandactory-reset-pending');
-      sessionStorage.removeItem('pandactory-reset-pending');
-      localStorage.removeItem('pandactory-save');
-      localStorage.removeItem('pandactory-current-view');
+      localStorage.removeItem(STORAGE_KEYS.resetPending);
+      sessionStorage.removeItem(STORAGE_KEYS.resetPending);
+      localStorage.removeItem(STORAGE_KEYS.save);
+      localStorage.removeItem(STORAGE_KEYS.currentView);
       return INITIAL_GAME_STATE;
     }
 
-    const saved = localStorage.getItem('pandactory-save');
+    const saved = localStorage.getItem(STORAGE_KEYS.save);
     if (saved) {
       let loadedState = JSON.parse(saved);
 
@@ -291,7 +369,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         isResetting = true;
 
         // Set sessionStorage flag so getInitialState knows to reset on reload
-        sessionStorage.setItem('pandactory-reset-pending', 'true');
+        sessionStorage.setItem(STORAGE_KEYS.resetPending, 'true');
 
         // Reload - the reset will happen in getInitialState on next load
         window.location.reload();
@@ -350,7 +428,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      localStorage.setItem('pandactory-save', JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEYS.save, JSON.stringify(state));
     } catch {
       // Failed to save - ignore
     }
@@ -359,7 +437,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Listen for localStorage changes from other tabs/windows (like dev-tools)
   React.useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'pandactory-save' && e.newValue) {
+      if (e.key === STORAGE_KEYS.save && e.newValue) {
         try {
           const newState = JSON.parse(e.newValue);
           dispatch({ type: 'LOAD_GAME', payload: { gameState: newState } });

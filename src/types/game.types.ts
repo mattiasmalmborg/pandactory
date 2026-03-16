@@ -61,12 +61,12 @@ export type ExpeditionTier = 'quick_dash' | 'quick_scout' | 'standard_expedition
 export type PandaStatus = 'home' | 'expedition';
 
 export type SkillId =
-  | 'prod_1' | 'prod_2' | 'prod_3' | 'prod_4'
-  | 'econ_1' | 'econ_2' | 'econ_3' | 'econ_4'
-  | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4'
-  | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4';
+  | 'prod_1' | 'prod_2' | 'prod_3' | 'prod_4' | 'prod_5'
+  | 'econ_1' | 'econ_2' | 'econ_3' | 'econ_4' | 'econ_5'
+  | 'exp_1' | 'exp_2' | 'exp_3' | 'exp_4' | 'exp_5'
+  | 'cell_1' | 'cell_2' | 'cell_3' | 'cell_4' | 'cell_5';
 
-export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'secret';
+export type AchievementCategory = 'gathering' | 'automation' | 'power_cells' | 'expedition' | 'biomes' | 'crashes' | 'skills' | 'milestones' | 'research' | 'artifacts' | 'chores' | 'secret';
 
 export type AchievementId =
   // Gathering achievements (10)
@@ -91,6 +91,14 @@ export type AchievementId =
   | 'first_skill' | 'production_branch' | 'economy_branch' | 'expedition_branch' | 'power_cells_branch' | 'all_skills'
   // Milestone achievements (3)
   | 'spaceship_started' | 'spaceship_halfway' | 'spaceship_complete'
+  // Research achievements (4)
+  | 'first_research' | 'research_5' | 'research_max_node' | 'research_all_max'
+  // Artifact achievements (6)
+  | 'first_artifact' | 'artifact_6' | 'artifact_12' | 'full_collection' | 'first_set_bonus' | 'legendary_find'
+  // Chore achievements (4)
+  | 'first_chore' | 'chores_25' | 'chores_100' | 'weekly_complete'
+  // Prestige additions (1)
+  | 'double_digits'
   // Secret/Fun achievements (8)
   | 'night_owl' | 'clicker_champion' | 'patient_panda' | 'speed_demon' | 'hoarder_deluxe'
   | 'perfectionist' | 'the_long_game' | 'dedicated';
@@ -138,6 +146,7 @@ export interface GameState {
     totalExpeditionsCompleted: number;
     expeditionsByTier: Record<ExpeditionTier, number>;
     totalSessions: number; // Total number of play sessions
+    totalChoresCompleted: number; // Total chores/contracts completed
   };
   // Session stats for secret achievements (reset on page load)
   sessionStats?: {
@@ -147,7 +156,12 @@ export interface GameState {
   };
   lastTick: number;
   lastSave: number;
+  contracts: ContractState;
+  research: ResearchState;
+  artifacts: ArtifactState;
   gameStartTime: number; // When the save file was first created
+  pendingVeteranBonus?: { amount: number; reason: string }; // One-time welcome bonus for returning players
+  pendingLabOnboarding?: boolean; // Show lab onboarding modal
   version: string;
 }
 
@@ -230,6 +244,164 @@ export interface Discovery {
   timestamp: number;
 }
 
+// === Research (Panda Lab) ===
+
+export type ResearchId =
+  | 'efficient_gathering'    // +X% gather yield per click
+  | 'overclocked_machines'   // +X% automation production speed
+  | 'bulk_purchasing'        // -X% build costs
+  | 'smart_upgrades'         // -X% upgrade costs
+  | 'expedition_logistics'   // -X% expedition food cost
+  | 'scout_training'         // -X% expedition duration
+  | 'resource_radar'         // +X% expedition resource rewards
+  | 'food_preservation'      // -X% food waste on expeditions
+  | 'power_cell_tuning'      // +X% power cell effectiveness
+  | 'alien_metallurgy';      // +X% spaceship part production
+
+export interface ResearchNode {
+  id: ResearchId;
+  name: string;
+  description: string;
+  flavorText: string;
+  icon: string;
+  maxLevel: number;
+  baseCost: number;           // Research Data cost at level 0→1
+  costMultiplier: number;     // Cost scales: baseCost * multiplier^level
+  bonusPerLevel: number;      // e.g. 0.03 = +3% per level
+  bonusType: 'production' | 'gather' | 'build_cost' | 'upgrade_cost'
+    | 'expedition_food' | 'expedition_time' | 'expedition_resource'
+    | 'food_waste' | 'power_cell' | 'spaceship';
+}
+
+export interface ActiveResearch {
+  researchId: ResearchId;
+  startTime: number;   // Date.now() when research started
+  endTime: number;     // Date.now() when research completes
+}
+
+export interface ResearchState {
+  levels: Partial<Record<ResearchId, number>>;  // Current level of each research
+  activeResearch: ActiveResearch | null;         // Currently researching
+}
+
+// === Artifacts ===
+
+export type ArtifactTemplateId =
+  // Forest-origin
+  | 'ancient_bamboo_scroll' | 'moss_covered_compass' | 'petrified_acorn'
+  // Lake-origin
+  | 'crystallized_dewdrop' | 'sunken_astrolabe' | 'mist_pearl'
+  // Desert-origin
+  | 'sand_etched_tablet' | 'solar_prism' | 'cactus_fossil'
+  // Tundra-origin
+  | 'frozen_star_fragment' | 'permafrost_lens' | 'ice_rune_stone'
+  // Volcanic-origin
+  | 'obsidian_idol' | 'magma_core_shard' | 'volcanic_geode'
+  // Cavern-origin
+  | 'crystal_resonator' | 'phosphor_lantern' | 'lithium_heart';
+
+export type ArtifactRarity = 'common' | 'uncommon' | 'rare' | 'legendary';
+
+export type ArtifactEffectId =
+  | 'overgrowth'        // Auto-gather every 30s
+  | 'trailblazer'       // Double discovery chances
+  | 'lucky_harvest'     // 20% chance gather triggers twice
+  | 'drip_feed'         // +1 Research Data every 5 min passively
+  | 'safe_return'       // Recalled expeditions keep 75% rewards
+  | 'mirage'            // 25% chance expedition refunds food
+  | 'desert_cache'      // 30% chance expedition also gives Research Data
+  | 'oasis'             // Quick expeditions take half time
+  | 'solar_flare'       // Every 10 min, random automation 5x burst
+  | 'flash_freeze'      // Analysis time halved
+  | 'deep_focus'        // Research costs 3 less Research Data (min 1)
+  | 'meteor_strike'     // Epic Journeys always drop at least 1 artifact
+  | 'thermal_vent'      // Power cells give +1 effective level
+  | 'idols_favor'       // Scrapping returns 100% Research Data
+  | 'eternal_forge'     // +1 loadout slot
+  | 'guiding_light'     // Artifact drops skew toward higher rarities
+  | 'crystal_clarity'   // Unlock second research station
+  | 'heartbeat';        // Bonus production tick every 47s in all biomes
+
+export interface ArtifactTemplate {
+  id: ArtifactTemplateId;
+  name: string;
+  description: string;
+  flavorText: string;
+  icon: string;
+  rarity: ArtifactRarity;
+  originBiome: BiomeId;
+  effect: ArtifactEffectId;
+  analysisCost: number;
+  analysisDurationMs: number;
+}
+
+export interface Artifact {
+  instanceId: string;
+  templateId: ArtifactTemplateId;
+  status: 'unanalyzed' | 'analyzing' | 'analyzed';
+  foundAt: number;
+  analyzedAt: number | null;
+  equipped: boolean;
+}
+
+export interface ActiveAnalysis {
+  artifactInstanceId: string;
+  templateId: ArtifactTemplateId;
+  startTime: number;
+  endTime: number;
+}
+
+export interface ArtifactState {
+  inventory: Artifact[];
+  activeAnalysis: ActiveAnalysis | null;
+  loadoutSlots: number;
+  totalFound: number;
+  totalAnalyzed: number;
+}
+
+// === Contracts (Daily/Weekly Quests) ===
+
+export type ContractCategory =
+  | 'gather'       // Gather X of a specific resource
+  | 'build'        // Build N automations
+  | 'upgrade'      // Upgrade automations N times
+  | 'expedition'   // Complete N expeditions
+  | 'produce'      // Produce X of an intermediate resource
+  | 'level_up'     // Get an automation to level X
+  | 'food'         // Accumulate X total nutrition
+  | 'discover';    // Discover a new resource
+
+export type ContractPeriod = 'daily' | 'weekly';
+
+export interface Contract {
+  id: string;                    // Unique ID (e.g. "daily-2026-03-11-0")
+  category: ContractCategory;
+  period: ContractPeriod;
+  description: string;           // Human-readable description
+  icon: string;                  // Emoji icon
+  target: number;                // Target amount
+  progress: number;              // Current progress
+  researchDataReward: number;    // Research Data earned on completion
+  completed: boolean;
+  claimed: boolean;              // Whether reward has been collected
+  // Context for tracking progress
+  trackingParams?: {
+    resourceId?: ResourceId;
+    automationType?: AutomationType;
+    expeditionTier?: ExpeditionTier;
+    targetLevel?: number;
+  };
+}
+
+export interface ContractState {
+  daily: Contract[];
+  weekly: Contract[];
+  lastDailyReset: string;       // ISO date string (YYYY-MM-DD)
+  lastWeeklyReset: string;      // ISO date string (YYYY-MM-DD), week start (Monday)
+  researchData: number;          // Accumulated Research Data currency
+  totalResearchDataEarned: number; // Lifetime total
+}
+
 export type GameAction =
   | { type: 'GATHER_RESOURCE'; payload: { biomeId: BiomeId; resourceId: ResourceId; amount: number } }
   | { type: 'GATHER_FOOD'; payload: { foodId: FoodId; amount: number } }
@@ -239,7 +411,7 @@ export type GameAction =
   | { type: 'INSTALL_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string; powerCell: PowerCell } }
   | { type: 'REMOVE_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string } }
   | { type: 'START_EXPEDITION'; payload: { tier: ExpeditionTier; foodConsumed: { id: FoodId; amount: number }[] } }
-  | { type: 'COLLECT_EXPEDITION'; payload: { rewards: Record<ResourceId, number>; powerCells: PowerCell[]; newBiome: BiomeId | null; newResources: ResourceId[] } }
+  | { type: 'COLLECT_EXPEDITION'; payload: { rewards: Record<ResourceId, number>; powerCells: PowerCell[]; newBiome: BiomeId | null; newResources: ResourceId[]; artifacts?: Artifact[] } }
   | { type: 'RECALL_EXPEDITION'; payload: { partialRewards: Partial<Record<ResourceId, number>> } }
   | { type: 'SWITCH_BIOME'; payload: { biomeId: BiomeId } }
   | { type: 'UNLOCK_BIOME'; payload: { biomeId: BiomeId } }
@@ -257,4 +429,17 @@ export type GameAction =
   | { type: 'INIT_SESSION' }
   | { type: 'SAVE_GAME' }
   | { type: 'LOAD_GAME'; payload: { gameState: GameState } }
-  | { type: 'RESET_GAME' };
+  | { type: 'RESET_GAME' }
+  | { type: 'UPDATE_CONTRACTS'; payload: { contracts: ContractState } }
+  | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } }
+  | { type: 'START_RESEARCH'; payload: { researchId: ResearchId; cost: number; startTime: number; endTime: number } }
+  | { type: 'COMPLETE_RESEARCH'; payload: { researchId: ResearchId } }
+  | { type: 'CANCEL_RESEARCH' }
+  | { type: 'START_ANALYSIS'; payload: { artifactInstanceId: string; templateId: ArtifactTemplateId; cost: number; startTime: number; endTime: number } }
+  | { type: 'COMPLETE_ANALYSIS'; payload: { artifactInstanceId: string } }
+  | { type: 'CANCEL_ANALYSIS' }
+  | { type: 'EQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
+  | { type: 'UNEQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
+  | { type: 'SCRAP_ARTIFACT'; payload: { artifactInstanceId: string } }
+  | { type: 'CLEAR_VETERAN_BONUS' }
+  | { type: 'DISMISS_LAB_ONBOARDING' };

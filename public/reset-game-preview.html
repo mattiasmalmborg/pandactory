@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pandactory Dev Tools</title>
+  <title>Pandactory Dev Tools (Preview)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -103,8 +103,8 @@
   </style>
 </head>
 <body>
-  <h1>🐼 Pandactory Dev Tools</h1>
-  <p>Development utilities for testing and debugging.</p>
+  <h1>🐼 Pandactory Dev Tools <span style="color: #ff6b35; font-size: 0.6em;">(PREVIEW)</span></h1>
+  <p>Development utilities for testing and debugging the <strong>preview build</strong>.</p>
   <p style="background: #3d2a1a; padding: 10px; border-radius: 6px; border-left: 4px solid #ff6b35;">
     <strong>💡 How to use:</strong> Make changes here, then <strong>reload the game tab (F5)</strong> to see the changes.
     The game auto-saves frequently, so reload quickly after making changes!
@@ -268,7 +268,7 @@
     // Update expedition status
     function updateExpeditionStatus() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('expedition-status').innerHTML =
             '<div class="expedition-info"><p>No saved game found.</p></div>';
@@ -311,16 +311,16 @@
       try {
         // Set localStorage flag - the game will see this and reset on next load
         // Using localStorage (not sessionStorage) so it works across tabs
-        localStorage.setItem('pandactory-reset-pending', 'true');
+        localStorage.setItem('pandactory-preview-reset-pending', 'true');
 
         // Clear the save data
-        localStorage.removeItem('pandactory-save');
-        localStorage.removeItem('pandactory-current-view');
+        localStorage.removeItem('pandactory-preview-save');
+        localStorage.removeItem('pandactory-preview-current-view');
 
         document.getElementById('reset-message').innerHTML =
           '<p class="message">✅ Reset flag set!<br><br>' +
           'Click the button below to open a fresh game.<br><br>' +
-          '<button onclick="window.open(\'/\', \'_blank\')" style="font-size: 18px; padding: 15px 30px;">🎮 Open Fresh Game</button></p>';
+          '<button onclick="window.open(\'/pandactory/preview/\', \'_blank\')" style="font-size: 18px; padding: 15px 30px;">🎮 Open Fresh Game</button></p>';
         updateExpeditionStatus();
       } catch (e) {
         document.getElementById('reset-message').innerHTML =
@@ -330,7 +330,7 @@
 
     function completeExpedition() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('expedition-message').innerHTML =
             '<p class="message error">❌ No saved game found.</p>';
@@ -349,7 +349,7 @@
         const completionTime = Date.now() - state.panda.expedition.durationMs - 1000;
         state.panda.expedition.startTime = completionTime;
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('expedition-message').innerHTML =
           '<p class="message">✅ Expedition completed! Switch to main game tab and press F5 to reload.</p>';
         updateExpeditionStatus();
@@ -361,7 +361,7 @@
 
     function startTestExpedition() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('expedition-message').innerHTML =
             '<p class="message error">❌ No saved game found.</p>';
@@ -387,7 +387,7 @@
           collectedAt: null
         };
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('expedition-message').innerHTML =
           '<p class="message">✅ Test expedition started! (10 seconds). Switch to main game tab and press F5 to reload.</p>';
         updateExpeditionStatus();
@@ -399,7 +399,7 @@
 
     function addResources() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('resource-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -430,7 +430,7 @@
           }
         });
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('resource-message').innerHTML =
           `<p class="message">✅ Modified ${addedCount} resources in ${currentBiome}! Reload the main game.</p>`;
       } catch (e) {
@@ -518,7 +518,7 @@
 
     function add1000EachResource() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('resource-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -548,7 +548,7 @@
           addedCounts[targetBiome] = (addedCounts[targetBiome] || 0) + 1;
         });
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
 
         // Build summary message
         let summary = Object.entries(addedCounts)
@@ -566,7 +566,7 @@
 
     function addFood() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('food-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -596,7 +596,7 @@
           }
         });
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('food-message').innerHTML =
           `<p class="message">✅ Modified ${addedCount} food items! Reload the main game.</p>`;
       } catch (e) {
@@ -615,7 +615,7 @@
 
     function updatePrestigeStatus() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('prestige-status').innerHTML =
             '<p>No saved game found.</p>';
@@ -630,10 +630,6 @@
           <p><strong>Cosmic Bamboo Shards:</strong> ${prestige.cosmicBambooShards}</p>
           <p><strong>Unlocked Skills:</strong> ${prestige.unlockedSkills.length}/${ALL_SKILLS.length}</p>
         `;
-
-        // Update input fields
-        document.getElementById('prestige-count').value = prestige.totalPrestiges;
-        document.getElementById('cosmic-shards').value = prestige.cosmicBambooShards;
       } catch (e) {
         document.getElementById('prestige-status').innerHTML =
           '<p class="error">Error reading game state: ' + e.message + '</p>';
@@ -642,7 +638,7 @@
 
     function setPrestige() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('prestige-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -668,10 +664,10 @@
 
         // Save back to localStorage
         const jsonString = JSON.stringify(state);
-        localStorage.setItem('pandactory-save', jsonString);
+        localStorage.setItem('pandactory-preview-save', jsonString);
 
         // Verify it was saved
-        const verified = localStorage.getItem('pandactory-save');
+        const verified = localStorage.getItem('pandactory-preview-save');
         const verifiedState = JSON.parse(verified);
 
         document.getElementById('prestige-message').innerHTML =
@@ -687,7 +683,7 @@
 
     function unlockAllSkills() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('prestige-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -706,7 +702,7 @@
 
         state.prestige.unlockedSkills = [...ALL_SKILLS];
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('prestige-message').innerHTML =
           `<p class="message">✅ All ${ALL_SKILLS.length} skills unlocked! Reload the main game.</p>`;
         updatePrestigeStatus();
@@ -718,7 +714,7 @@
 
     function clearAllSkills() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('prestige-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -737,7 +733,7 @@
 
         state.prestige.unlockedSkills = [];
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('prestige-message').innerHTML =
           '<p class="message">✅ All skills cleared! Reload the main game.</p>';
         updatePrestigeStatus();
@@ -749,7 +745,7 @@
 
     function addSpaceshipParts() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('spaceship-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -778,7 +774,7 @@
           state.biomes[currentBiome].resources[part] += 100;
         });
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('spaceship-message').innerHTML =
           `<p class="message">✅ Added 100 of each spaceship part to ${currentBiome}!<br>` +
           `<strong>Reload the main game (F5) to see changes.</strong><br>` +
@@ -814,7 +810,7 @@
 
     function updateBiomeStatus() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('biome-status').innerHTML = '<p>No saved game found.</p>';
           return;
@@ -839,7 +835,7 @@
 
     function unlockAllBiomes() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('biome-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -878,7 +874,7 @@
         // Update unlockedBiomes array
         state.unlockedBiomes = [...ALL_BIOMES];
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('biome-message').innerHTML =
           '<p class="message">✅ All biomes unlocked and activated!<br><strong>Reload the main game (F5) to see changes.</strong></p>';
         updateBiomeStatus();
@@ -890,7 +886,7 @@
 
     function discoverAllResources() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('biome-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -917,7 +913,7 @@
           state.biomes[biomeId].discoveredResources = currentDiscovered;
         });
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('biome-message').innerHTML =
           '<p class="message">✅ All resources discovered in all biomes!<br><strong>Reload the main game (F5) to see changes.</strong></p>';
         updateBiomeStatus();
@@ -929,7 +925,7 @@
 
     function updateResearchStatus() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('research-status').innerHTML = '<p>No saved game found.</p>';
           return;
@@ -953,7 +949,7 @@
 
     function addResearchData() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('research-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -968,7 +964,7 @@
         state.contracts.researchData = (state.contracts.researchData || 0) + amount;
         state.contracts.totalResearchDataEarned = (state.contracts.totalResearchDataEarned || 0) + amount;
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('research-message').innerHTML =
           `<p class="message">✅ Added ${amount} Research Data! Reload the main game.</p>`;
         updateResearchStatus();
@@ -980,7 +976,7 @@
 
     function triggerLabOnboarding() {
       try {
-        const saved = localStorage.getItem('pandactory-save');
+        const saved = localStorage.getItem('pandactory-preview-save');
         if (!saved) {
           document.getElementById('ui-message').innerHTML =
             '<p class="message error">❌ No saved game found. Start a game first.</p>';
@@ -990,7 +986,7 @@
         const state = JSON.parse(saved);
         state.pendingLabOnboarding = true;
 
-        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        localStorage.setItem('pandactory-preview-save', JSON.stringify(state));
         document.getElementById('ui-message').innerHTML =
           '<p class="message">✅ Lab onboarding modal queued! Reload the main game (F5) to see it.</p>';
       } catch (e) {
