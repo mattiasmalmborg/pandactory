@@ -194,6 +194,14 @@
     <div id="research-message"></div>
   </div>
 
+  <!-- UI Tools -->
+  <div class="section">
+    <h2>🖥️ UI Tools</h2>
+    <p>Trigger modals and UI elements for testing.</p>
+    <button class="secondary" onclick="triggerLabOnboarding()">Show Lab Onboarding Modal</button>
+    <div id="ui-message"></div>
+  </div>
+
   <!-- Spaceship Parts Tools -->
   <div class="section">
     <h2>🚀 Spaceship Parts</h2>
@@ -966,6 +974,27 @@
         updateResearchStatus();
       } catch (e) {
         document.getElementById('research-message').innerHTML =
+          '<p class="message error">❌ Error: ' + e.message + '</p>';
+      }
+    }
+
+    function triggerLabOnboarding() {
+      try {
+        const saved = localStorage.getItem('pandactory-save');
+        if (!saved) {
+          document.getElementById('ui-message').innerHTML =
+            '<p class="message error">❌ No saved game found. Start a game first.</p>';
+          return;
+        }
+
+        const state = JSON.parse(saved);
+        state.pendingLabOnboarding = true;
+
+        localStorage.setItem('pandactory-save', JSON.stringify(state));
+        document.getElementById('ui-message').innerHTML =
+          '<p class="message">✅ Lab onboarding modal queued! Reload the main game (F5) to see it.</p>';
+      } catch (e) {
+        document.getElementById('ui-message').innerHTML =
           '<p class="message error">❌ Error: ' + e.message + '</p>';
       }
     }

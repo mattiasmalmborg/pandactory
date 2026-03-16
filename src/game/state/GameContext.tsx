@@ -405,19 +405,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    (window as unknown as Record<string, unknown>).showLabOnboarding = () => {
-      currentDispatch({
-        type: 'LOAD_GAME',
-        payload: { gameState: { ...state, pendingLabOnboarding: true } },
-      });
-    };
-
     return () => {
       delete window.resetGame;
       delete window.getGameState;
       delete window.addResource;
       delete window.addFood;
-      delete (window as unknown as Record<string, unknown>).showLabOnboarding;
     };
   }, [state, dispatch]);
 
