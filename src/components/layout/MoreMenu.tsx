@@ -96,14 +96,14 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
               )}
             </button>
 
-            {/* Trophy Room */}
+            {/* Artifact Collection */}
             <button
               onClick={() => handleNavigate('trophy_room')}
               className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors text-left"
             >
               <span className="text-xl">🏺</span>
               <div className="flex-1">
-                <span className="text-white font-medium">Trophy Room</span>
+                <span className="text-white font-medium">Artifact Collection</span>
                 <span className="ml-2 text-xs text-gray-400">
                   {artifactsFound} artifacts
                 </span>

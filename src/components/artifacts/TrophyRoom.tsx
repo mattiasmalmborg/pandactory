@@ -30,7 +30,7 @@ export function TrophyRoom() {
       <div className="bg-gradient-to-br from-yellow-900/50 to-amber-900/50 backdrop-blur-sm rounded-lg border border-yellow-500/50 p-4">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-xl font-bold text-yellow-200 flex items-center gap-2">
-            🏺 Trophy Room
+            🏺 Artifact Collection
           </h1>
           <span className="text-yellow-300 font-bold">
             {discoveredCount}/{totalTemplates}
