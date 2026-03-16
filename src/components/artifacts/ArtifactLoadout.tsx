@@ -23,9 +23,10 @@ export function ArtifactLoadout() {
             return (
               <div
                 key={`slot-${i}`}
-                className="border border-dashed border-gray-700/50 rounded-lg p-2 flex items-center justify-center min-h-[60px]"
+                className="border-2 border-dashed border-gray-600/60 rounded-lg p-2 flex flex-col items-center justify-center min-h-[60px] bg-gray-900/40"
               >
-                <span className="text-gray-700 text-xl">+</span>
+                <span className="text-gray-500 text-xl">+</span>
+                <span className="text-[8px] text-gray-500 mt-0.5">Empty</span>
               </div>
             );
           }
