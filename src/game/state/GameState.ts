@@ -109,6 +109,7 @@ export const INITIAL_GAME_STATE: GameState = {
   contracts: { ...INITIAL_CONTRACT_STATE },
   research: { ...INITIAL_RESEARCH_STATE },
   artifacts: { ...INITIAL_ARTIFACT_STATE },
+  labJobs: [],
   lastTick: Date.now(),
   lastSave: Date.now(),
   gameStartTime: Date.now(),
@@ -788,9 +789,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // Backfill v1.5 state fields for imported saves
         contracts: loadedState.contracts || { ...INITIAL_CONTRACT_STATE },
         research: loadedState.research
-          ? { ...loadedState.research, activeResearch: loadedState.research.activeResearch ?? null }
+          ? { ...loadedState.research }
           : { ...INITIAL_RESEARCH_STATE },
         artifacts: loadedState.artifacts || { ...INITIAL_ARTIFACT_STATE },
+        labJobs: loadedState.labJobs || [],
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };
@@ -891,116 +893,99 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'START_RESEARCH': {
-      const { researchId, cost, startTime, endTime } = action.payload;
-      // Guard: can't start research if already researching
-      if (state.research.activeResearch) return state;
-      // Guard: with one station, can't research while analyzing
-      const hasSecondStationForResearch = state.artifacts.inventory.some(a =>
-        a.equipped && a.status === 'analyzed' &&
-        ARTIFACT_TEMPLATES[a.templateId]?.effect === 'crystal_clarity'
-      );
-      if (!hasSecondStationForResearch && state.artifacts.activeAnalysis) return state;
+    case 'START_STATION_JOB': {
+      const { job, cost } = action.payload;
+      const maxStations = hasArtifactEffect(state.artifacts.inventory, 'crystal_clarity') ? 2 : 1;
+      const jobs = state.labJobs || [];
+      // Guard: all stations busy
+      if (jobs.length >= maxStations) return state;
+      // Guard: can't research the same thing twice
+      if (job.type === 'research' && jobs.some(j => j.type === 'research' && j.researchId === job.researchId)) return state;
+      // Guard: can't analyze the same artifact twice
+      if (job.type === 'analysis' && jobs.some(j => j.type === 'analysis' && j.artifactInstanceId === job.artifactInstanceId)) return state;
 
-      return {
+      const newState: GameState = {
         ...state,
         contracts: {
           ...state.contracts,
           researchData: state.contracts.researchData - cost,
         },
-        research: {
-          ...state.research,
-          activeResearch: { researchId, startTime, endTime },
-        },
+        labJobs: [...jobs, job],
       };
+      // Mark artifact as analyzing
+      if (job.type === 'analysis') {
+        newState.artifacts = {
+          ...state.artifacts,
+          inventory: state.artifacts.inventory.map(a =>
+            a.instanceId === job.artifactInstanceId ? { ...a, status: 'analyzing' as const } : a
+          ),
+        };
+      }
+      return newState;
     }
 
-    case 'COMPLETE_RESEARCH': {
-      const { researchId } = action.payload;
-      const currentLevel = state.research.levels[researchId] || 0;
+    case 'COMPLETE_STATION_JOB': {
+      const { jobIndex } = action.payload;
+      const jobs = state.labJobs || [];
+      const job = jobs[jobIndex];
+      if (!job) return state;
 
-      return {
-        ...state,
-        research: {
-          ...state.research,
-          levels: {
-            ...state.research.levels,
-            [researchId]: currentLevel + 1,
+      const remainingJobs = jobs.filter((_, i) => i !== jobIndex);
+
+      if (job.type === 'research') {
+        const currentLevel = state.research.levels[job.researchId] || 0;
+        return {
+          ...state,
+          research: {
+            ...state.research,
+            levels: {
+              ...state.research.levels,
+              [job.researchId]: currentLevel + 1,
+            },
           },
-          activeResearch: null,
-        },
-      };
+          labJobs: remainingJobs,
+        };
+      } else {
+        // analysis
+        return {
+          ...state,
+          artifacts: {
+            ...state.artifacts,
+            inventory: state.artifacts.inventory.map(a =>
+              a.instanceId === job.artifactInstanceId
+                ? { ...a, status: 'analyzed' as const, analyzedAt: Date.now() }
+                : a
+            ),
+            totalAnalyzed: state.artifacts.totalAnalyzed + 1,
+          },
+          labJobs: remainingJobs,
+        };
+      }
     }
 
-    case 'CANCEL_RESEARCH': {
-      // Refund is not given — research data was already spent
-      return {
-        ...state,
-        research: {
-          ...state.research,
-          activeResearch: null,
-        },
-      };
-    }
+    case 'CANCEL_STATION_JOB': {
+      const { jobIndex } = action.payload;
+      const jobs = state.labJobs || [];
+      const job = jobs[jobIndex];
+      if (!job) return state;
 
-    case 'START_ANALYSIS': {
-      const { artifactInstanceId, templateId, cost, startTime, endTime } = action.payload;
-      // Guard: can't start analysis if already analyzing
-      if (state.artifacts.activeAnalysis) return state;
-      // Guard: with one station, can't analyze while researching
-      const hasSecondStation = state.artifacts.inventory.some(a =>
-        a.equipped && a.status === 'analyzed' &&
-        ARTIFACT_TEMPLATES[a.templateId]?.effect === 'crystal_clarity'
-      );
-      if (!hasSecondStation && state.research.activeResearch) return state;
-      return {
-        ...state,
-        contracts: {
-          ...state.contracts,
-          researchData: state.contracts.researchData - cost,
-        },
-        artifacts: {
-          ...state.artifacts,
-          inventory: state.artifacts.inventory.map(a =>
-            a.instanceId === artifactInstanceId ? { ...a, status: 'analyzing' as const } : a
-          ),
-          activeAnalysis: { artifactInstanceId, templateId, startTime, endTime },
-        },
-      };
-    }
-
-    case 'COMPLETE_ANALYSIS': {
-      const { artifactInstanceId } = action.payload;
-      return {
-        ...state,
-        artifacts: {
-          ...state.artifacts,
-          inventory: state.artifacts.inventory.map(a =>
-            a.instanceId === artifactInstanceId
-              ? { ...a, status: 'analyzed' as const, analyzedAt: Date.now() }
-              : a
-          ),
-          activeAnalysis: null,
-          totalAnalyzed: state.artifacts.totalAnalyzed + 1,
-        },
-      };
-    }
-
-    case 'CANCEL_ANALYSIS': {
-      const activeAnalysis = state.artifacts.activeAnalysis;
-      if (!activeAnalysis) return state;
-      return {
-        ...state,
-        artifacts: {
-          ...state.artifacts,
-          inventory: state.artifacts.inventory.map(a =>
-            a.instanceId === activeAnalysis.artifactInstanceId
-              ? { ...a, status: 'unanalyzed' as const }
-              : a
-          ),
-          activeAnalysis: null,
-        },
-      };
+      const remainingJobs = jobs.filter((_, i) => i !== jobIndex);
+      // If analysis, revert artifact status
+      if (job.type === 'analysis') {
+        return {
+          ...state,
+          artifacts: {
+            ...state.artifacts,
+            inventory: state.artifacts.inventory.map(a =>
+              a.instanceId === job.artifactInstanceId
+                ? { ...a, status: 'unanalyzed' as const }
+                : a
+            ),
+          },
+          labJobs: remainingJobs,
+        };
+      }
+      return { ...state, labJobs: remainingJobs };
     }
 
     case 'EQUIP_ARTIFACT': {
@@ -1022,10 +1007,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'UNEQUIP_ARTIFACT': {
       const { artifactInstanceId } = action.payload;
-      // Guard: can't unequip Crystal Resonator while analysis is running
+      // Guard: can't unequip Crystal Resonator while 2 jobs are running
       const unequipArtifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
       if (unequipArtifact && ARTIFACT_TEMPLATES[unequipArtifact.templateId]?.effect === 'crystal_clarity'
-        && state.artifacts.activeAnalysis) {
+        && (state.labJobs || []).length >= 2) {
         return state;
       }
       return {

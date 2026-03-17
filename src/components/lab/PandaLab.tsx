@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { RESEARCH_NODES, getResearchCost, getResearchDuration } from '../../game/config/research';
 import { ARTIFACT_TEMPLATES, getEquippedCount, getEffectiveLoadoutSlots, hasArtifactEffect, getActiveSetBonuses } from '../../game/config/artifacts';
-import { ResearchId, ResearchNode, ActiveResearch } from '../../types/game.types';
+import { ResearchId, ResearchNode, StationJob } from '../../types/game.types';
 import { formatNumber } from '../../utils/formatters';
 import { ArtifactCard } from '../artifacts/ArtifactCard';
 import { ArtifactLoadout } from '../artifacts/ArtifactLoadout';
@@ -23,60 +23,22 @@ function formatTimeRemaining(ms: number): string {
   return remainMins > 0 ? `${hours}h ${remainMins}m` : `${hours}h`;
 }
 
-function useTimer(
-  active: { startTime: number; endTime: number } | null,
-  onComplete: () => void,
-) {
-  const [now, setNow] = useState(Date.now());
+// === Station Display ===
 
-  useEffect(() => {
-    if (!active) return;
-    const remaining = active.endTime - Date.now();
-    if (remaining <= 0) {
-      onComplete();
-      return;
-    }
-    const interval = setInterval(() => {
-      const currentTime = Date.now();
-      if (currentTime >= active.endTime) {
-        onComplete();
-        clearInterval(interval);
-      } else {
-        setNow(currentTime);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [active, onComplete]);
-
-  if (!active) return { progress: 0, remaining: 0 };
-  const totalDuration = active.endTime - active.startTime;
-  const elapsed = now - active.startTime;
-  return {
-    progress: Math.min(elapsed / totalDuration, 1),
-    remaining: Math.max(active.endTime - now, 0),
-  };
-}
-
-// === Research Station ===
-
-function ResearchStation({
+function StationDisplay({
   label,
-  activeResearch,
-  activeAnalysis,
+  job,
   progress,
   remaining,
   currentResearchLevel,
 }: {
   label: string;
-  activeResearch: ActiveResearch | null;
-  activeAnalysis: { artifactInstanceId: string; templateId: string } | null;
+  job: StationJob | null;
   progress: number;
   remaining: number;
   currentResearchLevel?: number;
 }) {
-  const isActive = activeResearch || activeAnalysis;
-
-  if (!isActive) {
+  if (!job) {
     return (
       <div className="bg-gray-800/90 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
         <span className="text-lg text-gray-600">🔬</span>
@@ -88,8 +50,8 @@ function ResearchStation({
     );
   }
 
-  const isResearch = !!activeResearch;
-  const node = isResearch ? RESEARCH_NODES[activeResearch!.researchId] : null;
+  const isResearch = job.type === 'research';
+  const node = isResearch ? RESEARCH_NODES[job.researchId] : null;
   const levelInfo = isResearch && currentResearchLevel !== undefined ? `Lvl ${currentResearchLevel} → ${currentResearchLevel + 1}` : '';
 
   return (
@@ -137,8 +99,8 @@ function ResearchCard({
   node,
   currentLevel,
   researchData,
-  stationBusy,
-  activeResearch,
+  allStationsBusy,
+  activeJob,
   timerProgress,
   timerRemaining,
   onStart,
@@ -146,17 +108,17 @@ function ResearchCard({
   node: ResearchNode;
   currentLevel: number;
   researchData: number;
-  stationBusy: boolean;
-  activeResearch: ActiveResearch | null;
+  allStationsBusy: boolean;
+  activeJob: StationJob | null;
   timerProgress: number;
   timerRemaining: number;
   onStart: (id: ResearchId, cost: number) => void;
 }) {
-  const isThisResearching = activeResearch?.researchId === node.id;
+  const isThisResearching = activeJob?.type === 'research' && activeJob.researchId === node.id;
   const cost = getResearchCost(node.id, currentLevel);
   const isMaxed = cost === null;
   const canAfford = cost !== null && researchData >= cost;
-  const canStart = canAfford && !stationBusy;
+  const canStart = canAfford && !allStationsBusy;
   const currentBonus = node.bonusPerLevel * currentLevel;
   const duration = getResearchDuration(currentLevel);
 
@@ -241,10 +203,10 @@ function ResearchCard({
                         : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    {stationBusy ? 'Station Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
+                    {allStationsBusy ? 'All Stations Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
                   </button>
-                  {stationBusy && !isThisResearching && (
-                    <p className="text-[10px] text-gray-500 text-center mt-1">Wait for current task to finish</p>
+                  {allStationsBusy && (
+                    <p className="text-[10px] text-gray-500 text-center mt-1">Wait for a station to finish</p>
                   )}
                 </>
               )}
@@ -262,33 +224,54 @@ export function PandaLab() {
   const { state, dispatch } = useGame();
   const researchData = state.contracts.researchData;
   const levels = state.research.levels;
-  const activeResearch = state.research.activeResearch;
-  const activeAnalysis = state.artifacts?.activeAnalysis || null;
+  const labJobs = state.labJobs || [];
   const inventory = useMemo(() => state.artifacts?.inventory || [], [state.artifacts?.inventory]);
 
   const [labTab, setLabTab] = useState<LabTab>('research');
 
   // Check for Crystal Resonator (second station)
   const hasSecondStation = hasArtifactEffect(inventory, 'crystal_clarity');
-
-  // Determine station availability
-  // Station 1 handles research or analysis (one at a time)
-  // Station 2 (Crystal Resonator) is a dedicated analysis station
-  const station1Busy = activeResearch !== null || (!hasSecondStation && activeAnalysis !== null);
-  const station2Busy = activeAnalysis !== null;
-  const researchStationAvailable = !station1Busy;
-  const analysisStationAvailable = hasSecondStation ? !station2Busy : !station1Busy;
+  const maxStations = hasSecondStation ? 2 : 1;
+  const allStationsBusy = labJobs.length >= maxStations;
 
   // Unanalyzed count for badge
   const unanalyzedCount = inventory.filter(a => a.status === 'unanalyzed').length;
 
-  // --- Research timer ---
-  const handleResearchComplete = useCallback(() => {
-    if (activeResearch) {
-      dispatch({ type: 'COMPLETE_RESEARCH', payload: { researchId: activeResearch.researchId } });
-    }
-  }, [dispatch, activeResearch]);
+  // --- Job timers ---
+  const [now, setNow] = useState(Date.now());
+  const completedRef = useRef<Set<number>>(new Set());
 
+  useEffect(() => {
+    if (labJobs.length === 0) return;
+    const interval = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(interval);
+  }, [labJobs.length]);
+
+  // Complete jobs that have finished
+  useEffect(() => {
+    labJobs.forEach((job, index) => {
+      if (Date.now() >= job.endTime && !completedRef.current.has(index)) {
+        completedRef.current.add(index);
+        dispatch({ type: 'COMPLETE_STATION_JOB', payload: { jobIndex: index } });
+      }
+    });
+  }, [now, labJobs, dispatch]);
+
+  // Reset completed tracking when jobs change
+  useEffect(() => {
+    completedRef.current = new Set();
+  }, [labJobs.length]);
+
+  function getJobProgress(job: StationJob) {
+    const totalDuration = job.endTime - job.startTime;
+    const elapsed = now - job.startTime;
+    return {
+      progress: Math.min(elapsed / totalDuration, 1),
+      remaining: Math.max(job.endTime - now, 0),
+    };
+  }
+
+  // --- Start research ---
   const handleResearchStart = useCallback((researchId: ResearchId, cost: number) => {
     // Check deep focus artifact: -3 Research Data per level (min 1)
     const hasDeepFocus = hasArtifactEffect(inventory, 'deep_focus');
@@ -296,53 +279,19 @@ export function PandaLab() {
 
     const currentLevel = levels[researchId] || 0;
     const duration = getResearchDuration(currentLevel);
-    const now = Date.now();
+    const startTime = Date.now();
     dispatch({
-      type: 'START_RESEARCH',
-      payload: { researchId, cost: adjustedCost, startTime: now, endTime: now + duration },
+      type: 'START_STATION_JOB',
+      payload: {
+        job: { type: 'research', researchId, startTime, endTime: startTime + duration },
+        cost: adjustedCost,
+      },
     });
   }, [dispatch, levels, inventory]);
 
-  const { progress: researchProgress, remaining: researchRemaining } = useTimer(activeResearch, handleResearchComplete);
-
-  useEffect(() => {
-    if (activeResearch && Date.now() >= activeResearch.endTime) {
-      handleResearchComplete();
-    }
-  }, [activeResearch, handleResearchComplete]);
-
-  // --- Analysis timer ---
-  const handleAnalysisComplete = useCallback(() => {
-    if (activeAnalysis) {
-      dispatch({ type: 'COMPLETE_ANALYSIS', payload: { artifactInstanceId: activeAnalysis.artifactInstanceId } });
-    }
-  }, [dispatch, activeAnalysis]);
-
-  const { progress: analysisProgress, remaining: analysisRemaining } = useTimer(activeAnalysis, handleAnalysisComplete);
-
-  useEffect(() => {
-    if (activeAnalysis && Date.now() >= activeAnalysis.endTime) {
-      handleAnalysisComplete();
-    }
-  }, [activeAnalysis, handleAnalysisComplete]);
-
-  // --- Research categories ---
-  const categories = useMemo(() => {
-    const nodes = Object.values(RESEARCH_NODES);
-    return [
-      { title: 'Production', nodes: nodes.filter(n => ['production', 'gather', 'spaceship'].includes(n.bonusType)) },
-      { title: 'Economy', nodes: nodes.filter(n => ['build_cost', 'upgrade_cost'].includes(n.bonusType)) },
-      { title: 'Expeditions', nodes: nodes.filter(n => ['expedition_food', 'expedition_time', 'expedition_resource', 'food_waste'].includes(n.bonusType)) },
-      { title: 'Power', nodes: nodes.filter(n => n.bonusType === 'power_cell') },
-    ];
-  }, []);
-
-  const totalResearched = Object.values(levels).reduce((sum, lvl) => sum + (lvl || 0), 0);
-  const totalMaxLevels = Object.values(RESEARCH_NODES).reduce((sum, n) => sum + n.maxLevel, 0);
-
-  // --- Artifact handlers ---
+  // --- Start analysis ---
   const handleStartAnalysis = useCallback((instanceId: string) => {
-    if (!analysisStationAvailable) return;
+    if (allStationsBusy) return;
     const artifact = inventory.find(a => a.instanceId === instanceId);
     if (!artifact) return;
     const template = ARTIFACT_TEMPLATES[artifact.templateId];
@@ -359,18 +308,34 @@ export function PandaLab() {
       duration = Math.floor(duration / 2);
     }
 
-    const now = Date.now();
+    const startTime = Date.now();
     dispatch({
-      type: 'START_ANALYSIS',
+      type: 'START_STATION_JOB',
       payload: {
-        artifactInstanceId: instanceId,
-        templateId: artifact.templateId,
+        job: { type: 'analysis', artifactInstanceId: instanceId, templateId: artifact.templateId, startTime, endTime: startTime + duration },
         cost: template.analysisCost,
-        startTime: now,
-        endTime: now + duration,
       },
     });
-  }, [dispatch, inventory, analysisStationAvailable, researchData]);
+  }, [dispatch, inventory, allStationsBusy, researchData]);
+
+  // --- Research categories ---
+  const categories = useMemo(() => {
+    const nodes = Object.values(RESEARCH_NODES);
+    return [
+      { title: 'Production', nodes: nodes.filter(n => ['production', 'gather', 'spaceship'].includes(n.bonusType)) },
+      { title: 'Economy', nodes: nodes.filter(n => ['build_cost', 'upgrade_cost'].includes(n.bonusType)) },
+      { title: 'Expeditions', nodes: nodes.filter(n => ['expedition_food', 'expedition_time', 'expedition_resource', 'food_waste'].includes(n.bonusType)) },
+      { title: 'Power', nodes: nodes.filter(n => n.bonusType === 'power_cell') },
+    ];
+  }, []);
+
+  const totalResearched = Object.values(levels).reduce((sum, lvl) => sum + (lvl || 0), 0);
+  const totalMaxLevels = Object.values(RESEARCH_NODES).reduce((sum, n) => sum + n.maxLevel, 0);
+
+  // Find the active research job for a specific node (for inline timer on card)
+  function findResearchJob(researchId: ResearchId): StationJob | null {
+    return labJobs.find(j => j.type === 'research' && j.researchId === researchId) || null;
+  }
 
   const loadoutSlots = getEffectiveLoadoutSlots(inventory);
   const equippedCount = getEquippedCount(inventory);
@@ -404,28 +369,27 @@ export function PandaLab() {
 
       {/* Research Stations */}
       <div className="space-y-2">
-        <ResearchStation
-          label="Research Station 1"
-          activeResearch={activeResearch}
-          activeAnalysis={!hasSecondStation ? activeAnalysis : null}
-          progress={activeResearch ? researchProgress : (!hasSecondStation && activeAnalysis ? analysisProgress : 0)}
-          remaining={activeResearch ? researchRemaining : (!hasSecondStation && activeAnalysis ? analysisRemaining : 0)}
-          currentResearchLevel={activeResearch ? (levels[activeResearch.researchId] || 0) : undefined}
+        <StationDisplay
+          label="Station 1"
+          job={labJobs[0] || null}
+          progress={labJobs[0] ? getJobProgress(labJobs[0]).progress : 0}
+          remaining={labJobs[0] ? getJobProgress(labJobs[0]).remaining : 0}
+          currentResearchLevel={labJobs[0]?.type === 'research' ? (levels[labJobs[0].researchId] || 0) : undefined}
         />
 
         {hasSecondStation ? (
-          <ResearchStation
-                        label="Research Station 2"
-            activeResearch={null}
-            activeAnalysis={activeAnalysis}
-            progress={activeAnalysis ? analysisProgress : 0}
-            remaining={activeAnalysis ? analysisRemaining : 0}
+          <StationDisplay
+            label="Station 2"
+            job={labJobs[1] || null}
+            progress={labJobs[1] ? getJobProgress(labJobs[1]).progress : 0}
+            remaining={labJobs[1] ? getJobProgress(labJobs[1]).remaining : 0}
+            currentResearchLevel={labJobs[1]?.type === 'research' ? (levels[labJobs[1].researchId] || 0) : undefined}
           />
         ) : (
           <div className="bg-gray-800/60 backdrop-blur-sm border border-dashed border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
             <span className="text-lg text-gray-700">🔒</span>
             <div>
-              <p className="text-[10px] text-gray-600 font-semibold">Research Station 2</p>
+              <p className="text-[10px] text-gray-600 font-semibold">Station 2</p>
               <p className="text-[10px] text-gray-700 italic">Equip Crystal Resonator to unlock</p>
             </div>
           </div>
@@ -467,19 +431,23 @@ export function PandaLab() {
           {categories.map(cat => (
             <div key={cat.title} className="space-y-2">
               <h3 className="text-md font-semibold text-white">{cat.title}</h3>
-              {cat.nodes.map(node => (
-                <ResearchCard
-                  key={node.id}
-                  node={node}
-                  currentLevel={levels[node.id] || 0}
-                  researchData={researchData}
-                  stationBusy={!researchStationAvailable}
-                  activeResearch={activeResearch}
-                  timerProgress={researchProgress}
-                  timerRemaining={researchRemaining}
-                  onStart={handleResearchStart}
-                />
-              ))}
+              {cat.nodes.map(node => {
+                const activeJob = findResearchJob(node.id);
+                const jobTimer = activeJob ? getJobProgress(activeJob) : { progress: 0, remaining: 0 };
+                return (
+                  <ResearchCard
+                    key={node.id}
+                    node={node}
+                    currentLevel={levels[node.id] || 0}
+                    researchData={researchData}
+                    allStationsBusy={allStationsBusy}
+                    activeJob={activeJob}
+                    timerProgress={jobTimer.progress}
+                    timerRemaining={jobTimer.remaining}
+                    onStart={handleResearchStart}
+                  />
+                );
+              })}
             </div>
           ))}
         </>
@@ -520,13 +488,13 @@ export function PandaLab() {
                     <ArtifactCard
                       key={artifact.instanceId}
                       artifact={artifact}
-                      analysisActive={!analysisStationAvailable}
+                      analysisActive={allStationsBusy}
                       canAffordAnalysis={researchData >= ARTIFACT_TEMPLATES[artifact.templateId].analysisCost}
                       loadoutFull={equippedCount >= loadoutSlots}
                       unequipBlocked={
                         artifact.equipped &&
                         ARTIFACT_TEMPLATES[artifact.templateId]?.effect === 'crystal_clarity' &&
-                        activeAnalysis !== null
+                        labJobs.length >= 2
                       }
                       onAnalyze={() => handleStartAnalysis(artifact.instanceId)}
                       onEquip={() => dispatch({ type: 'EQUIP_ARTIFACT', payload: { artifactInstanceId: artifact.instanceId } })}

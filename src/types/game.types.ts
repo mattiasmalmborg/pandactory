@@ -159,6 +159,7 @@ export interface GameState {
   contracts: ContractState;
   research: ResearchState;
   artifacts: ArtifactState;
+  labJobs: StationJob[];  // Active station jobs (max = station count)
   gameStartTime: number; // When the save file was first created
   pendingVeteranBonus?: { amount: number; reason: string }; // One-time welcome bonus for returning players
   pendingLabOnboarding?: boolean; // Show lab onboarding modal
@@ -281,8 +282,14 @@ export interface ActiveResearch {
 
 export interface ResearchState {
   levels: Partial<Record<ResearchId, number>>;  // Current level of each research
-  activeResearch: ActiveResearch | null;         // Currently researching
+  activeResearch: ActiveResearch | null;         // DEPRECATED — kept for migration only
 }
+
+// === Lab Station Jobs ===
+
+export type StationJob =
+  | { type: 'research'; researchId: ResearchId; startTime: number; endTime: number }
+  | { type: 'analysis'; artifactInstanceId: string; templateId: ArtifactTemplateId; startTime: number; endTime: number };
 
 // === Artifacts ===
 
@@ -353,7 +360,7 @@ export interface ActiveAnalysis {
 
 export interface ArtifactState {
   inventory: Artifact[];
-  activeAnalysis: ActiveAnalysis | null;
+  activeAnalysis: ActiveAnalysis | null;  // DEPRECATED — kept for migration only
   loadoutSlots: number;
   totalFound: number;
   totalAnalyzed: number;
@@ -432,12 +439,9 @@ export type GameAction =
   | { type: 'RESET_GAME' }
   | { type: 'UPDATE_CONTRACTS'; payload: { contracts: ContractState } }
   | { type: 'CLAIM_CONTRACT'; payload: { contractId: string; period: ContractPeriod } }
-  | { type: 'START_RESEARCH'; payload: { researchId: ResearchId; cost: number; startTime: number; endTime: number } }
-  | { type: 'COMPLETE_RESEARCH'; payload: { researchId: ResearchId } }
-  | { type: 'CANCEL_RESEARCH' }
-  | { type: 'START_ANALYSIS'; payload: { artifactInstanceId: string; templateId: ArtifactTemplateId; cost: number; startTime: number; endTime: number } }
-  | { type: 'COMPLETE_ANALYSIS'; payload: { artifactInstanceId: string } }
-  | { type: 'CANCEL_ANALYSIS' }
+  | { type: 'START_STATION_JOB'; payload: { job: StationJob; cost: number } }
+  | { type: 'COMPLETE_STATION_JOB'; payload: { jobIndex: number } }
+  | { type: 'CANCEL_STATION_JOB'; payload: { jobIndex: number } }
   | { type: 'EQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
   | { type: 'UNEQUIP_ARTIFACT'; payload: { artifactInstanceId: string } }
   | { type: 'SCRAP_ARTIFACT'; payload: { artifactInstanceId: string } }

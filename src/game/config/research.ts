@@ -125,7 +125,7 @@ export const RESEARCH_NODES: Record<ResearchId, ResearchNode> = {
 
 export const INITIAL_RESEARCH_STATE: ResearchState = {
   levels: {},
-  activeResearch: null,
+  activeResearch: null, // DEPRECATED — kept for migration compatibility
 };
 
 /**

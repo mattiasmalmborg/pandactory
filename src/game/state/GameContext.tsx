@@ -251,23 +251,28 @@ function migrateGameState(state: GameState): GameState {
     };
   }
 
-  // Migrate activeResearch field (added for research timers)
-  if (migratedState.research && migratedState.research.activeResearch === undefined) {
-    migratedState = {
-      ...migratedState,
-      research: {
-        ...migratedState.research,
-        activeResearch: null,
-      },
-    };
-  }
-
   // Migrate artifacts (added in Fas 4)
   if (!migratedState.artifacts) {
     migratedState = {
       ...migratedState,
       artifacts: { ...INITIAL_ARTIFACT_STATE },
     };
+  }
+
+  // Migrate to labJobs array (replaces activeResearch + activeAnalysis)
+  if (!migratedState.labJobs) {
+    const jobs: import('../../types/game.types').StationJob[] = [];
+    // Migrate active research if any
+    if (migratedState.research?.activeResearch) {
+      const ar = migratedState.research.activeResearch;
+      jobs.push({ type: 'research', researchId: ar.researchId, startTime: ar.startTime, endTime: ar.endTime });
+    }
+    // Migrate active analysis if any
+    if (migratedState.artifacts?.activeAnalysis) {
+      const aa = migratedState.artifacts.activeAnalysis;
+      jobs.push({ type: 'analysis', artifactInstanceId: aa.artifactInstanceId, templateId: aa.templateId, startTime: aa.startTime, endTime: aa.endTime });
+    }
+    migratedState = { ...migratedState, labJobs: jobs };
   }
 
   // Veteran welcome bonus: give returning players Research Data based on progression
