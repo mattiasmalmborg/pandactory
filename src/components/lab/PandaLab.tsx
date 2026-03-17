@@ -271,10 +271,10 @@ export function PandaLab() {
   // Determine station availability
   // Station 1 is for research, Station 2 (if unlocked) is for analysis
   // If only 1 station, it handles both sequentially
-  const station1Busy = activeResearch !== null;
+  const station1Busy = activeResearch !== null || (!hasSecondStation && activeAnalysis !== null);
   const station2Busy = activeAnalysis !== null;
   const researchStationAvailable = !station1Busy;
-  const analysisStationAvailable = hasSecondStation ? !station2Busy : !station1Busy && !station2Busy;
+  const analysisStationAvailable = hasSecondStation ? !station2Busy : !station1Busy;
 
   // Unanalyzed count for badge
   const unanalyzedCount = inventory.filter(a => a.status === 'unanalyzed').length;

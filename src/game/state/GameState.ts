@@ -893,6 +893,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'START_RESEARCH': {
       const { researchId, cost, startTime, endTime } = action.payload;
+      // Guard: can't start research if already researching
+      if (state.research.activeResearch) return state;
 
       return {
         ...state,
@@ -937,6 +939,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'START_ANALYSIS': {
       const { artifactInstanceId, templateId, cost, startTime, endTime } = action.payload;
+      // Guard: can't start analysis if already analyzing
+      if (state.artifacts.activeAnalysis) return state;
       return {
         ...state,
         contracts: {
