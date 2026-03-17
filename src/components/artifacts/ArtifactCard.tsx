@@ -111,8 +111,11 @@ export function ArtifactCard({
                     : 'bg-purple-600/80 text-white hover:bg-purple-500/80 border border-purple-400/40'
                 }`}
               >
-                {analysisActive ? 'Busy' : !canAffordAnalysis ? `Need ${formatNumber(template.analysisCost)} 🔬` : 'Analyze'}
+                {analysisActive ? 'Station Busy' : !canAffordAnalysis ? `Need ${formatNumber(template.analysisCost)} 🔬` : 'Analyze'}
               </button>
+            )}
+            {analysisActive && !isAnalyzing && onAnalyze && (
+              <p className="text-[10px] text-gray-500">Wait for current task to finish</p>
             )}
             {!isAnalyzing && onScrap && (
               <button

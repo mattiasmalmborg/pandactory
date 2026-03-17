@@ -241,8 +241,11 @@ function ResearchCard({
                         : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                     }`}
                   >
-                    {stationBusy ? 'Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
+                    {stationBusy ? 'Station Busy' : currentLevel === 0 ? 'Research' : 'Upgrade'}
                   </button>
+                  {stationBusy && !isThisResearching && (
+                    <p className="text-[10px] text-gray-500 text-center mt-1">Wait for current task to finish</p>
+                  )}
                 </>
               )}
             </div>
