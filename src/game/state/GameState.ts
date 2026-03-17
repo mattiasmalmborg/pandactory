@@ -941,6 +941,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { artifactInstanceId, templateId, cost, startTime, endTime } = action.payload;
       // Guard: can't start analysis if already analyzing
       if (state.artifacts.activeAnalysis) return state;
+      // Guard: with one station, can't analyze while researching
+      const hasSecondStation = state.artifacts.inventory.some(a =>
+        a.equipped && a.status === 'analyzed' &&
+        ARTIFACT_TEMPLATES[a.templateId]?.effect === 'crystal_clarity'
+      );
+      if (!hasSecondStation && state.research.activeResearch) return state;
       return {
         ...state,
         contracts: {

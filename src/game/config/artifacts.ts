@@ -249,11 +249,11 @@ export const INITIAL_ARTIFACT_STATE: ArtifactState = {
 // === Drop Chance by Expedition Tier ===
 
 const ARTIFACT_DROP_CHANCES: Record<ExpeditionTier, number> = {
-  quick_dash: 0.05,
-  quick_scout: 0.12,
-  standard_expedition: 0.22,
-  deep_exploration: 0.35,
-  epic_journey: 0.55,
+  quick_dash: 0.02,
+  quick_scout: 0.05,
+  standard_expedition: 0.10,
+  deep_exploration: 0.18,
+  epic_journey: 0.30,
 };
 
 // === Rarity Weights ===
