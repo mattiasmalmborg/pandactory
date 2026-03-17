@@ -1,4 +1,4 @@
-import { GameState, GameAction, ResourceId, FoodId, BiomeId, ResearchId } from '../../types/game.types';
+import { GameState, GameAction, ResourceId, FoodId, BiomeId, ResearchId, StationJob } from '../../types/game.types';
 import { AUTOMATIONS } from '../config/automations';
 import { EXPEDITION_TIERS } from '../config/expeditions';
 import { SKILL_TREE, getSkillTreeBonus, hasSkillEffect } from '../config/skillTree';
@@ -792,7 +792,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ? { ...loadedState.research }
           : { ...INITIAL_RESEARCH_STATE },
         artifacts: loadedState.artifacts || { ...INITIAL_ARTIFACT_STATE },
-        labJobs: loadedState.labJobs || [],
+        labJobs: loadedState.labJobs || (() => {
+          // Migrate from old activeResearch/activeAnalysis format
+          const jobs: StationJob[] = [];
+          if (loadedState.research?.activeResearch) {
+            const ar = loadedState.research.activeResearch;
+            jobs.push({ type: 'research', researchId: ar.researchId, startTime: ar.startTime, endTime: ar.endTime });
+          }
+          if (loadedState.artifacts?.activeAnalysis) {
+            const aa = loadedState.artifacts.activeAnalysis;
+            jobs.push({ type: 'analysis', artifactInstanceId: aa.artifactInstanceId, templateId: aa.templateId, startTime: aa.startTime, endTime: aa.endTime });
+          }
+          return jobs;
+        })(),
         lastTick: Date.now(),
         version: INITIAL_GAME_STATE.version, // Always use current version
       };
@@ -896,13 +908,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'START_STATION_JOB': {
       const { job, cost } = action.payload;
       const maxStations = hasArtifactEffect(state.artifacts.inventory, 'crystal_clarity') ? 2 : 1;
-      const jobs = state.labJobs || [];
-      // Guard: all stations busy
-      if (jobs.length >= maxStations) return state;
+      const slots = state.labJobs || [];
+      // Find first empty slot
+      let freeSlot = slots.findIndex(j => j === null);
+      if (freeSlot === -1 && slots.length < maxStations) freeSlot = slots.length;
+      if (freeSlot === -1 || freeSlot >= maxStations) return state;
       // Guard: can't research the same thing twice
-      if (job.type === 'research' && jobs.some(j => j.type === 'research' && j.researchId === job.researchId)) return state;
+      const activeJobs = slots.filter((j): j is StationJob => j !== null);
+      if (job.type === 'research' && activeJobs.some(j => j.type === 'research' && j.researchId === job.researchId)) return state;
       // Guard: can't analyze the same artifact twice
-      if (job.type === 'analysis' && jobs.some(j => j.type === 'analysis' && j.artifactInstanceId === job.artifactInstanceId)) return state;
+      if (job.type === 'analysis' && activeJobs.some(j => j.type === 'analysis' && j.artifactInstanceId === job.artifactInstanceId)) return state;
+
+      const newSlots = [...slots];
+      if (freeSlot < newSlots.length) {
+        newSlots[freeSlot] = job;
+      } else {
+        newSlots.push(job);
+      }
 
       const newState: GameState = {
         ...state,
@@ -910,7 +932,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.contracts,
           researchData: state.contracts.researchData - cost,
         },
-        labJobs: [...jobs, job],
+        labJobs: newSlots,
       };
       // Mark artifact as analyzing
       if (job.type === 'analysis') {
@@ -926,11 +948,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'COMPLETE_STATION_JOB': {
       const { jobIndex } = action.payload;
-      const jobs = state.labJobs || [];
-      const job = jobs[jobIndex];
+      const slots = state.labJobs || [];
+      const job = slots[jobIndex];
       if (!job) return state;
 
-      const remainingJobs = jobs.filter((_, i) => i !== jobIndex);
+      const newSlots = [...slots];
+      newSlots[jobIndex] = null;
 
       if (job.type === 'research') {
         const currentLevel = state.research.levels[job.researchId] || 0;
@@ -943,7 +966,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               [job.researchId]: currentLevel + 1,
             },
           },
-          labJobs: remainingJobs,
+          labJobs: newSlots,
         };
       } else {
         // analysis
@@ -958,18 +981,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ),
             totalAnalyzed: state.artifacts.totalAnalyzed + 1,
           },
-          labJobs: remainingJobs,
+          labJobs: newSlots,
         };
       }
     }
 
     case 'CANCEL_STATION_JOB': {
       const { jobIndex } = action.payload;
-      const jobs = state.labJobs || [];
-      const job = jobs[jobIndex];
+      const slots = state.labJobs || [];
+      const job = slots[jobIndex];
       if (!job) return state;
 
-      const remainingJobs = jobs.filter((_, i) => i !== jobIndex);
+      const newSlots = [...slots];
+      newSlots[jobIndex] = null;
+
       // If analysis, revert artifact status
       if (job.type === 'analysis') {
         return {
@@ -982,10 +1007,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 : a
             ),
           },
-          labJobs: remainingJobs,
+          labJobs: newSlots,
         };
       }
-      return { ...state, labJobs: remainingJobs };
+      return { ...state, labJobs: newSlots };
     }
 
     case 'EQUIP_ARTIFACT': {
@@ -1010,7 +1035,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Guard: can't unequip Crystal Resonator while 2 jobs are running
       const unequipArtifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
       if (unequipArtifact && ARTIFACT_TEMPLATES[unequipArtifact.templateId]?.effect === 'crystal_clarity'
-        && (state.labJobs || []).length >= 2) {
+        && (state.labJobs || []).filter(j => j !== null).length >= 2) {
         return state;
       }
       return {

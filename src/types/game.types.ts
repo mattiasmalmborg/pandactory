@@ -159,7 +159,7 @@ export interface GameState {
   contracts: ContractState;
   research: ResearchState;
   artifacts: ArtifactState;
-  labJobs: StationJob[];  // Active station jobs (max = station count)
+  labJobs: (StationJob | null)[];  // Fixed-length station slots (null = idle)
   gameStartTime: number; // When the save file was first created
   pendingVeteranBonus?: { amount: number; reason: string }; // One-time welcome bonus for returning players
   pendingLabOnboarding?: boolean; // Show lab onboarding modal

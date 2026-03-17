@@ -224,7 +224,7 @@ export function PandaLab() {
   const { state, dispatch } = useGame();
   const researchData = state.contracts.researchData;
   const levels = state.research.levels;
-  const labJobs = state.labJobs || [];
+  const labSlots = state.labJobs || [];
   const inventory = useMemo(() => state.artifacts?.inventory || [], [state.artifacts?.inventory]);
 
   const [labTab, setLabTab] = useState<LabTab>('research');
@@ -232,7 +232,8 @@ export function PandaLab() {
   // Check for Crystal Resonator (second station)
   const hasSecondStation = hasArtifactEffect(inventory, 'crystal_clarity');
   const maxStations = hasSecondStation ? 2 : 1;
-  const allStationsBusy = labJobs.length >= maxStations;
+  const activeJobs = labSlots.filter((j): j is StationJob => j !== null);
+  const allStationsBusy = activeJobs.length >= maxStations;
 
   // Unanalyzed count for badge
   const unanalyzedCount = inventory.filter(a => a.status === 'unanalyzed').length;
@@ -242,25 +243,25 @@ export function PandaLab() {
   const completedRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
-    if (labJobs.length === 0) return;
+    if (activeJobs.length === 0) return;
     const interval = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(interval);
-  }, [labJobs.length]);
+  }, [activeJobs.length]);
 
   // Complete jobs that have finished
   useEffect(() => {
-    labJobs.forEach((job, index) => {
-      if (Date.now() >= job.endTime && !completedRef.current.has(index)) {
+    labSlots.forEach((job, index) => {
+      if (job && Date.now() >= job.endTime && !completedRef.current.has(index)) {
         completedRef.current.add(index);
         dispatch({ type: 'COMPLETE_STATION_JOB', payload: { jobIndex: index } });
       }
     });
-  }, [now, labJobs, dispatch]);
+  }, [now, labSlots, dispatch]);
 
   // Reset completed tracking when jobs change
   useEffect(() => {
     completedRef.current = new Set();
-  }, [labJobs.length]);
+  }, [activeJobs.length]);
 
   function getJobProgress(job: StationJob) {
     const totalDuration = job.endTime - job.startTime;
@@ -334,7 +335,7 @@ export function PandaLab() {
 
   // Find the active research job for a specific node (for inline timer on card)
   function findResearchJob(researchId: ResearchId): StationJob | null {
-    return labJobs.find(j => j.type === 'research' && j.researchId === researchId) || null;
+    return activeJobs.find(j => j.type === 'research' && j.researchId === researchId) || null;
   }
 
   const loadoutSlots = getEffectiveLoadoutSlots(inventory);
@@ -371,19 +372,19 @@ export function PandaLab() {
       <div className="space-y-2">
         <StationDisplay
           label="Station 1"
-          job={labJobs[0] || null}
-          progress={labJobs[0] ? getJobProgress(labJobs[0]).progress : 0}
-          remaining={labJobs[0] ? getJobProgress(labJobs[0]).remaining : 0}
-          currentResearchLevel={labJobs[0]?.type === 'research' ? (levels[labJobs[0].researchId] || 0) : undefined}
+          job={labSlots[0] || null}
+          progress={labSlots[0] ? getJobProgress(labSlots[0]).progress : 0}
+          remaining={labSlots[0] ? getJobProgress(labSlots[0]).remaining : 0}
+          currentResearchLevel={labSlots[0]?.type === 'research' ? (levels[labSlots[0].researchId] || 0) : undefined}
         />
 
         {hasSecondStation ? (
           <StationDisplay
             label="Station 2"
-            job={labJobs[1] || null}
-            progress={labJobs[1] ? getJobProgress(labJobs[1]).progress : 0}
-            remaining={labJobs[1] ? getJobProgress(labJobs[1]).remaining : 0}
-            currentResearchLevel={labJobs[1]?.type === 'research' ? (levels[labJobs[1].researchId] || 0) : undefined}
+            job={labSlots[1] || null}
+            progress={labSlots[1] ? getJobProgress(labSlots[1]).progress : 0}
+            remaining={labSlots[1] ? getJobProgress(labSlots[1]).remaining : 0}
+            currentResearchLevel={labSlots[1]?.type === 'research' ? (levels[labSlots[1].researchId] || 0) : undefined}
           />
         ) : (
           <div className="bg-gray-800/60 backdrop-blur-sm border border-dashed border-gray-700/50 rounded-lg p-4 flex items-center gap-3">
@@ -494,7 +495,7 @@ export function PandaLab() {
                       unequipBlocked={
                         artifact.equipped &&
                         ARTIFACT_TEMPLATES[artifact.templateId]?.effect === 'crystal_clarity' &&
-                        labJobs.length >= 2
+                        activeJobs.length >= 2
                       }
                       onAnalyze={() => handleStartAnalysis(artifact.instanceId)}
                       onEquip={() => dispatch({ type: 'EQUIP_ARTIFACT', payload: { artifactInstanceId: artifact.instanceId } })}
