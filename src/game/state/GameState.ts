@@ -895,6 +895,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { researchId, cost, startTime, endTime } = action.payload;
       // Guard: can't start research if already researching
       if (state.research.activeResearch) return state;
+      // Guard: with one station, can't research while analyzing
+      const hasSecondStationForResearch = state.artifacts.inventory.some(a =>
+        a.equipped && a.status === 'analyzed' &&
+        ARTIFACT_TEMPLATES[a.templateId]?.effect === 'crystal_clarity'
+      );
+      if (!hasSecondStationForResearch && state.artifacts.activeAnalysis) return state;
 
       return {
         ...state,
@@ -1016,6 +1022,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'UNEQUIP_ARTIFACT': {
       const { artifactInstanceId } = action.payload;
+      // Guard: can't unequip Crystal Resonator while analysis is running
+      const unequipArtifact = state.artifacts.inventory.find(a => a.instanceId === artifactInstanceId);
+      if (unequipArtifact && ARTIFACT_TEMPLATES[unequipArtifact.templateId]?.effect === 'crystal_clarity'
+        && state.artifacts.activeAnalysis) {
+        return state;
+      }
       return {
         ...state,
         artifacts: {

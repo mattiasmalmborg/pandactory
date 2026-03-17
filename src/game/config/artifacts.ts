@@ -213,7 +213,7 @@ export const ARTIFACT_TEMPLATES: Record<ArtifactTemplateId, ArtifactTemplate> = 
   crystal_resonator: {
     id: 'crystal_resonator',
     name: 'Crystal Resonator',
-    description: 'Unlocks a second research station — run two jobs at once',
+    description: 'Unlocks a dedicated analysis station — research and analyze simultaneously',
     flavorText: '"It hums. My machines hum back. They\'re having a conversation and I\'m not invited." — Dr. Redd',
     icon: '💠',
     rarity: 'rare',

@@ -272,8 +272,8 @@ export function PandaLab() {
   const hasSecondStation = hasArtifactEffect(inventory, 'crystal_clarity');
 
   // Determine station availability
-  // Station 1 is for research, Station 2 (if unlocked) is for analysis
-  // If only 1 station, it handles both sequentially
+  // Station 1 handles research or analysis (one at a time)
+  // Station 2 (Crystal Resonator) is a dedicated analysis station
   const station1Busy = activeResearch !== null || (!hasSecondStation && activeAnalysis !== null);
   const station2Busy = activeAnalysis !== null;
   const researchStationAvailable = !station1Busy;
@@ -523,6 +523,11 @@ export function PandaLab() {
                       analysisActive={!analysisStationAvailable}
                       canAffordAnalysis={researchData >= ARTIFACT_TEMPLATES[artifact.templateId].analysisCost}
                       loadoutFull={equippedCount >= loadoutSlots}
+                      unequipBlocked={
+                        artifact.equipped &&
+                        ARTIFACT_TEMPLATES[artifact.templateId]?.effect === 'crystal_clarity' &&
+                        activeAnalysis !== null
+                      }
                       onAnalyze={() => handleStartAnalysis(artifact.instanceId)}
                       onEquip={() => dispatch({ type: 'EQUIP_ARTIFACT', payload: { artifactInstanceId: artifact.instanceId } })}
                       onUnequip={() => dispatch({ type: 'UNEQUIP_ARTIFACT', payload: { artifactInstanceId: artifact.instanceId } })}

@@ -319,7 +319,7 @@ export type ArtifactEffectId =
   | 'idols_favor'       // Scrapping returns 100% Research Data
   | 'eternal_forge'     // +1 loadout slot
   | 'guiding_light'     // Artifact drops skew toward higher rarities
-  | 'crystal_clarity'   // Unlock second research station
+  | 'crystal_clarity'   // Unlock dedicated analysis station
   | 'heartbeat';        // Bonus production tick every 47s in all biomes
 
 export interface ArtifactTemplate {

@@ -11,6 +11,7 @@ interface ArtifactCardProps {
   analysisActive?: boolean;
   canAffordAnalysis?: boolean;
   loadoutFull?: boolean;
+  unequipBlocked?: boolean;
 }
 
 function formatDuration(ms: number): string {
@@ -32,6 +33,7 @@ export function ArtifactCard({
   analysisActive,
   canAffordAnalysis,
   loadoutFull,
+  unequipBlocked,
 }: ArtifactCardProps) {
   const template = ARTIFACT_TEMPLATES[artifact.templateId];
   const rarity = RARITY_COLORS[template.rarity];
@@ -96,9 +98,14 @@ export function ArtifactCard({
             {isAnalyzed && artifact.equipped && onUnequip && (
               <button
                 onClick={onUnequip}
-                className="text-[10px] font-bold px-2.5 py-1 rounded bg-gray-700/80 text-gray-300 hover:bg-gray-600/80 border border-gray-500/40 transition-colors"
+                disabled={unequipBlocked}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded transition-colors ${
+                  unequipBlocked
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-700/80 text-gray-300 hover:bg-gray-600/80 border border-gray-500/40'
+                }`}
               >
-                Unequip
+                {unequipBlocked ? 'In Use' : 'Unequip'}
               </button>
             )}
             {!isAnalyzed && !isAnalyzing && onAnalyze && (
