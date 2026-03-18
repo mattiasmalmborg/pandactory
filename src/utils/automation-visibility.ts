@@ -21,7 +21,8 @@ import { RESOURCES } from '../game/config/resources';
 export function canSeeAutomation(
   automation: AutomationConfig,
   discoveredResources: ResourceId[],
-  discoveredProducedResources: ResourceId[] = []
+  discoveredProducedResources: ResourceId[] = [],
+  ownedResources: Partial<Record<ResourceId, number>> = {}
 ): boolean {
   const consumedResources = (automation.consumes || []).map(c => c.resourceId);
   const producedResources = (automation.produces || []).map(p => p.resourceId);
@@ -48,7 +49,7 @@ export function canSeeAutomation(
   });
 
   const allIntermediateConsumedProduced = intermediateConsumedResources.every(resource =>
-    discoveredProducedResources.includes(resource)
+    discoveredProducedResources.includes(resource) || (ownedResources[resource] ?? 0) > 0
   );
 
   if (!allIntermediateConsumedProduced) {
@@ -78,7 +79,7 @@ export function canSeeAutomation(
     if (resource.category === 'raw') {
       return discoveredResources.includes(resourceId);
     } else if (resource.category === 'intermediate') {
-      return discoveredProducedResources.includes(resourceId);
+      return discoveredProducedResources.includes(resourceId) || (ownedResources[resourceId] ?? 0) > 0;
     }
     // For other categories (food, final), allow them
     return true;
@@ -95,11 +96,12 @@ export function getVisibleAutomations(
   automationTypes: AutomationType[],
   automationConfigs: Partial<Record<AutomationType, AutomationConfig>>,
   discoveredResources: ResourceId[],
-  discoveredProducedResources: ResourceId[] = []
+  discoveredProducedResources: ResourceId[] = [],
+  ownedResources: Partial<Record<ResourceId, number>> = {}
 ): AutomationType[] {
   return automationTypes.filter(type => {
     const config = automationConfigs[type];
     if (!config) return false;
-    return canSeeAutomation(config, discoveredResources, discoveredProducedResources);
+    return canSeeAutomation(config, discoveredResources, discoveredProducedResources, ownedResources);
   });
 }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { AutomationType, BiomeId, ResourceCost } from '../../types/game.types';
+import { AutomationType, BiomeId, ResourceCost, ResourceId } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
 import { useGame } from '../../game/state/GameContext';
@@ -27,12 +27,22 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
     .flatMap(b => b.discoveredResources || [])
     .filter((v, i, a) => a.indexOf(v) === i); // unique
 
+  // Gather all resources from ALL biomes for cross-biome building
+  const allResources: Record<string, number> = {};
+  Object.values(state.biomes).forEach(b => {
+    Object.entries(b.resources).forEach(([resId, amount]) => {
+      allResources[resId] = (allResources[resId] || 0) + amount;
+    });
+  });
+
   // Filter automations by discovered resources (only show if all required resources are discovered)
+  // Also consider owned resources — if the player has an intermediate resource, show the automation
   const visibleAutomations = getVisibleAutomations(
     availableAutomations,
     AUTOMATIONS,
     allDiscoveredResources,
-    state.discoveredProducedResources || []
+    state.discoveredProducedResources || [],
+    allResources as Partial<Record<ResourceId, number>>
   );
 
   // Filter out automations that already exist (maxInstancesPerBiome check)
@@ -43,14 +53,6 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
 
     const existingCount = biome.automations.filter(a => a.type === type).length;
     return existingCount < config.maxInstancesPerBiome;
-  });
-
-  // Gather all resources from ALL biomes for cross-biome building
-  const allResources: Record<string, number> = {};
-  Object.values(state.biomes).forEach(b => {
-    Object.entries(b.resources).forEach(([resId, amount]) => {
-      allResources[resId] = (allResources[resId] || 0) + amount;
-    });
   });
 
   // Get achievement-based cost reduction
