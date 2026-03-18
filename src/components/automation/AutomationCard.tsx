@@ -17,6 +17,7 @@ interface AutomationCardProps {
   automation: Automation;
   biomeId: BiomeId;
   onUpgrade?: () => void;
+  onUpgradeMulti?: (times: number) => void;
   onInstallPowerCell?: () => void;
   onRemovePowerCell?: () => void;
   onTogglePause?: () => void;
@@ -26,6 +27,7 @@ export function AutomationCard({
   automation,
   biomeId: _biomeId,
   onUpgrade,
+  onUpgradeMulti,
   onInstallPowerCell,
   onRemovePowerCell,
   onTogglePause
@@ -165,6 +167,20 @@ export function AutomationCard({
   const baseUpgradeCost = calculateLevelUpCost(config.baseCost, automation.level, config.levelUpCostMultiplier);
   const upgradeCost = applyCostReduction(baseUpgradeCost, unlockedAchievements, state.research?.levels, 'upgrade', state.prestige.unlockedSkills);
   const canAffordUpgrade = canAfford(allResources, upgradeCost);
+
+  // Calculate x10 upgrade total cost
+  const upgrade10Cost = useMemo(() => {
+    const totalCost: Record<string, number> = {};
+    for (let i = 0; i < 10; i++) {
+      const lvlCost = calculateLevelUpCost(config.baseCost, automation.level + i, config.levelUpCostMultiplier);
+      const reduced = applyCostReduction(lvlCost, unlockedAchievements, state.research?.levels, 'upgrade', state.prestige.unlockedSkills);
+      for (const c of reduced) {
+        totalCost[c.resourceId] = (totalCost[c.resourceId] || 0) + c.amount;
+      }
+    }
+    return Object.entries(totalCost).map(([resourceId, amount]) => ({ resourceId: resourceId as ResourceId, amount }));
+  }, [automation.level, config.baseCost, config.levelUpCostMultiplier, unlockedAchievements, state.research?.levels, state.prestige.unlockedSkills]);
+  const canAffordUpgrade10 = canAfford(allResources, upgrade10Cost);
 
   const powerCellInfo = automation.powerCell
     ? POWER_CELLS[automation.powerCell.tier]
@@ -351,6 +367,20 @@ export function AutomationCard({
             >
               {isOnExpedition ? '🐼 On Expedition' : `⬆ Upgrade`}
             </button>
+            {onUpgradeMulti && !isOnExpedition && (
+              <button
+                onClick={() => onUpgradeMulti(10)}
+                disabled={!canAffordUpgrade10}
+                className={`text-white text-sm py-2 px-3 rounded font-semibold transition-all ${
+                  canAffordUpgrade10
+                    ? 'bg-blue-700 hover:bg-blue-600 active:scale-95'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+                title="Upgrade 10 levels at once"
+              >
+                x10
+              </button>
+            )}
             {onInstallPowerCell && !automation.powerCell && (
               <button
                 onClick={onInstallPowerCell}

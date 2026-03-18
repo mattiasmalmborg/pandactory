@@ -7,6 +7,7 @@ import { BIOMES } from '../config/biomes';
 import { INITIAL_CONTRACT_STATE } from '../config/contracts';
 import { INITIAL_RESEARCH_STATE, getResearchBonus } from '../config/research';
 import { INITIAL_ARTIFACT_STATE, ARTIFACT_TEMPLATES, hasArtifactEffect, getActiveSetBonuses, getEffectiveLoadoutSlots } from '../config/artifacts';
+import { calculateLevelUpCost, applyCostReduction, canAfford } from '../../utils/calculations';
 
 export const INITIAL_GAME_STATE: GameState = {
   player: {
@@ -202,6 +203,70 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           totalUpgradesPurchased: (state.lifetimeStats?.totalUpgradesPurchased || 0) + 1,
         },
       };
+    }
+
+    case 'UPGRADE_AUTOMATION_MULTI': {
+      const { biomeId, automationId, times } = action.payload;
+      const automation = state.biomes[biomeId].automations.find(a => a.id === automationId);
+      if (!automation) return state;
+      const config = AUTOMATIONS[automation.type];
+      if (!config) return state;
+
+      const unlockedAchievements = state.achievements?.unlocked || [];
+      let currentState = state;
+
+      for (let i = 0; i < times; i++) {
+        const currentLevel = automation.level + i;
+        const baseCost = calculateLevelUpCost(config.baseCost, currentLevel, config.levelUpCostMultiplier);
+        const cost = applyCostReduction(baseCost, unlockedAchievements, currentState.research?.levels, 'upgrade', currentState.prestige.unlockedSkills);
+
+        // Check affordability against current (progressively updated) resources
+        const allResources: Record<string, number> = {};
+        Object.values(currentState.biomes).forEach(b => {
+          Object.entries(b.resources).forEach(([resId, amount]) => {
+            allResources[resId] = (allResources[resId] || 0) + amount;
+          });
+        });
+        if (!canAfford(allResources, cost)) break;
+
+        // Deduct resources cross-biome
+        const updatedBiomes = { ...currentState.biomes };
+        for (const c of cost) {
+          let remaining = c.amount;
+          for (const bId of (Object.keys(updatedBiomes) as BiomeId[])) {
+            if (remaining <= 0) break;
+            const bState = updatedBiomes[bId];
+            const available = bState.resources[c.resourceId] || 0;
+            if (available > 0) {
+              const toDeduct = Math.min(available, remaining);
+              updatedBiomes[bId] = {
+                ...bState,
+                resources: { ...bState.resources, [c.resourceId]: available - toDeduct },
+              };
+              remaining -= toDeduct;
+            }
+          }
+        }
+
+        // Increment level
+        updatedBiomes[biomeId] = {
+          ...updatedBiomes[biomeId],
+          automations: updatedBiomes[biomeId].automations.map(a =>
+            a.id === automationId ? { ...a, level: a.level + 1 } : a
+          ),
+        };
+
+        currentState = {
+          ...currentState,
+          biomes: updatedBiomes,
+          lifetimeStats: {
+            ...currentState.lifetimeStats,
+            totalUpgradesPurchased: (currentState.lifetimeStats?.totalUpgradesPurchased || 0) + 1,
+          },
+        };
+      }
+
+      return currentState;
     }
 
     case 'TOGGLE_AUTOMATION_PAUSE': {

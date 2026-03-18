@@ -358,6 +358,12 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                         payload: { biomeId, automationId: automation.id },
                       });
                     }}
+                    onUpgradeMulti={(times: number) => {
+                      dispatch({
+                        type: "UPGRADE_AUTOMATION_MULTI",
+                        payload: { biomeId, automationId: automation.id, times },
+                      });
+                    }}
                     onInstallPowerCell={() => {
                       setPowerCellModal({ automationId: automation.id });
                     }}

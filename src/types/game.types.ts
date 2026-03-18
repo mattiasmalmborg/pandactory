@@ -414,6 +414,7 @@ export type GameAction =
   | { type: 'GATHER_FOOD'; payload: { foodId: FoodId; amount: number } }
   | { type: 'BUILD_AUTOMATION'; payload: { biomeId: BiomeId; automationType: AutomationType } }
   | { type: 'UPGRADE_AUTOMATION'; payload: { biomeId: BiomeId; automationId: string } }
+  | { type: 'UPGRADE_AUTOMATION_MULTI'; payload: { biomeId: BiomeId; automationId: string; times: number } }
   | { type: 'TOGGLE_AUTOMATION_PAUSE'; payload: { biomeId: BiomeId; automationId: string } }
   | { type: 'INSTALL_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string; powerCell: PowerCell } }
   | { type: 'REMOVE_POWER_CELL'; payload: { biomeId: BiomeId; automationId: string } }
