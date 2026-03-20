@@ -84,11 +84,11 @@ export function BiomeBackground({ biomeId, children }: BiomeBackgroundProps) {
               <span
                 key={i}
                 style={{
-                  '--x': p.x,
-                  '--y': p.y,
-                  '--d': p.duration,
-                  '--s': p.delay,
-                } as React.CSSProperties}
+                  left: `${p.x}%`,
+                  top: `${p.y}%`,
+                  animationDuration: `${p.duration}s`,
+                  animationDelay: `${p.delay}s`,
+                }}
               />
             ))}
           </div>
