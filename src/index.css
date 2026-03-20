@@ -420,7 +420,7 @@ body {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 .biome-particles > span {
@@ -523,33 +523,14 @@ body {
   80%      { opacity: 0.8; transform: scale(1.1); }
 }
 
-/* ═══════════════════════════════════════════════════
-   POLISH: Breathing Background Gradient
-   ═══════════════════════════════════════════════════ */
-
-@keyframes bg-breathe {
-  0%, 100% { opacity: 0; }
-  50%      { opacity: 0.08; }
-}
-
-.bg-breathe::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 30%, var(--biome-accent, rgba(90,158,58,0.5)), transparent 70%);
-  animation: bg-breathe 8s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Vignette effect for depth */
+/* Vignette effect for depth — subtle darkening at edges */
 .bg-vignette::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.3) 100%);
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -745,8 +726,7 @@ body {
   .animate-gentle-pulse,
   .animate-button-pulse:hover,
   .animate-new-item,
-  .biome-particles > span,
-  .bg-breathe::after {
+  .biome-particles > span {
     animation: none !important;
   }
 

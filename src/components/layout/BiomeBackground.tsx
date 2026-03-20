@@ -1,6 +1,5 @@
 import { ReactNode, useMemo } from 'react';
 import { BiomeId } from '../../types/game.types';
-import { BIOMES } from '../../game/config/biomes';
 import { useAssetImage } from '../../hooks/useAssetImage';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
@@ -67,7 +66,7 @@ export function BiomeBackground({ biomeId, children }: BiomeBackgroundProps) {
   return (
     <div className="fixed inset-0 overflow-hidden">
       {/* Background Layer */}
-      <div className="absolute inset-0 bg-breathe bg-vignette" style={{ '--biome-accent': BIOMES[biomeId as BiomeId]?.accentColor || 'rgba(90,158,58,0.5)' } as React.CSSProperties}>
+      <div className="absolute inset-0 bg-vignette">
         {backgroundImage ? (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
