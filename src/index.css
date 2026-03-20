@@ -426,9 +426,9 @@ body {
 .biome-particles > span {
   position: absolute;
   border-radius: 50%;
+  opacity: 0;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
-  animation-fill-mode: both;
 }
 
 /* Forest — glowing spores drifting up */
@@ -438,19 +438,21 @@ body {
   animation-name: p-float-up;
 }
 
-/* Misty Lake — soft fog wisps */
+/* Misty Lake — soft fog wisps drifting across at various heights */
 .biome-particles[data-biome="misty_lake"] > span {
-  width: 50px; height: 18px;
+  width: 80px; height: 25px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(180,215,235,0.12), transparent);
+  left: -80px !important; /* always start off-screen left */
   animation-name: p-drift-right;
 }
 
-/* Desert — sand grains falling diagonally */
+/* Desert — sand grains blowing left to right */
 .biome-particles[data-biome="arid_desert"] > span {
   width: 2px; height: 2px;
   background: rgba(210,180,120,0.6);
-  animation-name: p-sand-fall;
+  left: -10px !important; /* start off-screen left */
+  animation-name: p-sand-blow;
 }
 
 /* Tundra — snowflakes drifting down */
@@ -486,17 +488,17 @@ body {
 }
 
 @keyframes p-drift-right {
-  0%   { opacity: 0;   transform: translateX(-60px); }
-  15%  { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { opacity: 0;   transform: translateX(400px) translateY(-10px); }
+  0%   { opacity: 0;   transform: translateX(0); }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0;   transform: translateX(550px) translateY(-15px); }
 }
 
-@keyframes p-sand-fall {
-  0%   { opacity: 0;   transform: translate(0, -5vh); }
-  10%  { opacity: 0.5; }
-  90%  { opacity: 0.15; }
-  100% { opacity: 0;   transform: translate(60px, 95vh); }
+@keyframes p-sand-blow {
+  0%   { opacity: 0;   transform: translate(0, 0); }
+  8%   { opacity: 0.5; }
+  85%  { opacity: 0.2; }
+  100% { opacity: 0;   transform: translate(500px, 30px); }
 }
 
 @keyframes p-snow-fall {
@@ -735,12 +737,28 @@ body {
   animation: nav-dot-in 0.2s ease-out;
 }
 
-/* Respect user motion preferences */
+/* Respect user motion preferences — targeted for a game context.
+   Only reduce decorative/distracting animations, not game-essential ones. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  /* Kill purely decorative animations */
+  .animate-shimmer,
+  .animate-gentle-pulse,
+  .animate-button-pulse:hover,
+  .animate-new-item,
+  .biome-particles > span,
+  .bg-breathe::after {
+    animation: none !important;
+  }
+
+  /* Reduce but don't eliminate transitions */
+  .stagger-list > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Keep functional transitions fast but not jarring */
+  .progress-bar-smooth,
+  .progress-bar-animated {
+    transition-duration: 0.2s !important;
   }
 }
