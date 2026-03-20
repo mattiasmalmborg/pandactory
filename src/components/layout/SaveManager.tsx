@@ -166,7 +166,9 @@ export function SaveManager() {
 
         {showImport && (
           <div className="space-y-2">
+            <label htmlFor="save-import-data" className="sr-only">Save data</label>
             <textarea
+              id="save-import-data"
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
               placeholder="Paste your save data here..."

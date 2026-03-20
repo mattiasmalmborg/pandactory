@@ -1,7 +1,7 @@
 import { useGame } from '../../game/state/GameContext';
 import { SKILL_TREE, canUnlockSkill } from '../../game/config/skillTree';
 import { SkillId, SkillNode } from '../../types/game.types';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BackgroundWrapper } from '../layout/BackgroundWrapper';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
@@ -164,87 +164,12 @@ export function SkillTree() {
 
       {/* Selected Skill Modal/Popup */}
       {selectedSkill && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedSkill(null)}>
-          <div className="bg-gray-900 border-2 border-purple-500 rounded-lg max-w-md w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            {(() => {
-              const skill = SKILL_TREE[selectedSkill];
-              const isUnlocked = state.prestige.unlockedSkills.includes(skill.id);
-              const canUnlock = canUnlockSkill(skill.id, state.prestige.unlockedSkills);
-              const canAfford = state.prestige.cosmicBambooShards >= skill.cost;
-
-              return (
-                <>
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold text-purple-200 mb-2">{skill.name}</h2>
-                    <p className="text-sm text-gray-300">{skill.description}</p>
-                  </div>
-
-                  <div className="bg-purple-950/50 border border-purple-600 rounded-lg p-4">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <div className="text-gray-400">Cost</div>
-                        <div className={`font-bold ${canAfford ? 'text-yellow-300' : 'text-red-400'}`}>
-                          🎋 {skill.cost}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">Branch</div>
-                        <div className="font-bold text-white">{BRANCHES[skill.branch as keyof typeof BRANCHES].name}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">Tier</div>
-                        <div className="font-bold text-white">{skill.tier}</div>
-                      </div>
-                      <div>
-                        <div className="text-gray-400">Effect</div>
-                        <div className="font-bold text-green-300">{formatEffect(skill)}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {skill.requires.length > 0 && (
-                    <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                      <div className="text-xs text-gray-400 mb-1">Requirements:</div>
-                      <div className="space-y-1">
-                        {skill.requires.map(reqId => {
-                          const reqSkill = SKILL_TREE[reqId];
-                          const reqUnlocked = state.prestige.unlockedSkills.includes(reqId);
-                          return (
-                            <div key={reqId} className={`text-sm flex items-center gap-2 ${reqUnlocked ? 'text-green-400' : 'text-red-400'}`}>
-                              {reqUnlocked ? '✓' : '✗'} {reqSkill.name}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setSelectedSkill(null)}
-                      className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
-                    >
-                      Close
-                    </button>
-                    {!isUnlocked && (
-                      <button
-                        onClick={() => handleUnlockSkill(skill.id)}
-                        disabled={!canUnlock || !canAfford}
-                        className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${
-                          canUnlock && canAfford
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        Unlock
-                      </button>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
+        <SkillModal
+          selectedSkill={selectedSkill}
+          onClose={() => setSelectedSkill(null)}
+          onUnlock={handleUnlockSkill}
+          state={state}
+        />
       )}
     </div>
   );
@@ -257,6 +182,139 @@ export function SkillTree() {
     >
       {skillTreeContent}
     </BackgroundWrapper>
+  );
+}
+
+// Extracted modal component with focus trapping and keyboard support
+function SkillModal({ selectedSkill, onClose, onUnlock, state }: {
+  selectedSkill: SkillId;
+  onClose: () => void;
+  onUnlock: (id: SkillId) => void;
+  state: ReturnType<typeof useGame>['state'];
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Escape key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      // Focus trap: Tab cycles within the modal
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Auto-focus the dialog on mount
+  useEffect(() => {
+    dialogRef.current?.focus();
+  }, []);
+
+  const skill = SKILL_TREE[selectedSkill];
+  const isUnlocked = state.prestige.unlockedSkills.includes(skill.id);
+  const canUnlock = canUnlockSkill(skill.id, state.prestige.unlockedSkills);
+  const canAfford = state.prestige.cosmicBambooShards >= skill.cost;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-label={`Skill: ${skill.name}`}
+        aria-modal="true"
+        tabIndex={-1}
+        className="bg-gray-900 border-2 border-purple-500 rounded-lg max-w-md w-full p-6 space-y-4 outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-purple-200 mb-2">{skill.name}</h2>
+          <p className="text-sm text-gray-300">{skill.description}</p>
+        </div>
+
+        <div className="bg-purple-950/50 border border-purple-600 rounded-lg p-4">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <div className="text-gray-400">Cost</div>
+              <div className={`font-bold ${canAfford ? 'text-yellow-300' : 'text-red-400'}`}>
+                🎋 {skill.cost}
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-400">Branch</div>
+              <div className="font-bold text-white">{BRANCHES[skill.branch as keyof typeof BRANCHES].name}</div>
+            </div>
+            <div>
+              <div className="text-gray-400">Tier</div>
+              <div className="font-bold text-white">{skill.tier}</div>
+            </div>
+            <div>
+              <div className="text-gray-400">Effect</div>
+              <div className="font-bold text-green-300">{formatEffect(skill)}</div>
+            </div>
+          </div>
+        </div>
+
+        {skill.requires.length > 0 && (
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <div className="text-xs text-gray-400 mb-1">Requirements:</div>
+            <div className="space-y-1">
+              {skill.requires.map(reqId => {
+                const reqSkill = SKILL_TREE[reqId];
+                const reqUnlocked = state.prestige.unlockedSkills.includes(reqId);
+                return (
+                  <div key={reqId} className={`text-sm flex items-center gap-2 ${reqUnlocked ? 'text-green-400' : 'text-red-400'}`}>
+                    {reqUnlocked ? '✓' : '✗'} {reqSkill.name}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+          >
+            Close
+          </button>
+          {!isUnlocked && (
+            <button
+              onClick={() => onUnlock(skill.id)}
+              disabled={!canUnlock || !canAfford}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${
+                canUnlock && canAfford
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Unlock
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

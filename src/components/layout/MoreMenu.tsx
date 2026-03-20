@@ -75,7 +75,7 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
                 )}
               </div>
               {hasUnspentShards && (
-                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" aria-label="Unspent shards available" />
               )}
             </button>
 
@@ -92,7 +92,7 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
                 </span>
               </div>
               {hasPendingAchievements && (
-                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" aria-label="New achievements" />
               )}
             </button>
 

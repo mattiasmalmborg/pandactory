@@ -33,16 +33,16 @@ export function ArtifactLoadout() {
           const template = ARTIFACT_TEMPLATES[artifact.templateId];
           const rarity = RARITY_COLORS[template.rarity];
           return (
-            <div
+            <button
               key={artifact.instanceId}
-              className={`border rounded-lg p-2 text-center cursor-pointer hover:opacity-80 transition-opacity ${rarity.border} ${rarity.bg} ${rarity.glow}`}
+              className={`border rounded-lg p-2 text-center hover:opacity-80 transition-opacity w-full ${rarity.border} ${rarity.bg} ${rarity.glow}`}
               onClick={() => dispatch({ type: 'UNEQUIP_ARTIFACT', payload: { artifactInstanceId: artifact.instanceId } })}
-              title="Click to unequip"
+              aria-label={`Unequip ${template.name}`}
             >
               <span className="text-xl">{template.icon}</span>
               <p className="text-[9px] text-white truncate mt-0.5">{template.name}</p>
               <p className={`text-[8px] ${rarity.text}`}>{template.rarity}</p>
-            </div>
+            </button>
           );
         })}
       </div>

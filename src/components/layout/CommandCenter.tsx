@@ -101,8 +101,8 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
 
       {/* Active Timers */}
       {state.panda.status === 'expedition' && state.panda.expedition && (
-        <div
-          className="bg-gray-900/70 backdrop-blur-sm border border-blue-700/40 rounded-lg p-3 cursor-pointer hover:bg-gray-800/70 transition-colors"
+        <button
+          className="w-full bg-gray-900/70 backdrop-blur-sm border border-blue-700/40 rounded-lg p-3 hover:bg-gray-800/70 transition-colors text-left"
           onClick={() => onNavigate('expedition')}
         >
           <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export function CommandCenter({ onNavigate }: CommandCenterProps) {
             </div>
             <span className="text-gray-600 text-xs">›</span>
           </div>
-        </div>
+        </button>
       )}
     </div>
   );
