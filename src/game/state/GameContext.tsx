@@ -277,7 +277,9 @@ function migrateGameState(state: GameState): GameState {
 
   // Veteran welcome bonus: give returning players Research Data based on progression
   // Triggers once when a pre-contracts save first loads the new version
+  // Only applies to players who have prestiged (lab requires prestige)
   if (
+    migratedState.prestige?.totalPrestiges > 0 &&
     migratedState.contracts?.researchData === 0 &&
     migratedState.contracts?.totalResearchDataEarned === 0 &&
     !migratedState.pendingVeteranBonus &&
