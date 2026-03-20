@@ -62,6 +62,7 @@ export function Navigation({ currentView, onViewChange }: NavigationProps) {
             {item.showNotification && !item.locked && (
               <span className="absolute top-2 right-1/4 w-3 h-3 bg-green-500 rounded-full animate-pulse border-2 border-gray-900"></span>
             )}
+            {activeTab === item.id && !item.locked && <span className="nav-active-dot" />}
           </button>
         ))}
       </div>

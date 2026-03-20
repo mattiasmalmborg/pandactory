@@ -59,7 +59,7 @@ export function MoreMenu({ isOpen, onClose, onNavigate }: MoreMenuProps) {
             </button>
           </div>
 
-          <div className="px-4 pb-4 space-y-1">
+          <div className="px-4 pb-4 space-y-1 stagger-list">
             {/* Skills */}
             <button
               onClick={() => handleNavigate('skills')}

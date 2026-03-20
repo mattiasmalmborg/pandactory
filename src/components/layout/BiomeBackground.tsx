@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { BiomeId } from '../../types/game.types';
+import { BIOMES } from '../../game/config/biomes';
 import { useAssetImage } from '../../hooks/useAssetImage';
 import { getBiomeBackgroundPath, getFallbackGradient } from '../../config/assets';
 
@@ -24,22 +25,25 @@ export function BiomeBackground({ biomeId, children }: BiomeBackgroundProps) {
   const showOverlay = biomeId !== 'dashboard';
   const overlayColor = 'bg-black bg-opacity-40';
 
+  // Determine biome key for particles (only actual biomes get particles)
+  const particleBiome = (['lush_forest', 'misty_lake', 'arid_desert', 'frozen_tundra', 'volcanic_isle', 'crystal_caverns'] as string[]).includes(biomeId)
+    ? biomeId : null;
+
   return (
     <div className="fixed inset-0 overflow-hidden">
       {/* Background Layer - Fixed, doesn't scroll */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 bg-breathe bg-vignette" style={{ '--biome-accent': BIOMES[biomeId as BiomeId]?.accentColor || 'rgba(90,158,58,0.5)' } as React.CSSProperties}>
         {backgroundImage ? (
-          // Image background
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${backgroundImage})` }}
           />
         ) : (
-          // Fallback gradient
           <div className={`absolute inset-0 bg-gradient-to-br ${fallbackGradient}`} />
         )}
-        {/* Overlay for better text readability (not on dashboard) */}
         {showOverlay && <div className={`absolute inset-0 ${overlayColor}`} />}
+        {/* Biome-specific particles */}
+        {particleBiome && <div className="biome-particles" data-biome={particleBiome} />}
       </div>
 
       {/* Content Layer - Scrollable */}

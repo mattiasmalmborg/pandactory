@@ -187,7 +187,12 @@ export const AutomationCard = memo(function AutomationCard({
     : null;
 
   return (
-    <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4 space-y-3">
+    <div className={`bg-gray-800/90 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4 space-y-3 card-depth ${
+      automation.paused ? '' :
+      efficiency >= 0.99 ? 'card-glow-green' :
+      efficiency >= 0.7 ? 'card-glow-yellow' :
+      'card-glow-red'
+    }`}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -234,7 +239,7 @@ export const AutomationCard = memo(function AutomationCard({
             style={{ transform: `scaleX(${efficiencyPercent / 100})` }}
           />
         </div>
-        <span className={`text-xs font-bold w-10 text-right ${
+        <span className={`text-xs font-bold w-10 text-right font-game-num ${
           efficiency >= 0.99 ? 'text-green-400' :
           efficiency >= 0.7 ? 'text-yellow-400' :
           'text-red-400'

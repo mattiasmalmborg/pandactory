@@ -214,7 +214,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
 
       <div className="p-4 space-y-4">
         {/* Header with description and progress */}
-        <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4">
+        <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4 card-depth">
           <h2 className="text-xl font-bold text-white mb-2">{biomeConfig.name}</h2>
           <p className="text-sm text-gray-300 leading-relaxed italic mb-3">
             "{biomeConfig.description}"
@@ -311,7 +311,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
             Automations ({biome.automations.length})
           </h3>
           {biome.automations.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-3 stagger-list">
               {biome.automations.map((automation) => {
                 const config = AUTOMATIONS[automation.type];
                 if (!config) return null;

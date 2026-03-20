@@ -409,6 +409,422 @@ body {
   animation: menu-slide-down 0.2s ease-out forwards;
 }
 
+/* ═══════════════════════════════════════════════════
+   POLISH: Biome Particle Systems (CSS-only)
+   ═══════════════════════════════════════════════════ */
+
+/* Base particle layer */
+.biome-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.biome-particles::before,
+.biome-particles::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Forest — floating spores/pollen */
+.biome-particles[data-biome="lush_forest"]::before {
+  width: 4px; height: 4px;
+  background: radial-gradient(circle, rgba(144,238,144,0.8), rgba(144,238,144,0));
+  box-shadow:
+    30px 0 4px rgba(144,238,144,0.3),
+    90px 40px 3px rgba(180,255,180,0.25),
+    200px 80px 5px rgba(144,238,144,0.2),
+    320px 20px 4px rgba(180,255,180,0.3),
+    150px 120px 3px rgba(144,238,144,0.25);
+  animation: float-drift 18s infinite;
+}
+.biome-particles[data-biome="lush_forest"]::after {
+  width: 3px; height: 3px;
+  background: radial-gradient(circle, rgba(200,255,200,0.6), rgba(200,255,200,0));
+  box-shadow:
+    60px 30px 3px rgba(200,255,200,0.2),
+    180px 60px 4px rgba(180,255,180,0.3),
+    280px 100px 3px rgba(200,255,200,0.2),
+    100px 150px 5px rgba(180,255,180,0.25),
+    350px 50px 3px rgba(200,255,200,0.2);
+  animation: float-drift 24s 6s infinite reverse;
+}
+
+/* Misty Lake — fog wisps */
+.biome-particles[data-biome="misty_lake"]::before {
+  width: 120px; height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(180,210,230,0.12), transparent);
+  box-shadow:
+    200px 60px 60px 20px rgba(180,210,230,0.08),
+    -100px 120px 80px 30px rgba(180,210,230,0.06);
+  animation: fog-drift 25s infinite;
+}
+.biome-particles[data-biome="misty_lake"]::after {
+  width: 80px; height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(200,220,240,0.1), transparent);
+  box-shadow:
+    150px 90px 50px 15px rgba(200,220,240,0.07);
+  animation: fog-drift 30s 8s infinite reverse;
+}
+
+/* Desert — heat shimmer / sand particles */
+.biome-particles[data-biome="arid_desert"]::before {
+  width: 3px; height: 3px;
+  background: rgba(210,180,120,0.5);
+  box-shadow:
+    40px 20px 2px rgba(210,180,120,0.3),
+    120px 80px 2px rgba(210,180,120,0.25),
+    250px 40px 3px rgba(210,180,120,0.2),
+    350px 100px 2px rgba(210,180,120,0.3),
+    80px 140px 2px rgba(210,180,120,0.2);
+  animation: sand-drift 12s infinite;
+}
+.biome-particles[data-biome="arid_desert"]::after {
+  width: 100%; height: 30%;
+  top: 40%;
+  border-radius: 0;
+  background: linear-gradient(0deg, transparent, rgba(255,200,100,0.03), transparent);
+  animation: heat-shimmer 4s ease-in-out infinite;
+}
+
+/* Frozen Tundra — snowflakes */
+.biome-particles[data-biome="frozen_tundra"]::before {
+  width: 4px; height: 4px;
+  background: rgba(255,255,255,0.8);
+  box-shadow:
+    50px 0 3px rgba(255,255,255,0.6),
+    120px -20px 2px rgba(255,255,255,0.5),
+    220px 10px 4px rgba(255,255,255,0.4),
+    310px -10px 3px rgba(255,255,255,0.6),
+    170px -30px 2px rgba(255,255,255,0.5),
+    390px 5px 3px rgba(255,255,255,0.3);
+  animation: snowfall 10s infinite linear;
+}
+.biome-particles[data-biome="frozen_tundra"]::after {
+  width: 3px; height: 3px;
+  background: rgba(200,230,255,0.6);
+  box-shadow:
+    30px -40px 2px rgba(200,230,255,0.5),
+    80px -10px 3px rgba(200,230,255,0.4),
+    190px -50px 2px rgba(200,230,255,0.5),
+    270px -20px 4px rgba(200,230,255,0.3),
+    350px -60px 2px rgba(200,230,255,0.5);
+  animation: snowfall 14s 3s infinite linear;
+}
+
+/* Volcanic Isle — embers / sparks */
+.biome-particles[data-biome="volcanic_isle"]::before {
+  width: 3px; height: 3px;
+  background: rgba(255,100,0,0.9);
+  box-shadow:
+    60px 20px 3px rgba(255,140,0,0.7),
+    150px 50px 2px rgba(255,80,0,0.6),
+    250px 30px 4px rgba(255,160,0,0.5),
+    340px 70px 2px rgba(255,100,0,0.7),
+    100px 90px 3px rgba(255,120,0,0.6);
+  animation: ember-rise 8s infinite;
+}
+.biome-particles[data-biome="volcanic_isle"]::after {
+  width: 2px; height: 2px;
+  background: rgba(255,200,50,0.8);
+  box-shadow:
+    40px 40px 2px rgba(255,200,50,0.6),
+    130px 10px 3px rgba(255,180,30,0.5),
+    200px 60px 2px rgba(255,200,50,0.7),
+    290px 40px 2px rgba(255,180,30,0.5);
+  animation: ember-rise 11s 2s infinite;
+}
+
+/* Crystal Caverns — sparkles */
+.biome-particles[data-biome="crystal_caverns"]::before {
+  width: 3px; height: 3px;
+  background: rgba(180,140,255,0.9);
+  box-shadow:
+    70px 30px 3px rgba(140,200,255,0.6),
+    160px 80px 2px rgba(255,180,255,0.5),
+    250px 50px 4px rgba(140,200,255,0.7),
+    330px 100px 3px rgba(180,140,255,0.5),
+    110px 130px 2px rgba(255,180,255,0.6);
+  animation: crystal-sparkle 6s infinite;
+}
+.biome-particles[data-biome="crystal_caverns"]::after {
+  width: 2px; height: 2px;
+  background: rgba(140,200,255,0.7);
+  box-shadow:
+    50px 60px 3px rgba(180,140,255,0.5),
+    140px 20px 2px rgba(255,180,255,0.6),
+    230px 90px 3px rgba(140,200,255,0.4);
+  animation: crystal-sparkle 9s 3s infinite reverse;
+}
+
+/* Particle keyframes */
+@keyframes float-drift {
+  0%   { transform: translate(0, 100vh); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.6; }
+  100% { transform: translate(40px, -20vh); opacity: 0; }
+}
+
+@keyframes fog-drift {
+  0%   { transform: translateX(-150px) translateY(30%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(500px) translateY(25%); opacity: 0; }
+}
+
+@keyframes sand-drift {
+  0%   { transform: translate(-20px, 50vh); opacity: 0; }
+  10%  { opacity: 0.5; }
+  90%  { opacity: 0.3; }
+  100% { transform: translate(80px, 30vh); opacity: 0; }
+}
+
+@keyframes heat-shimmer {
+  0%, 100% { transform: scaleY(1); opacity: 0; }
+  50%      { transform: scaleY(1.02); opacity: 1; }
+}
+
+@keyframes snowfall {
+  0%   { transform: translate(0, -10vh); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 0.7; }
+  100% { transform: translate(-30px, 110vh); opacity: 0; }
+}
+
+@keyframes ember-rise {
+  0%   { transform: translate(0, 100vh) scale(1); opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { opacity: 0.8; }
+  100% { transform: translate(-20px, -10vh) scale(0.3); opacity: 0; }
+}
+
+@keyframes crystal-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  20%      { opacity: 1; transform: scale(1.2); }
+  40%      { opacity: 0.4; transform: scale(0.8); }
+  60%      { opacity: 1; transform: scale(1); }
+  80%      { opacity: 0.3; transform: scale(0.6); }
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Breathing Background Gradient
+   ═══════════════════════════════════════════════════ */
+
+@keyframes bg-breathe {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 0.08; }
+}
+
+.bg-breathe::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, var(--biome-accent, rgba(90,158,58,0.5)), transparent 70%);
+  animation: bg-breathe 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Vignette effect for depth */
+.bg-vignette::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Micro-interactions
+   ═══════════════════════════════════════════════════ */
+
+/* Ripple effect on buttons */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    rgba(255,255,255,0.3) 0%, transparent 60%);
+  transform: scale(0);
+  opacity: 0;
+  transition: none;
+}
+
+.btn-ripple:active::after {
+  transform: scale(2.5);
+  opacity: 1;
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+/* Upgrade glow burst */
+@keyframes glow-burst {
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.6); transform: scale(1); }
+  30%  { box-shadow: 0 0 20px 8px rgba(59,130,246,0.3); transform: scale(1.02); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); transform: scale(1); }
+}
+
+.animate-upgrade-burst {
+  animation: glow-burst 0.5s ease-out;
+}
+
+/* Build stamp-down */
+@keyframes stamp-down {
+  0%   { transform: scale(1.15) translateY(-4px); opacity: 0.5; }
+  40%  { transform: scale(0.97) translateY(1px); opacity: 1; }
+  70%  { transform: scale(1.02) translateY(0); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.animate-stamp-down {
+  animation: stamp-down 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Progress Bar Shimmer Sweep
+   ═══════════════════════════════════════════════════ */
+
+.progress-bar-smooth {
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-smooth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.25) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: bar-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes bar-shimmer {
+  0%, 70%, 100% { transform: translateX(-100%); }
+  40%           { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Card Effects
+   ═══════════════════════════════════════════════════ */
+
+/* Efficiency-based border glow */
+.card-glow-green {
+  box-shadow: inset 0 0 0 1px rgba(34,197,94,0.2), 0 0 12px -4px rgba(34,197,94,0.15);
+}
+
+.card-glow-yellow {
+  box-shadow: inset 0 0 0 1px rgba(234,179,8,0.2), 0 0 12px -4px rgba(234,179,8,0.15);
+}
+
+.card-glow-red {
+  box-shadow: inset 0 0 0 1px rgba(239,68,68,0.2), 0 0 12px -4px rgba(239,68,68,0.15);
+}
+
+/* Subtle inner depth on cards */
+.card-depth {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 2px 8px -2px rgba(0,0,0,0.3);
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: View Transitions
+   ═══════════════════════════════════════════════════ */
+
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-view-enter {
+  animation: view-enter 0.25s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Stagger Animation for Lists
+   ═══════════════════════════════════════════════════ */
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-list > * {
+  animation: stagger-in 0.3s ease-out both;
+}
+
+.stagger-list > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 280ms; }
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Typography — Tabular Numbers
+   ═══════════════════════════════════════════════════ */
+
+.font-game-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   POLISH: Active Nav Indicator
+   ═══════════════════════════════════════════════════ */
+
+@keyframes nav-dot-in {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+
+.nav-active-dot {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #ff6b35;
+  animation: nav-dot-in 0.2s ease-out;
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

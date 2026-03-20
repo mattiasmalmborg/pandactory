@@ -39,7 +39,7 @@ export const AnimatedResourceRow = memo(function AnimatedResourceRow({ resourceI
           </span>
         </div>
         <span
-          className={`text-lg font-bold tabular-nums ${isNegativeNet ? 'text-red-400' : 'text-white'}`}
+          className={`text-lg font-bold font-game-num ${isNegativeNet ? 'text-red-400' : 'text-white'}`}
           data-tooltip={`Exact: ${displayedExact.toLocaleString()}`}
         >
           {formatNumber(animatedAmount)}
@@ -50,7 +50,7 @@ export const AnimatedResourceRow = memo(function AnimatedResourceRow({ resourceI
         <div className="flex items-center justify-end gap-2 mt-1 text-xs">
           {produced > 0 && (
             <span
-              className="text-green-400"
+              className="text-green-400 font-game-num"
               data-tooltip={`Exact: +${produced.toFixed(1)}/min`}
             >
               +{formatNumber(produced)}/min
@@ -58,14 +58,14 @@ export const AnimatedResourceRow = memo(function AnimatedResourceRow({ resourceI
           )}
           {consumed > 0 && (
             <span
-              className="text-orange-400"
+              className="text-orange-400 font-game-num"
               data-tooltip={`Exact: -${consumed.toFixed(1)}/min`}
             >
               -{formatNumber(consumed)}/min
             </span>
           )}
           <span
-            className={net > 0 ? 'text-green-500 font-semibold' : net < 0 ? 'text-red-500 font-semibold' : 'text-gray-400'}
+            className={`font-game-num ${net > 0 ? 'text-green-500 font-semibold' : net < 0 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}
             data-tooltip={`Exact net: ${net > 0 ? '+' : ''}${net.toFixed(1)}/min`}
           >
             = {net > 0 ? '+' : ''}{formatNumber(Math.abs(net))}/min

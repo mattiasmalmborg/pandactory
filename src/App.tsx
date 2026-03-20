@@ -205,8 +205,8 @@ function GameContent() {
             {/* Produced Resource Discovery Popup */}
             <ProducedResourceDiscovery />
 
-            {/* Main Content - scrollable */}
-            <div className="h-full">
+            {/* Main Content - scrollable with view transition */}
+            <div className="h-full animate-view-enter" key={currentView}>
               {currentView === 'dashboard' && <CommandCenter onNavigate={handleCommandCenterNavigate} />}
               {currentView === 'biome' && <BiomeView biomeId={state.player.currentBiome} />}
               {currentView === 'expedition' && <ExpeditionLauncher />}
