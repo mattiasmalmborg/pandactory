@@ -126,10 +126,10 @@ export function SpaceshipGoal() {
         </div>
         <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
           <div
-            className={`h-2 rounded-full progress-bar-smooth ${
+            className={`h-2 w-full rounded-full progress-bar-smooth ${
               isComplete ? 'bg-green-500' : 'bg-purple-500'
             }`}
-            style={{ width: `${progressPercent}%` }}
+            style={{ transform: `scaleX(${progressPercent / 100})` }}
           />
         </div>
       </div>
@@ -180,8 +180,8 @@ export function SpaceshipGoal() {
               {!isPartComplete && currentAmount > 0 && (
                 <div className="bg-gray-700 rounded-full h-1 overflow-hidden">
                   <div
-                    className="bg-purple-500 h-1 rounded-full progress-bar-smooth"
-                    style={{ width: `${progressPercent}%` }}
+                    className="bg-purple-500 h-1 w-full rounded-full progress-bar-smooth"
+                    style={{ transform: `scaleX(${progressPercent / 100})` }}
                   />
                 </div>
               )}

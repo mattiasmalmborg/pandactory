@@ -65,7 +65,7 @@ export function applyOfflineProgress(loadedState: GameState): OfflineProgressRes
     };
   }
 
-  const newState = JSON.parse(JSON.stringify(loadedState)) as GameState;
+  const newState = structuredClone(loadedState);
 
   // Context for production calculations
   const productionContext = createProductionContext(loadedState);

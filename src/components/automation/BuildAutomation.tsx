@@ -20,20 +20,26 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
   const isOnExpedition = state.panda.status === 'expedition';
 
   // Calculate current production rates
-  const { production } = calculateBiomeProductionRates(biome);
+  const { production } = useMemo(() => calculateBiomeProductionRates(biome), [biome]);
 
   // Gather all discovered resources from ALL biomes (cross-biome resource sharing)
-  const allDiscoveredResources = Object.values(state.biomes)
-    .flatMap(b => b.discoveredResources || [])
-    .filter((v, i, a) => a.indexOf(v) === i); // unique
+  const allDiscoveredResources = useMemo(() =>
+    Object.values(state.biomes)
+      .flatMap(b => b.discoveredResources || [])
+      .filter((v, i, a) => a.indexOf(v) === i),
+    [state.biomes]
+  );
 
   // Gather all resources from ALL biomes for cross-biome building
-  const allResources: Record<string, number> = {};
-  Object.values(state.biomes).forEach(b => {
-    Object.entries(b.resources).forEach(([resId, amount]) => {
-      allResources[resId] = (allResources[resId] || 0) + amount;
+  const allResources = useMemo(() => {
+    const resources: Record<string, number> = {};
+    Object.values(state.biomes).forEach(b => {
+      Object.entries(b.resources).forEach(([resId, amount]) => {
+        resources[resId] = (resources[resId] || 0) + amount;
+      });
     });
-  });
+    return resources;
+  }, [state.biomes]);
 
   // Filter automations by discovered resources (only show if all required resources are discovered)
   // Also consider owned resources — if the player has an intermediate resource, show the automation

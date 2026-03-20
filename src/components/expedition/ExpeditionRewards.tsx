@@ -80,7 +80,7 @@ export function ExpeditionRewards({
   // Show rewards summary
   if (currentStep === 'rewards') {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 z-50 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="fixed inset-0 bg-black bg-opacity-75 z-50 overflow-auto overscroll-contain">
         <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
         <div className="bg-gradient-to-br from-green-900 to-green-800 rounded-xl border-2 border-green-500 p-4 sm:p-6 max-w-md w-full shadow-2xl">
           {/* Header */}
@@ -152,7 +152,7 @@ export function ExpeditionRewards({
     const rarity = RARITY_COLORS[template.rarity];
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-85 z-50 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="fixed inset-0 bg-black bg-opacity-85 z-50 overflow-auto overscroll-contain">
         <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
         <div className={`bg-gradient-to-br from-amber-950 via-yellow-950 to-amber-900 rounded-xl border-2 border-amber-500 p-4 sm:p-6 max-w-md w-full shadow-2xl ${rarity.glow}`}>
           {/* Header */}
@@ -200,7 +200,7 @@ export function ExpeditionRewards({
   if (currentStep === 'biome' && newBiome) {
     const biome = BIOMES[newBiome];
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-85 z-50 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="fixed inset-0 bg-black bg-opacity-85 z-50 overflow-auto overscroll-contain">
         <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
         <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 rounded-xl border-2 border-purple-400 p-4 sm:p-6 max-w-md w-full shadow-2xl">
           {/* Header with celebration */}
@@ -245,7 +245,7 @@ export function ExpeditionRewards({
     const totalResources = newResources.length;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-80 z-50 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="fixed inset-0 bg-black bg-opacity-80 z-50 overflow-auto overscroll-contain">
         <div className="min-h-full flex items-center justify-center p-4 pt-8 pb-24">
         <div className="bg-gradient-to-br from-cyan-900 via-blue-900 to-cyan-800 rounded-xl border-2 border-cyan-400 p-4 sm:p-6 max-w-md w-full shadow-2xl">
           {/* Header */}

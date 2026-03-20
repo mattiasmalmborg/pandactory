@@ -117,37 +117,42 @@ export function useSmartTooltips() {
       }, 10);
     };
 
-    // Attach event listeners to all tooltip elements
-    const updateTooltips = () => {
-      // If current target is no longer in the DOM, hide the tooltip
-      if (currentTarget && !document.body.contains(currentTarget)) {
-        hideTooltip();
-      }
-
-      document.querySelectorAll('[data-tooltip]').forEach(el => {
-        el.removeEventListener('mouseenter', showTooltip as EventListener);
-        el.removeEventListener('mouseleave', hideTooltip);
-        el.addEventListener('mouseenter', showTooltip as EventListener);
-        el.addEventListener('mouseleave', hideTooltip);
-      });
+    // Event delegation: listen on document.body instead of individual elements
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = (e.target as Element)?.closest?.('[data-tooltip]') as HTMLElement | null;
+      if (!target || target === currentTarget) return;
+      // Simulate mouseenter by checking if we're entering a new tooltip element
+      showTooltip({ currentTarget: target } as unknown as MouseEvent);
     };
 
-    updateTooltips();
+    const handleMouseOut = (e: MouseEvent) => {
+      if (!currentTarget) return;
+      const relatedTarget = e.relatedTarget as Element | null;
+      // Only hide if we're leaving the tooltip element entirely
+      if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+        const closestTooltip = relatedTarget?.closest?.('[data-tooltip]');
+        if (closestTooltip !== currentTarget) {
+          hideTooltip();
+        }
+      }
+    };
 
-    // Re-attach when DOM changes - also hide tooltip if element was removed
+    document.body.addEventListener('mouseover', handleMouseOver);
+    document.body.addEventListener('mouseout', handleMouseOut);
+
+    // Only observe for removed nodes to clean up tooltip when element disappears
     const observer = new MutationObserver((mutations) => {
-      // Check if any removed nodes contained our current target
+      if (!currentTarget) return;
       for (const mutation of mutations) {
-        if (mutation.removedNodes.length > 0 && currentTarget) {
+        if (mutation.removedNodes.length > 0) {
           for (const node of mutation.removedNodes) {
             if (node === currentTarget || (node instanceof Element && node.contains(currentTarget))) {
               hideTooltip();
-              break;
+              return;
             }
           }
         }
       }
-      updateTooltips();
     });
 
     observer.observe(document.body, {
@@ -170,6 +175,8 @@ export function useSmartTooltips() {
       if (attributeObserver) {
         attributeObserver.disconnect();
       }
+      document.body.removeEventListener('mouseover', handleMouseOver);
+      document.body.removeEventListener('mouseout', handleMouseOut);
       document.removeEventListener('scroll', handleScroll, true);
       if (tooltipElement) {
         tooltipElement.remove();

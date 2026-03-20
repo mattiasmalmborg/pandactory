@@ -188,9 +188,9 @@ export function ExpeditionTimer() {
             style={{ borderWidth: '1px', borderColor: `${biomeAccentColor}99` }}
           >
             <div
-              className="h-full rounded-full progress-bar-smooth"
+              className="h-full w-full rounded-full progress-bar-smooth"
               style={{
-                width: `${progressPercent}%`,
+                transform: `scaleX(${progressPercent / 100})`,
                 background: `linear-gradient(to right, ${biomeAccentColor}, ${biomeAccentColor}CC)`
               }}
             />

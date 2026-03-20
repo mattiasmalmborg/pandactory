@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Automation, BiomeId, ResourceId } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { POWER_CELLS } from '../../game/config/powerCells';
@@ -23,7 +23,7 @@ interface AutomationCardProps {
   onTogglePause?: () => void;
 }
 
-export function AutomationCard({
+export const AutomationCard = memo(function AutomationCard({
   automation,
   biomeId: _biomeId,
   onUpgrade,
@@ -226,12 +226,12 @@ export function AutomationCard({
         <span className="text-xs text-gray-400 w-16">Efficiency</span>
         <div className="flex-1 bg-gray-700 rounded-full h-1.5 overflow-hidden">
           <div
-            className={`h-1.5 rounded-full progress-bar-smooth ${
+            className={`h-1.5 w-full rounded-full progress-bar-smooth ${
               efficiency >= 0.99 ? 'bg-green-500' :
               efficiency >= 0.7 ? 'bg-yellow-500' :
               'bg-red-500'
             }`}
-            style={{ width: `${efficiencyPercent}%` }}
+            style={{ transform: `scaleX(${efficiencyPercent / 100})` }}
           />
         </div>
         <span className={`text-xs font-bold w-10 text-right ${
@@ -400,4 +400,4 @@ export function AutomationCard({
       )}
     </div>
   );
-}
+});

@@ -57,36 +57,35 @@ export function useAchievements() {
       currentAutomationCount += biome.automations.length;
     });
 
-    // Create a simple hash of relevant state to avoid checking too frequently
-    const stateHash = JSON.stringify({
-      resources: state.lifetimeStats?.totalResourcesGathered || 0,
-      automations: state.lifetimeStats?.totalAutomationsBuilt || 0,
-      currentAutomationCount, // Also track actual automation count
-      upgrades: state.lifetimeStats?.totalUpgradesPurchased || 0,
-      expeditions: state.lifetimeStats?.totalExpeditionsCompleted || 0,
-      expeditionCount: state.expeditionCount || 0, // Also track expeditionCount for old saves
-      expeditionsByTier: state.lifetimeStats?.expeditionsByTier || {},
-      biomes: Object.values(state.biomes).filter(b => b.discovered).length,
-      activatedBiomes: Object.values(state.biomes).filter(b => b.activated).length,
-      prestiges: state.prestige.totalPrestiges,
-      shards: state.prestige.cosmicBambooShards,
-      skills: state.prestige.unlockedSkills.length,
-      powerCells: totalInstalledPowerCells,
-      greenCells,
-      blueCells,
-      orangeCells,
+    // Create a lightweight hash of relevant state to avoid checking too frequently
+    // Using string concatenation instead of JSON.stringify for better performance
+    const expeditionsByTier = state.lifetimeStats?.expeditionsByTier;
+    const stateHash = [
+      state.lifetimeStats?.totalResourcesGathered || 0,
+      state.lifetimeStats?.totalAutomationsBuilt || 0,
+      currentAutomationCount,
+      state.lifetimeStats?.totalUpgradesPurchased || 0,
+      state.lifetimeStats?.totalExpeditionsCompleted || 0,
+      state.expeditionCount || 0,
+      expeditionsByTier ? Object.values(expeditionsByTier).join(',') : '0',
+      Object.values(state.biomes).filter(b => b.discovered).length,
+      Object.values(state.biomes).filter(b => b.activated).length,
+      state.prestige.totalPrestiges,
+      state.prestige.cosmicBambooShards,
+      state.prestige.unlockedSkills.length,
+      totalInstalledPowerCells,
+      greenCells, blueCells, orangeCells,
       maxAutomationLevel,
       automationsAtLevel100,
-      discoveredResourceCounts,
-      discoveredProducedResources: (state.discoveredProducedResources || []).length,
-      discoveredProducedFoods: (state.discoveredProducedFoods || []).length,
+      discoveredResourceCounts.join(','),
+      (state.discoveredProducedResources || []).length,
+      (state.discoveredProducedFoods || []).length,
       maxResourceAmount,
-      unlocked: state.achievements?.unlocked?.length || 0,
-      currentHour: new Date().getHours(), // For night owl achievement
-      // Session stats for secret achievements (check every 100 clicks and periodically)
-      sessionClicksRounded: Math.floor((state.sessionStats?.clickCount || 0) / 100) * 100,
-      sessionStartTime: state.sessionStats?.sessionStartTime || 0,
-    });
+      state.achievements?.unlocked?.length || 0,
+      new Date().getHours(),
+      Math.floor((state.sessionStats?.clickCount || 0) / 100) * 100,
+      state.sessionStats?.sessionStartTime || 0,
+    ].join('|');
 
     // Skip if nothing relevant changed
     if (stateHash === lastCheckRef.current) {

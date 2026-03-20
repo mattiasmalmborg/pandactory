@@ -26,7 +26,6 @@ body {
   height: 100%;
   /* Prevent pull-to-refresh and overscroll on mobile */
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
 }
 
 #root {
@@ -184,9 +183,10 @@ body {
   animation: float-up-fade 1s ease-out forwards;
 }
 
-/* Progress bar fill animation */
+/* Progress bar fill animation (GPU-accelerated) */
 .progress-bar-animated {
-  transition: width 0.5s ease-out;
+  transition: transform 0.5s ease-out;
+  transform-origin: left;
 }
 
 /* Button hover pulse */
@@ -301,9 +301,10 @@ body {
   pointer-events: none;
 }
 
-/* Progress bar smooth fill */
+/* Progress bar smooth fill (GPU-accelerated) */
 .progress-bar-smooth {
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left;
 }
 
 /* Shimmer effect for loading/active states */

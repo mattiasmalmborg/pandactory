@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useAnimatedNumber } from './FloatingNumber';
 import { RESOURCES } from '../../game/config/resources';
 import { formatNumber } from '../../utils/formatters';
@@ -10,7 +11,7 @@ interface AnimatedResourceRowProps {
   consumed: number;
 }
 
-export function AnimatedResourceRow({ resourceId, amount, produced, consumed }: AnimatedResourceRowProps) {
+export const AnimatedResourceRow = memo(function AnimatedResourceRow({ resourceId, amount, produced, consumed }: AnimatedResourceRowProps) {
   const resource = RESOURCES[resourceId];
   const animatedAmount = useAnimatedNumber(amount, 500);
 
@@ -73,4 +74,4 @@ export function AnimatedResourceRow({ resourceId, amount, produced, consumed }: 
       )}
     </div>
   );
-}
+});

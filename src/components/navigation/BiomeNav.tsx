@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { BIOMES } from '../../game/config/biomes';
 import { BiomeId } from '../../types/game.types';
@@ -15,7 +15,7 @@ export const BIOME_ORDER: BiomeId[] = [
 ];
 
 // Individual tab component
-function BiomeTab({
+const BiomeTab = memo(function BiomeTab({
   biomeId,
   isActive,
   isUnlocked,
@@ -88,7 +88,7 @@ function BiomeTab({
       )}
     </button>
   );
-}
+});
 
 export function BiomeNav() {
   const { state, dispatch } = useGame();

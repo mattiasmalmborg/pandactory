@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useGame } from '../../game/state/GameContext';
 import { Contract, ContractPeriod } from '../../types/game.types';
 import { formatNumber } from '../../utils/formatters';
 
-function ChoreCard({ contract, onClaim }: { contract: Contract; onClaim: () => void }) {
+const ChoreCard = memo(function ChoreCard({ contract, onClaim }: { contract: Contract; onClaim: () => void }) {
   const percent = Math.min(100, Math.round((contract.progress / contract.target) * 100));
 
   return (
@@ -69,7 +69,7 @@ function ChoreCard({ contract, onClaim }: { contract: Contract; onClaim: () => v
       </div>
     </div>
   );
-}
+});
 
 function getTimeUntilReset(period: ContractPeriod): string {
   const now = new Date();
@@ -108,11 +108,16 @@ export function ChoresList() {
   const weekly = contracts.weekly || [];
   const activeContracts = activeTab === 'daily' ? daily : weekly;
 
-  const dailyCompleted = daily.filter(c => c.completed).length;
-  const weeklyCompleted = weekly.filter(c => c.completed).length;
-  const dailyUnclaimed = daily.filter(c => c.completed && !c.claimed).length;
-  const weeklyUnclaimed = weekly.filter(c => c.completed && !c.claimed).length;
-  const totalUnclaimed = dailyUnclaimed + weeklyUnclaimed;
+  const { dailyCompleted, weeklyCompleted, totalUnclaimed } = useMemo(() => {
+    let dCompleted = 0, wCompleted = 0, dUnclaimed = 0, wUnclaimed = 0;
+    for (const c of daily) {
+      if (c.completed) { dCompleted++; if (!c.claimed) dUnclaimed++; }
+    }
+    for (const c of weekly) {
+      if (c.completed) { wCompleted++; if (!c.claimed) wUnclaimed++; }
+    }
+    return { dailyCompleted: dCompleted, weeklyCompleted: wCompleted, totalUnclaimed: dUnclaimed + wUnclaimed };
+  }, [daily, weekly]);
 
   const handleClaim = (contractId: string, period: ContractPeriod) => {
     dispatch({ type: 'CLAIM_CONTRACT', payload: { contractId, period } });
