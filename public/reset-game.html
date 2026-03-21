@@ -213,27 +213,25 @@
   <script>
     // Resource definitions
     const RESOURCES = [
-      // Lush Forest
-      'wood', 'stone', 'berries', 'rubber_sap', 'nitrogen_nodules',
-      // Processed
-      'planks', 'stone_bricks', 'charcoal', 'rubber',
-      // Misty Lake
-      'fresh_water', 'fish', 'clay', 'clean_water', 'ceramics',
-      // Arid Desert
-      'quartz_sand', 'crude_oil', 'cactus', 'sulfur', 'glass', 'kerosene',
-      // Frozen Tundra
-      'ice', 'rutile_ore', 'iron_ore', 'arctic_moss', 'iron_ingots',
-      // Volcanic Isle
+      // Lush Forest (primary + discoverable + produced)
+      'wood', 'stone', 'rubber_sap', 'nitrogen_nodules',
+      'planks', 'stone_bricks', 'charcoal', 'rubber', 'graphite',
+      // Misty Lake (primary + discoverable + produced)
+      'fresh_water', 'fish', 'clay',
+      'clean_water', 'ceramics', 'hydrogen', 'oxygen', 'aluminum_ingots',
+      // Arid Desert (primary + discoverable + produced)
+      'quartz_sand', 'crude_oil', 'cactus', 'sulfur',
+      'glass', 'kerosene', 'silicon_ingot', 'ammonia', 'hydrazine', 'rocket_fuel',
+      // Frozen Tundra (primary + discoverable + produced)
+      'ice', 'rutile_ore', 'iron_ore', 'arctic_moss',
+      'iron_ingots', 'aluminum_frame', 'liquid_oxygen', 'insulation', 'titanium_hull',
+      // Volcanic Isle (primary + discoverable + produced)
       'nickel_cobalt_ore', 'obsidian', 'geothermal_energy',
-      // Crystal Caverns
+      'refined_alloy', 'obsidian_tools', 'vulcanized_rubber', 'thrusters',
+      // Crystal Caverns (primary + discoverable + produced)
       'lithium_crystals', 'copper_ore', 'phosphorus', 'quartz_crystals',
-      // Advanced
-      'aluminum_ingots', 'silicon_ingot',
-      'hydrogen', 'oxygen', 'ammonia', 'precision_quartz',
-      'hull_plates', 'tank_shell', 'aluminum_frame', 'cathode_powder',
-      'liquid_oxygen', 'doped_silicon', 'graphite', 'hydrazine', 'insulation',
-      'battery_cells', 'solar_cells',
-      'microchips', 'rocket_fuel', 'thrusters', 'oxygen_tanks', 'batteries', 'solar_arrays', 'titanium_hull'
+      'copper_wire', 'precision_quartz', 'doped_silicon',
+      'battery_cells', 'solar_cells', 'microchips', 'batteries', 'solar_arrays', 'oxygen_tanks',
     ];
 
     const FOOD = ['berries', 'cactus_juice', 'smoked_fish', 'greenhouse_veggies'];
@@ -444,7 +442,6 @@
       // Lush Forest
       wood: 'lush_forest',
       stone: 'lush_forest',
-      berries: 'lush_forest',
       rubber_sap: 'lush_forest',
       nitrogen_nodules: 'lush_forest',
       planks: 'lush_forest',
@@ -456,12 +453,9 @@
       // Misty Lake
       fresh_water: 'misty_lake',
       fish: 'misty_lake',
-      algae: 'misty_lake',
       clay: 'misty_lake',
       clean_water: 'misty_lake',
       ceramics: 'misty_lake',
-      smoked_fish: 'misty_lake',
-      protein_bars: 'misty_lake',
       hydrogen: 'misty_lake',
       oxygen: 'misty_lake',
       aluminum_ingots: 'misty_lake',
@@ -473,7 +467,6 @@
       sulfur: 'arid_desert',
       glass: 'arid_desert',
       kerosene: 'arid_desert',
-      cactus_fruit: 'arid_desert',
       silicon_ingot: 'arid_desert',
       ammonia: 'arid_desert',
       hydrazine: 'arid_desert',
@@ -486,7 +479,6 @@
       arctic_moss: 'frozen_tundra',
       iron_ingots: 'frozen_tundra',
       aluminum_frame: 'frozen_tundra',
-      hull_plates: 'frozen_tundra',
       liquid_oxygen: 'frozen_tundra',
       insulation: 'frozen_tundra',
       titanium_hull: 'frozen_tundra',
@@ -496,9 +488,9 @@
       obsidian: 'volcanic_isle',
       geothermal_energy: 'volcanic_isle',
       refined_alloy: 'volcanic_isle',
-      cathode_powder: 'volcanic_isle',
+      obsidian_tools: 'volcanic_isle',
+      vulcanized_rubber: 'volcanic_isle',
       thrusters: 'volcanic_isle',
-      tank_shell: 'volcanic_isle',
 
       // Crystal Caverns
       lithium_crystals: 'crystal_caverns',
@@ -543,6 +535,14 @@
             state.biomes[targetBiome].resources[resource] = 0;
           }
           state.biomes[targetBiome].resources[resource] += 1000;
+
+          // Also mark as discovered so the biome counter works
+          if (!state.biomes[targetBiome].discoveredResources) {
+            state.biomes[targetBiome].discoveredResources = [];
+          }
+          if (!state.biomes[targetBiome].discoveredResources.includes(resource)) {
+            state.biomes[targetBiome].discoveredResources.push(resource);
+          }
 
           // Track count per biome
           addedCounts[targetBiome] = (addedCounts[targetBiome] || 0) + 1;
@@ -795,7 +795,7 @@
     // Resources that can be discovered per biome
     const BIOME_DISCOVERABLE_RESOURCES = {
       lush_forest: ['rubber_sap', 'nitrogen_nodules'],
-      misty_lake: ['algae', 'clay'],
+      misty_lake: ['clay'],
       arid_desert: ['crude_oil', 'sulfur'],
       frozen_tundra: ['rutile_ore', 'arctic_moss'],
       volcanic_isle: ['nickel_cobalt_ore', 'sulfur'],
