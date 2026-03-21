@@ -204,8 +204,8 @@ function GameContent() {
               />
             )}
 
-            {/* Expedition Timer Overlay */}
-            <ExpeditionTimer />
+            {/* Expedition Timer Overlay — fullscreen on primary views, hidden on secondary */}
+            <ExpeditionTimer currentView={currentView} />
 
             {/* Tutorial Hints */}
             <HintSystem />

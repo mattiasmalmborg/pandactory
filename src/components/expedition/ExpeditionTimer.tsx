@@ -9,7 +9,14 @@ import { BIOMES } from '../../game/config/biomes';
 
 const BASE = import.meta.env.BASE_URL;
 
-export function ExpeditionTimer() {
+// Views where the fullscreen expedition overlay should NOT appear
+const SECONDARY_VIEWS = new Set(['skills', 'achievements', 'trophy_room', 'statistics']);
+
+interface ExpeditionTimerProps {
+  currentView?: string;
+}
+
+export function ExpeditionTimer({ currentView }: ExpeditionTimerProps) {
   const { state, dispatch } = useGame();
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
@@ -146,6 +153,11 @@ export function ExpeditionTimer() {
   };
 
   const progressPercent = Math.round(progress * 100);
+
+  // Don't show fullscreen overlay on secondary views (skills, achievements, etc.)
+  if (currentView && SECONDARY_VIEWS.has(currentView)) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
