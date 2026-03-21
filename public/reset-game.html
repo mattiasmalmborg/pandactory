@@ -521,31 +521,41 @@
         const currentBiome = state.player.currentBiome;
         let addedCounts = {};
 
-        // Add 1000 of each resource to its respective biome
+        // Resources that belong to multiple biomes (discoverable in more than one)
+        const MULTI_BIOME_RESOURCES = {
+          sulfur: ['arid_desert', 'volcanic_isle'],
+        };
+
+        // Add 1000 of each resource to its respective biome(s)
         RESOURCES.forEach(resource => {
-          // Determine target biome - use mapped biome or fall back to current biome
-          const targetBiome = RESOURCE_BIOME_MAP[resource] || currentBiome;
+          const targetBiomes = MULTI_BIOME_RESOURCES[resource]
+            ? MULTI_BIOME_RESOURCES[resource]
+            : [RESOURCE_BIOME_MAP[resource] || currentBiome];
 
-          // Make sure the biome exists in state
-          if (!state.biomes[targetBiome]) {
-            return; // Skip if biome doesn't exist
-          }
+          targetBiomes.forEach(targetBiome => {
+            if (!state.biomes[targetBiome]) return;
 
-          if (!state.biomes[targetBiome].resources[resource]) {
-            state.biomes[targetBiome].resources[resource] = 0;
-          }
-          state.biomes[targetBiome].resources[resource] += 1000;
+            if (!state.biomes[targetBiome].resources[resource]) {
+              state.biomes[targetBiome].resources[resource] = 0;
+            }
+            state.biomes[targetBiome].resources[resource] += 1000;
 
-          // Also mark as discovered so the biome counter works
-          if (!state.biomes[targetBiome].discoveredResources) {
-            state.biomes[targetBiome].discoveredResources = [];
-          }
-          if (!state.biomes[targetBiome].discoveredResources.includes(resource)) {
-            state.biomes[targetBiome].discoveredResources.push(resource);
-          }
+            // Also mark as discovered so the biome counter works
+            if (!state.biomes[targetBiome].discoveredResources) {
+              state.biomes[targetBiome].discoveredResources = [];
+            }
+            if (!state.biomes[targetBiome].discoveredResources.includes(resource)) {
+              state.biomes[targetBiome].discoveredResources.push(resource);
+            }
 
-          // Track count per biome
-          addedCounts[targetBiome] = (addedCounts[targetBiome] || 0) + 1;
+            addedCounts[targetBiome] = (addedCounts[targetBiome] || 0) + 1;
+          });
+        });
+
+        // Also add 1000 of each food (biome counters include food from automations)
+        FOOD.forEach(food => {
+          if (!state.food[food]) state.food[food] = 0;
+          state.food[food] += 1000;
         });
 
         localStorage.setItem('pandactory-save', JSON.stringify(state));
@@ -556,7 +566,7 @@
           .join('<br>');
 
         document.getElementById('resource-message').innerHTML =
-          `<p class="message">✅ Added 1000 of each resource to their respective biomes!<br><br>${summary}<br><br>` +
+          `<p class="message">✅ Added 1000 of each resource + food to their respective biomes!<br><br>${summary}<br><br>` +
           `<strong>Reload the main game (F5) to see changes.</strong></p>`;
       } catch (e) {
         document.getElementById('resource-message').innerHTML =
