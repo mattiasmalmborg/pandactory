@@ -54,6 +54,11 @@ export const AutomationCard = memo(function AutomationCard({
     }
   }, [automation.level]);
 
+  // Clean up cascade timer on unmount
+  useEffect(() => {
+    return () => { if (cascadeTimer.current) clearTimeout(cascadeTimer.current); };
+  }, []);
+
   const handleUpgrade = useCallback(() => {
     if (onUpgrade) {
       onUpgrade();
