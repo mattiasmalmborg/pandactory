@@ -1,5 +1,6 @@
-import { useMemo, memo } from 'react';
+import { useMemo, memo, useState, useEffect, useRef, useCallback } from 'react';
 import { Automation, BiomeId, ResourceId } from '../../types/game.types';
+import { feedbackUpgrade } from '../../utils/gameFeedback';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { POWER_CELLS } from '../../game/config/powerCells';
 import { RESOURCES } from '../../game/config/resources';
@@ -16,6 +17,7 @@ import { getResourceSourceDescription } from '../../utils/resourceTracking';
 interface AutomationCardProps {
   automation: Automation;
   biomeId: BiomeId;
+  biomeAccentColor?: string;
   onUpgrade?: () => void;
   onUpgradeMulti?: (times: number) => void;
   onInstallPowerCell?: () => void;
@@ -26,6 +28,7 @@ interface AutomationCardProps {
 export const AutomationCard = memo(function AutomationCard({
   automation,
   biomeId: _biomeId,
+  biomeAccentColor,
   onUpgrade,
   onUpgradeMulti,
   onInstallPowerCell,
@@ -35,6 +38,56 @@ export const AutomationCard = memo(function AutomationCard({
   const { state } = useGame();
   const config = AUTOMATIONS[automation.type];
   const isOnExpedition = state.panda.status === 'expedition';
+
+  // Upgrade burst animation state
+  const [showBurst, setShowBurst] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Upgrade cascade: display level ticks up visually on x10
+  const [displayLevel, setDisplayLevel] = useState(automation.level);
+  const cascadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync display level when automation level changes (single upgrade or external)
+  useEffect(() => {
+    if (!cascadeTimer.current) {
+      setDisplayLevel(automation.level);
+    }
+  }, [automation.level]);
+
+  const handleUpgrade = useCallback(() => {
+    if (onUpgrade) {
+      onUpgrade();
+      feedbackUpgrade();
+      setShowBurst(true);
+      setTimeout(() => setShowBurst(false), 500);
+    }
+  }, [onUpgrade]);
+
+  const handleUpgradeMulti = useCallback((times: number) => {
+    if (onUpgradeMulti) {
+      const startLevel = automation.level;
+      onUpgradeMulti(times);
+      feedbackUpgrade();
+      setShowBurst(true);
+      setTimeout(() => setShowBurst(false), 500);
+
+      // Cascade: tick display level up visually
+      let tick = 0;
+      const targetLevel = startLevel + times;
+      if (cascadeTimer.current) clearTimeout(cascadeTimer.current);
+
+      const step = () => {
+        tick++;
+        setDisplayLevel(startLevel + tick);
+        if (startLevel + tick < targetLevel) {
+          cascadeTimer.current = setTimeout(step, 30);
+        } else {
+          cascadeTimer.current = null;
+        }
+      };
+      cascadeTimer.current = setTimeout(step, 30);
+    }
+  }, [onUpgradeMulti, automation.level]);
 
   // Gather all resources from ALL biomes for cross-biome upgrades (memoized)
   const allResources = useMemo(() => {
@@ -187,12 +240,18 @@ export const AutomationCard = memo(function AutomationCard({
     : null;
 
   return (
-    <div className={`bg-gray-800/90 backdrop-blur-sm rounded-lg border border-gray-700/50 p-4 space-y-3 card-depth ${
-      automation.paused ? '' :
-      efficiency >= 0.99 ? 'card-glow-green' :
-      efficiency >= 0.7 ? 'card-glow-yellow' :
-      'card-glow-red'
-    }`}>
+    <div
+      ref={cardRef}
+      className={`bg-gray-800/90 backdrop-blur-sm rounded-lg border p-4 space-y-3 card-depth ${
+        showBurst ? 'animate-upgrade-burst' : ''
+      } ${
+        automation.paused ? 'border-gray-700/50' :
+        efficiency >= 0.99 ? 'card-glow-green' :
+        efficiency >= 0.7 ? 'card-glow-yellow' :
+        'card-glow-red'
+      }`}
+      style={biomeAccentColor ? { borderColor: `${biomeAccentColor}30` } : undefined}
+    >
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -200,8 +259,8 @@ export const AutomationCard = memo(function AutomationCard({
             <h3 className="font-semibold text-white capitalize truncate">
               {config.name}
             </h3>
-            <span className="text-xs bg-gray-700 px-2 py-0.5 rounded whitespace-nowrap">
-              Lv. {automation.level}
+            <span className="text-xs bg-gray-700 px-2 py-0.5 rounded whitespace-nowrap font-game-num">
+              Lv. {displayLevel}
             </span>
             {automation.paused && (
               <span className="text-xs bg-yellow-900/50 text-yellow-300 px-2 py-0.5 rounded whitespace-nowrap">
@@ -361,9 +420,9 @@ export const AutomationCard = memo(function AutomationCard({
           {/* Actions Row */}
           <div className="flex gap-2">
             <button
-              onClick={onUpgrade}
+              onClick={handleUpgrade}
               disabled={!canAffordUpgrade || isOnExpedition}
-              className={`flex-1 text-white text-sm py-2 px-3 rounded font-semibold transition-all ${
+              className={`flex-1 text-white text-sm py-2 px-3 rounded font-semibold transition-all btn-ripple ${
                 canAffordUpgrade && !isOnExpedition
                   ? 'bg-blue-600 hover:bg-blue-500 active:scale-95'
                   : 'bg-gray-700 text-gray-500 cursor-not-allowed'
@@ -374,9 +433,9 @@ export const AutomationCard = memo(function AutomationCard({
             </button>
             {onUpgradeMulti && !isOnExpedition && (
               <button
-                onClick={() => onUpgradeMulti(10)}
+                onClick={() => handleUpgradeMulti(10)}
                 disabled={!canAffordUpgrade10}
-                className={`text-white text-sm py-2 px-3 rounded font-semibold transition-all ${
+                className={`text-white text-sm py-2 px-3 rounded font-semibold transition-all btn-ripple ${
                   canAffordUpgrade10
                     ? 'bg-blue-700 hover:bg-blue-600 active:scale-95'
                     : 'bg-gray-700 text-gray-500 cursor-not-allowed'

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useGame } from '../game/state/GameContext';
 import { checkAchievements } from '../game/config/achievements';
+import { feedbackAchievement } from '../utils/gameFeedback';
 
 /**
  * Hook that checks for new achievements and unlocks them
@@ -97,6 +98,9 @@ export function useAchievements() {
     const newAchievements = checkAchievements(state);
 
     // Unlock each new achievement
+    if (newAchievements.length > 0) {
+      feedbackAchievement();
+    }
     newAchievements.forEach(achievementId => {
       dispatch({ type: 'UNLOCK_ACHIEVEMENT', payload: { achievementId } });
     });

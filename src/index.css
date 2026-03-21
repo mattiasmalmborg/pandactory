@@ -410,9 +410,10 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════
-   POLISH: Biome Atmosphere Particles
-   Each <span> is positioned via inline left/top/
-   animationDuration/animationDelay from React.
+   POLISH: Biome Atmosphere
+   Single div per biome — background-image with multiple
+   radial-gradient dots, animated via background-position.
+   No extra DOM elements. No box-shadow. Just one div.
    ═══════════════════════════════════════════════════ */
 
 .biome-particles {
@@ -423,104 +424,99 @@ body {
   z-index: 2;
 }
 
-.biome-particles > span {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
+/* Forest — drifting green spores */
+.biome-particles[data-biome="lush_forest"] {
+  background-image:
+    radial-gradient(2px 2px at 15% 20%, rgba(144,238,144,0.6), transparent),
+    radial-gradient(3px 3px at 45% 60%, rgba(180,255,180,0.5), transparent),
+    radial-gradient(2px 2px at 75% 35%, rgba(144,238,144,0.4), transparent),
+    radial-gradient(3px 3px at 30% 80%, rgba(180,255,180,0.5), transparent),
+    radial-gradient(2px 2px at 85% 70%, rgba(144,238,144,0.4), transparent),
+    radial-gradient(2px 2px at 55% 15%, rgba(200,255,200,0.3), transparent);
+  background-size: 100% 200%;
+  animation: bg-drift-up 20s linear infinite;
 }
 
-/* Forest — glowing spores drifting up */
-.biome-particles[data-biome="lush_forest"] > span {
-  width: 4px; height: 4px;
-  background: radial-gradient(circle, rgba(144,238,144,0.8), transparent);
-  animation-name: p-float-up;
+/* Misty Lake — soft horizontal fog wisps */
+.biome-particles[data-biome="misty_lake"] {
+  background-image:
+    radial-gradient(60px 15px at 10% 30%, rgba(180,210,230,0.1), transparent),
+    radial-gradient(80px 20px at 50% 60%, rgba(200,220,240,0.08), transparent),
+    radial-gradient(50px 12px at 80% 45%, rgba(180,210,230,0.1), transparent);
+  background-size: 200% 100%;
+  animation: bg-drift-right 25s linear infinite;
 }
 
-/* Misty Lake — soft fog wisps drifting across at various heights */
-.biome-particles[data-biome="misty_lake"] > span {
-  width: 80px; height: 25px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(180,215,235,0.12), transparent);
-  left: -80px !important; /* always start off-screen left */
-  animation-name: p-drift-right;
+/* Desert — fine sand blowing right */
+.biome-particles[data-biome="arid_desert"] {
+  background-image:
+    radial-gradient(1px 1px at 10% 40%, rgba(210,180,120,0.5), transparent),
+    radial-gradient(2px 2px at 30% 55%, rgba(210,180,120,0.4), transparent),
+    radial-gradient(1px 1px at 50% 30%, rgba(210,180,120,0.3), transparent),
+    radial-gradient(1px 1px at 70% 65%, rgba(210,180,120,0.5), transparent),
+    radial-gradient(2px 2px at 90% 45%, rgba(210,180,120,0.3), transparent);
+  background-size: 200% 100%;
+  animation: bg-drift-right 12s linear infinite;
 }
 
-/* Desert — sand grains blowing left to right */
-.biome-particles[data-biome="arid_desert"] > span {
-  width: 2px; height: 2px;
-  background: rgba(210,180,120,0.6);
-  left: -10px !important; /* start off-screen left */
-  animation-name: p-sand-blow;
+/* Tundra — snowflakes falling */
+.biome-particles[data-biome="frozen_tundra"] {
+  background-image:
+    radial-gradient(2px 2px at 12% 15%, rgba(255,255,255,0.7), transparent),
+    radial-gradient(3px 3px at 35% 40%, rgba(200,230,255,0.5), transparent),
+    radial-gradient(2px 2px at 58% 25%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 78% 55%, rgba(200,230,255,0.4), transparent),
+    radial-gradient(3px 3px at 92% 35%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(2px 2px at 22% 70%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(2px 2px at 48% 85%, rgba(200,230,255,0.5), transparent);
+  background-size: 100% 200%;
+  animation: bg-drift-down 15s linear infinite;
 }
 
-/* Tundra — snowflakes drifting down */
-.biome-particles[data-biome="frozen_tundra"] > span {
-  width: 3px; height: 3px;
-  background: rgba(255,255,255,0.8);
-  animation-name: p-snow-fall;
+/* Volcano — embers rising */
+.biome-particles[data-biome="volcanic_isle"] {
+  background-image:
+    radial-gradient(2px 2px at 20% 70%, rgba(255,120,0,0.7), transparent),
+    radial-gradient(3px 3px at 45% 85%, rgba(255,160,30,0.6), transparent),
+    radial-gradient(2px 2px at 65% 60%, rgba(255,100,0,0.5), transparent),
+    radial-gradient(2px 2px at 80% 90%, rgba(255,140,0,0.6), transparent),
+    radial-gradient(3px 3px at 35% 75%, rgba(255,200,50,0.4), transparent);
+  background-size: 100% 200%;
+  animation: bg-drift-up 10s linear infinite;
 }
 
-/* Volcano — glowing embers rising */
-.biome-particles[data-biome="volcanic_isle"] > span {
-  width: 3px; height: 3px;
-  background: radial-gradient(circle, rgba(255,140,30,0.9), rgba(255,80,0,0.3));
-  animation-name: p-ember-up;
+/* Crystal Caverns — twinkling sparkles */
+.biome-particles[data-biome="crystal_caverns"] {
+  background-image:
+    radial-gradient(2px 2px at 18% 25%, rgba(180,140,255,0.7), transparent),
+    radial-gradient(3px 3px at 42% 55%, rgba(140,200,255,0.6), transparent),
+    radial-gradient(2px 2px at 70% 35%, rgba(255,180,255,0.5), transparent),
+    radial-gradient(2px 2px at 88% 65%, rgba(140,200,255,0.6), transparent),
+    radial-gradient(3px 3px at 55% 80%, rgba(180,140,255,0.5), transparent),
+    radial-gradient(2px 2px at 30% 45%, rgba(255,180,255,0.4), transparent);
+  animation: bg-twinkle 6s ease-in-out infinite alternate;
 }
 
-/* Crystal — sparkles twinkling in place */
-.biome-particles[data-biome="crystal_caverns"] > span {
-  width: 3px; height: 3px;
-  background: radial-gradient(circle, rgba(180,160,255,0.9), transparent);
-  animation-name: p-twinkle;
+/* ── Background-position keyframes ── */
+@keyframes bg-drift-up {
+  from { background-position: 0% 100%; }
+  to   { background-position: 0% -100%; }
 }
 
-/* ── Particle keyframes ──
-   All use translateY relative to viewport height
-   so each particle travels the full screen independently */
-
-@keyframes p-float-up {
-  0%   { opacity: 0;   transform: translateY(90vh); }
-  10%  { opacity: 0.7; }
-  90%  { opacity: 0.3; }
-  100% { opacity: 0;   transform: translateY(-10vh) translateX(15px); }
+@keyframes bg-drift-down {
+  from { background-position: 0% -100%; }
+  to   { background-position: 0% 100%; }
 }
 
-@keyframes p-drift-right {
-  0%   { opacity: 0;   transform: translateX(0); }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { opacity: 0;   transform: translateX(550px) translateY(-15px); }
+@keyframes bg-drift-right {
+  from { background-position: -100% 0%; }
+  to   { background-position: 100% 0%; }
 }
 
-@keyframes p-sand-blow {
-  0%   { opacity: 0;   transform: translate(0, 0); }
-  8%   { opacity: 0.5; }
-  85%  { opacity: 0.2; }
-  100% { opacity: 0;   transform: translate(500px, 30px); }
-}
-
-@keyframes p-snow-fall {
-  0%   { opacity: 0;   transform: translate(0, -5vh); }
-  5%   { opacity: 0.9; }
-  50%  { opacity: 0.6; transform: translate(-12px, 45vh); }
-  95%  { opacity: 0.2; }
-  100% { opacity: 0;   transform: translate(8px, 100vh); }
-}
-
-@keyframes p-ember-up {
-  0%   { opacity: 0;   transform: translateY(95vh) scale(1); }
-  10%  { opacity: 1; }
-  70%  { opacity: 0.4; }
-  100% { opacity: 0;   transform: translateY(-5vh) scale(0.2); }
-}
-
-@keyframes p-twinkle {
-  0%, 100% { opacity: 0;   transform: scale(0.5); }
-  30%      { opacity: 0.9; transform: scale(1.4); }
-  55%      { opacity: 0.15; transform: scale(0.8); }
-  80%      { opacity: 0.8; transform: scale(1.1); }
+@keyframes bg-twinkle {
+  0%   { opacity: 0.3; }
+  50%  { opacity: 0.8; }
+  100% { opacity: 0.4; }
 }
 
 /* Vignette effect for depth — subtle darkening at edges */
@@ -558,6 +554,20 @@ body {
   transform: scale(2.5);
   opacity: 1;
   transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+/* Screen shake for impactful moments */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  15%      { transform: translate(-2px, 1px); }
+  30%      { transform: translate(2px, -1px); }
+  45%      { transform: translate(-1px, 2px); }
+  60%      { transform: translate(1px, -1px); }
+  75%      { transform: translate(-1px, 0px); }
+}
+
+.animate-screen-shake {
+  animation: screen-shake 0.3s ease-out;
 }
 
 /* Upgrade glow burst */

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { feedbackBuild } from '../../utils/gameFeedback';
 import { AutomationType, BiomeId, ResourceCost, ResourceId } from '../../types/game.types';
 import { AUTOMATIONS } from '../../game/config/automations';
 import { RESOURCES } from '../../game/config/resources';
@@ -111,6 +112,7 @@ export function BuildAutomation({ biomeId, availableAutomations }: BuildAutomati
       type: 'BUILD_AUTOMATION',
       payload: { biomeId, automationType: type },
     });
+    feedbackBuild();
 
     setSelectedType(null);
   };

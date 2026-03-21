@@ -329,6 +329,7 @@ export function BiomeView({ biomeId }: BiomeViewProps) {
                     key={automation.id}
                     automation={automation}
                     biomeId={biomeId}
+                    biomeAccentColor={biomeConfig.accentColor}
                     onUpgrade={() => {
                       // Deduct upgrade costs from biomes that HAVE the resources
                       upgradeCost.forEach((cost) => {

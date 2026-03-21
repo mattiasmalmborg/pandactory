@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useScreenShake } from './hooks/useScreenShake';
 import { GameProvider, getLastOfflineProgressResult, clearOfflineProgressResult } from './game/state/GameContext';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSmartTooltips } from './hooks/useSmartTooltips';
@@ -79,6 +80,16 @@ function GameContent() {
     unlockedBiomes: state.unlockedBiomes,
     onBiomeChange: handleBiomeChange,
   });
+
+  // Screen shake for impactful moments
+  const { shakeRef, shake } = useScreenShake();
+
+  // Listen for custom shake events (fired from game actions)
+  useEffect(() => {
+    const handler = () => shake();
+    window.addEventListener('game-shake', handler);
+    return () => window.removeEventListener('game-shake', handler);
+  }, [shake]);
 
   // Initialize session on mount (for secret achievements)
   useEffect(() => {
@@ -172,7 +183,7 @@ function GameContent() {
       <BiomeBackground biomeId={backgroundId}>
         {/* Mobile frame - max width with centered content */}
         <div className="min-h-screen pb-20">
-          <div className="max-w-md mx-auto h-full">
+          <div ref={shakeRef} className="max-w-md mx-auto h-full">
             {/* Lab Onboarding Modal (first prestige or veteran migration) */}
             {state.pendingLabOnboarding && (
               <LabOnboardingModal
